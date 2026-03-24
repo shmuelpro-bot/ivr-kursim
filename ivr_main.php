@@ -1,24 +1,18 @@
-﻿<?php
+<?php
 /**
  * מערכת IVR - קו הקורסים והסדנאות
- * ימות המשיח - קוד מלא
+ * ימות המשיח - פורמט INI נכון
  */
 
-// ==============================
-// הגדרות בסיסיות
-// ==============================
-define('API_KEY','0772519703'_78098632'); // הכנס את ה-API Key של ימות המשיח שלך
+define('API_KEY', '0772519703_78098632');
 define('BASE_URL', 'https://www.call2all.co.il/ym/api/');
-define('RECORDINGS_PATH', '/ivr/recordings/'); // נתיב להקלטות בימות המשיח
+define('NEDARIM_MOSAD_ID', '7007382');
+define('NEDARIM_API_PASS', 'nb252');
+define('NEDARIM_API_URL', 'https://matara.pro/nedarimplus/online/api.aspx');
+define('PRICE_WEEK', 25);
+define('PRICE_OPENING_AD', 25);
+define('SELF_URL', 'https://ivr-kursim.onrender.com/ivr_main.php');
 
-// נדרים פלוס
-define('NEDARIM_MOSAD_ID',   '7007382');
-define('NEDARIM_API_PASS',   'nb252');
-define('NEDARIM_API_URL',    'https://matara.pro/nedarimplus/online/api.aspx');
-define('PRICE_WEEK',         25);   // מחיר פרסום שבועי בש"ח
-define('PRICE_OPENING_AD',   25);   // מחיר פרסומת פתיח ל-24 שעות
-
-// קטגוריות
 define('CATEGORIES', [
     1 => 'קורסים ושיעורי תורה',
     2 => 'שיעורים פרטיים ולימוד לבר מצווה',
@@ -27,111 +21,6 @@ define('CATEGORIES', [
     5 => 'קורסים מקצועיים',
 ]);
 
-// אזורים
-define('REGIONS', [
-    1 => 'ירושלים והסביבה',
-    2 => 'מרכז',
-    3 => 'צפון',
-    4 => 'דרום',
-]);
-
-// ==============================
-// פונקציות עזר לימות המשיח
-// ==============================
-
-/**
- * שליחת פקודת Say לימות המשיח
- */
-function say($text) {
-    return "say:" . $text . "\n";
-}
-
-/**
- * השמעת הקלטה
- */
-function playFile($filename) {
-    return "play:" . RECORDINGS_PATH . $filename . "\n";
-}
-
-/**
- * קבלת קלט מהמשתמש
- */
-function getInput($timeout = 5, $maxDigits = 1) {
-    return "read:DIGIT,{$timeout},{$maxDigits}\n";
-}
-
-/**
- * הפניה לתפריט אחר
- */
-function gotoMenu($menuName) {
-    return "goto:{$menuName}\n";
-}
-
-/**
- * שמירת משתנה
- */
-function setVar($name, $value) {
-    return "var:{$name}={$value}\n";
-}
-
-/**
- * שליחת SMS
- */
-function sendSMS($phone, $message) {
-    $url = BASE_URL . "SendSms?token=" . API_KEY . "&phones=" . $phone . "&message=" . urlencode($message);
-    @file_get_contents($url);
-}
-
-/**
- * תשלום דרך נדרים פלוס
- * מחזיר: ['success'=>true/false, 'transaction_id'=>..., 'error'=>...]
- */
-function nedarimCharge($phone, $amount, $description) {
-    $params = [
-        'MosadId'     => NEDARIM_MOSAD_ID,
-        'ApiPassword' => NEDARIM_API_PASS,
-        'Action'      => 'ChargeByPhone',
-        'Phone'       => $phone,
-        'Amount'      => $amount,
-        'Designation' => $description,
-        'Currency'    => '1', // שקל
-    ];
-    $url = NEDARIM_API_URL . '?' . http_build_query($params);
-    $response = @file_get_contents($url);
-    if (!$response) return ['success' => false, 'error' => 'no_response'];
-    $xml = @simplexml_load_string($response);
-    if (!$xml) return ['success' => false, 'error' => 'bad_response'];
-    $status = (string)$xml->Status;
-    if ($status === '000') {
-        return ['success' => true, 'transaction_id' => (string)$xml->TransactionId];
-    }
-    return ['success' => false, 'error' => $status, 'message' => (string)$xml->StatusDesc];
-}
-
-/**
- * יצירת קישור תשלום נדרים פלוס (אם אין כרטיס רשום)
- */
-function nedarimPaymentLink($phone, $amount, $description) {
-    $params = [
-        'MosadId'     => NEDARIM_MOSAD_ID,
-        'ApiPassword' => NEDARIM_API_PASS,
-        'Action'      => 'GetPaymentLink',
-        'Phone'       => $phone,
-        'Amount'      => $amount,
-        'Designation' => $description,
-        'Currency'    => '1',
-    ];
-    $url = NEDARIM_API_URL . '?' . http_build_query($params);
-    $response = @file_get_contents($url);
-    if (!$response) return null;
-    $xml = @simplexml_load_string($response);
-    if (!$xml) return null;
-    return (string)$xml->URL;
-}
-
-/**
- * קריאה ל-API של ימות המשיח
- */
 function callAPI($endpoint, $params = []) {
     $params['token'] = API_KEY;
     $url = BASE_URL . $endpoint . '?' . http_build_query($params);
@@ -139,23 +28,49 @@ function callAPI($endpoint, $params = []) {
     return json_decode($response, true);
 }
 
-/**
- * קבלת מספר מתקשר
- */
-function getCallerPhone() {
-    return isset($_GET['PhoneNumber']) ? $_GET['PhoneNumber'] : '';
+function sendSMS($phone, $message) {
+    callAPI('SendSms', ['phones' => $phone, 'message' => $message]);
 }
 
-/**
- * קבלת הקלט שהוקש
- */
-function getDigit() {
-    return isset($_GET['DIGIT']) ? $_GET['DIGIT'] : '';
+function getActiveAds($category = null) {
+    $adsRaw = callAPI('GetVar', ['var' => 'ads_list']);
+    $ads = isset($adsRaw['value']) ? json_decode($adsRaw['value'], true) : [];
+    if (!is_array($ads)) $ads = [];
+    $now = time();
+    $active = [];
+    foreach ($ads as $ad) {
+        if ($ad['expires'] > $now) {
+            if ($category === null || $ad['category'] == $category) {
+                $active[] = $ad;
+            }
+        }
+    }
+    usort($active, function($a, $b) { return $b['created'] - $a['created']; });
+    return $active;
 }
 
-/**
- * ספירת סה"כ משתמשים (מאוחסן ב-DB של ימות המשיח)
- */
+function getActiveOpeningAd() {
+    $adRaw = callAPI('GetVar', ['var' => 'opening_ad']);
+    $ad = isset($adRaw['value']) ? json_decode($adRaw['value'], true) : null;
+    if ($ad && $ad['expires'] > time()) return $ad;
+    return null;
+}
+
+function isUserRegistered($phone) {
+    $result = callAPI('GetVar', ['var' => 'user_' . $phone]);
+    return isset($result['value']) && $result['value'] !== '';
+}
+
+function registerUser($phone) {
+    $user = ['phone' => $phone, 'alerts' => [], 'registered' => time()];
+    callAPI('SetVar', ['var' => 'user_' . $phone, 'value' => json_encode($user)]);
+}
+
+function getUser($phone) {
+    $result = callAPI('GetVar', ['var' => 'user_' . $phone]);
+    return isset($result['value']) ? json_decode($result['value'], true) : null;
+}
+
 function getTotalUsers() {
     $result = callAPI('GetVar', ['var' => 'total_users']);
     return isset($result['value']) ? intval($result['value']) : 0;
@@ -166,688 +81,509 @@ function incrementTotalUsers() {
     callAPI('SetVar', ['var' => 'total_users', 'value' => $current + 1]);
 }
 
-/**
- * קבלת פרסומות פעילות לפי קטגוריה
- */
-function getActiveAds($category = null) {
-    $adsRaw = callAPI('GetVar', ['var' => 'ads_list']);
-    $ads = isset($adsRaw['value']) ? json_decode($adsRaw['value'], true) : [];
-    if (!is_array($ads)) $ads = [];
-    
-    $now = time();
-    $active = [];
-    foreach ($ads as $ad) {
-        if ($ad['expires'] > $now) {
-            if ($category === null || $ad['category'] == $category) {
-                $active[] = $ad;
+function stepUrl($step, $extra = []) {
+    $params = array_merge(['step' => $step], $extra);
+    return SELF_URL . '?' . http_build_query($params);
+}
+
+function respond($ini) {
+    header('Content-Type: text/plain; charset=utf-8');
+    $out = '';
+    foreach ($ini as $key => $value) {
+        if (is_array($value)) {
+            foreach ($value as $v) {
+                $out .= $key . '=' . $v . "\n";
             }
+        } else {
+            $out .= $key . '=' . $value . "\n";
         }
     }
-    // מיון מהחדש לישן
-    usort($active, function($a, $b) { return $b['created'] - $a['created']; });
-    return $active;
+    echo $out;
+    exit;
 }
 
-/**
- * פרסומת פתיח פעילה
- */
-function getActiveOpeningAd() {
-    $adRaw = callAPI('GetVar', ['var' => 'opening_ad']);
-    $ad = isset($adRaw['value']) ? json_decode($adRaw['value'], true) : null;
-    if ($ad && $ad['expires'] > time()) return $ad;
-    return null;
-}
-
-/**
- * שמירת פרסום חדש
- */
-function saveNewAd($phone, $category, $region, $city, $recordingFile, $days) {
-    $ads = getActiveAds(); // כל הפרסומות
-    $adsRaw = callAPI('GetVar', ['var' => 'ads_list']);
-    $allAds = isset($adsRaw['value']) ? json_decode($adsRaw['value'], true) : [];
-    if (!is_array($allAds)) $allAds = [];
-    
-    $adId = time() . '_' . rand(1000, 9999);
-    $newAd = [
-        'id'        => $adId,
-        'phone'     => $phone,
-        'category'  => $category,
-        'region'    => $region,
-        'city'      => $city,
-        'recording' => $recordingFile,
-        'days'      => $days,
-        'created'   => time(),
-        'expires'   => time() + ($days * 86400),
-    ];
-    $allAds[] = $newAd;
-    callAPI('SetVar', ['var' => 'ads_list', 'value' => json_encode($allAds)]);
-    return $adId;
-}
-
-/**
- * בדיקה אם מספר טלפון רשום
- */
-function isUserRegistered($phone) {
-    $result = callAPI('GetVar', ['var' => 'user_' . $phone]);
-    return isset($result['value']) && $result['value'] !== '';
-}
-
-/**
- * רישום משתמש חדש
- */
-function registerUser($phone) {
-    $user = ['phone' => $phone, 'alerts' => [], 'registered' => time()];
-    callAPI('SetVar', ['var' => 'user_' . $phone, 'value' => json_encode($user)]);
-}
-
-/**
- * קבלת נתוני משתמש
- */
-function getUser($phone) {
-    $result = callAPI('GetVar', ['var' => 'user_' . $phone]);
-    return isset($result['value']) ? json_decode($result['value'], true) : null;
-}
-
-/**
- * שמירת התראה למשתמש
- */
-function saveUserAlert($phone, $category, $recordingFile) {
-    $user = getUser($phone);
-    if (!$user) return;
-    $user['alerts'][$category] = $recordingFile;
-    callAPI('SetVar', ['var' => 'user_' . $phone, 'value' => json_encode($user)]);
-}
-
-/**
- * שליחת התראות למשתמשים רשומים בקטגוריה
- */
-function notifyUsersForCategory($category) {
-    // ימות המשיח מגבילה — מומלץ להפעיל כ-cron נפרד
-    // כאן רק מדגים את הלוגיקה
-    $usersRaw = callAPI('GetVar', ['var' => 'all_users']);
-    $allUsers = isset($usersRaw['value']) ? json_decode($usersRaw['value'], true) : [];
-    foreach ($allUsers as $phone) {
-        $user = getUser($phone);
-        if ($user && isset($user['alerts'][$category])) {
-            $catName = CATEGORIES[$category];
-            callAPI('Call', [
-                'phone'   => $phone,
-                'message' => "פורסם קורס חדש בקטגוריית {$catName}. להאזנה הקש 1",
-            ]);
-        }
-    }
-}
-
-// ==============================
-// תפריטי IVR
-// ==============================
-
-$step  = isset($_GET['step'])  ? $_GET['step']  : 'main';
-$digit = getDigit();
-$phone = getCallerPhone();
-
-// תוצאת ה-IVR שתוחזר לימות המשיח
-$output = '';
+$step  = $_GET['step'] ?? 'main';
+$phone = $_GET['PhoneNumber'] ?? '';
 
 switch ($step) {
 
-    // ==========================================
-    // תפריט ראשי
-    // ==========================================
     case 'main':
         incrementTotalUsers();
-        $totalUsers  = getTotalUsers();
-        $openingAd   = getActiveOpeningAd();
-
-        $output .= say("שלום וברכה! ברוכים הבאים לקו הקורסים והסדנאות.");
-
-        if ($openingAd) {
-            $output .= playFile($openingAd['recording']);
-        }
-
-        $output .= say("סך האנשים שהשתמשו במערכת הם " . $totalUsers . " אנשים.");
-        $output .= say("לשמיעת הקורסים ושיעורים זמינים - הקש 1.");
-        $output .= say("לפרסום קורס, שיעור, סדנה או קייטנה - הקש 2.");
-        $output .= say("לכניסה לאזור האישי ורישום להתראות - הקש 3.");
-        $output .= say("למידע על המערכת ותעריפים - הקש 4.");
-        $output .= say("להשארת הודעה למנהל המערכת - הקש 5.");
-        $output .= getInput(7);
-        $output .= "if_digit:1:goto:menu1\n";
-        $output .= "if_digit:2:goto:menu2_start\n";
-        $output .= "if_digit:3:goto:menu3_start\n";
-        $output .= "if_digit:4:goto:menu4_info\n";
-        $output .= "if_digit:5:goto:menu5_voicemail\n";
-        $output .= gotoMenu('main'); // חזרה אם לא הוקש כלום
+        $total = getTotalUsers();
+        $openAd = getActiveOpeningAd();
+        $messages = ['שלום וברכה! ברוכים הבאים לקו הקורסים והסדנאות.'];
+        if ($openAd) $messages[] = 't:' . $openAd['recording'];
+        $messages[] = 'סך האנשים שהשתמשו במערכת הם ' . $total . ' אנשים.';
+        $messages[] = 'לשמיעת הקורסים ושיעורים זמינים הקש 1.';
+        $messages[] = 'לפרסום קורס שיעור סדנה או קייטנה הקש 2.';
+        $messages[] = 'לכניסה לאזור האישי ורישום להתראות הקש 3.';
+        $messages[] = 'למידע על המערכת ותעריפים הקש 4.';
+        $messages[] = 'להשארת הודעה למנהל המערכת הקש 5.';
+        respond([
+            'type' => 'menu',
+            'id_list_message' => $messages,
+            'id_list_1' => stepUrl('menu1'),
+            'id_list_2' => stepUrl('menu2_start'),
+            'id_list_3' => stepUrl('menu3_start'),
+            'id_list_4' => stepUrl('menu4_info'),
+            'id_list_5' => stepUrl('menu5_voicemail'),
+        ]);
         break;
 
-    // ==========================================
-    // תפריט 1 - האזנה לפרסומים
-    // ==========================================
     case 'menu1':
-        $output .= say("הקש 1 לקורסים ושיעורי תורה.");
-        $output .= say("הקש 2 לשיעורים פרטיים כולל לימוד לבר מצווה.");
-        $output .= say("הקש 3 לסדנאות ופיתוח אישי.");
-        $output .= say("הקש 4 לקייטנות וחוגים לילדים.");
-        $output .= say("הקש 5 לקורסים מקצועיים.");
-        $output .= say("הקש 6 לכל הפרסומים ברצף.");
-        $output .= say("הקש 9 לחזרה לתפריט הראשי.");
-        $output .= getInput(7);
-        for ($i = 1; $i <= 6; $i++) {
-            $output .= "if_digit:{$i}:goto:listen_cat_{$i}\n";
-        }
-        $output .= "if_digit:9:goto:main\n";
-        $output .= gotoMenu('menu1');
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'הקש 1 לקורסים ושיעורי תורה.',
+                'הקש 2 לשיעורים פרטיים כולל לימוד לבר מצווה.',
+                'הקש 3 לסדנאות ופיתוח אישי.',
+                'הקש 4 לקייטנות וחוגים לילדים.',
+                'הקש 5 לקורסים מקצועיים.',
+                'הקש 6 לכל הפרסומים ברצף.',
+                'הקש 9 לחזרה לתפריט הראשי.',
+            ],
+            'id_list_1' => stepUrl('listen', ['cat' => 1]),
+            'id_list_2' => stepUrl('listen', ['cat' => 2]),
+            'id_list_3' => stepUrl('listen', ['cat' => 3]),
+            'id_list_4' => stepUrl('listen', ['cat' => 4]),
+            'id_list_5' => stepUrl('listen', ['cat' => 5]),
+            'id_list_6' => stepUrl('listen', ['cat' => 0]),
+            'id_list_9' => stepUrl('main'),
+        ]);
         break;
 
-    case 'listen_cat_1':
-    case 'listen_cat_2':
-    case 'listen_cat_3':
-    case 'listen_cat_4':
-    case 'listen_cat_5':
-        $catNum = intval(substr($step, -1));
-        $ads    = getActiveAds($catNum);
-        $catName = CATEGORIES[$catNum];
-
+    case 'listen':
+        $cat = intval($_GET['cat'] ?? 0);
+        $idx = intval($_GET['idx'] ?? 0);
+        $ads = $cat > 0 ? getActiveAds($cat) : getActiveAds();
+        $catName = $cat > 0 ? (CATEGORIES[$cat] ?? '') : 'כל הקטגוריות';
         if (empty($ads)) {
-            $output .= say("אין כרגע פרסומים בקטגוריית {$catName}. חוזרים לתפריט.");
-            $output .= gotoMenu('menu1');
-        } else {
-            $output .= say("מאזין לפרסומים בקטגוריית {$catName}. נמצאו " . count($ads) . " פרסומים.");
-            foreach ($ads as $idx => $ad) {
-                $num = $idx + 1;
-                $output .= say("פרסום מספר {$num}.");
-                $output .= playFile($ad['recording']);
-                $output .= say("בסוף הפרסום של {$catName} ממספר " . $ad['phone'] . ".");
-                $output .= say("להאזנה חוזרת הקש כוכבית. למעבר לפרסום הבא הקש 8. לחזרה לפרסום קודם הקש 2. לחזרה לתפריט הקש 9.");
-                $output .= getInput(5);
-                $output .= "if_digit:9:goto:menu1\n";
-                // כוכבית = חזרה לאותו פרסום
-                $output .= "if_digit:*:goto:{$step}\n";
-            }
-            $output .= say("הגעת לסוף הפרסומים בקטגוריה זו. חוזרים לתפריט.");
-            $output .= gotoMenu('menu1');
+            respond([
+                'type' => 'menu',
+                'id_list_message' => ['אין כרגע פרסומים ב' . $catName . '. חוזרים לתפריט.'],
+                'goto' => stepUrl('menu1'),
+            ]);
         }
+        if ($idx >= count($ads)) {
+            respond([
+                'type' => 'menu',
+                'id_list_message' => ['הגעת לסוף הפרסומים. חוזרים לתפריט.'],
+                'goto' => stepUrl('menu1'),
+            ]);
+        }
+        $ad = $ads[$idx];
+        $num = $idx + 1;
+        $total = count($ads);
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'פרסום מספר ' . $num . ' מתוך ' . $total . '.',
+                't:' . $ad['recording'],
+                'מספר ליצירת קשר ' . $ad['phone'] . '.',
+                'להאזנה חוזרת הקש כוכבית.',
+                'לפרסום הבא הקש 1.',
+                'לחזרה לתפריט הקש 9.',
+            ],
+            'id_list_1' => stepUrl('listen', ['cat' => $cat, 'idx' => $idx + 1]),
+            'id_list_*' => stepUrl('listen', ['cat' => $cat, 'idx' => $idx]),
+            'id_list_9' => stepUrl('menu1'),
+        ]);
         break;
 
-    case 'listen_cat_6':
-        // כל הפרסומים ברצף
-        $ads = getActiveAds();
-        if (empty($ads)) {
-            $output .= say("אין כרגע פרסומים פעילים במערכת.");
-            $output .= gotoMenu('menu1');
-        } else {
-            $output .= say("משמיע את כל הפרסומים. נמצאו " . count($ads) . " פרסומים.");
-            foreach ($ads as $idx => $ad) {
-                $num = $idx + 1;
-                $catName = CATEGORIES[$ad['category']] ?? 'כללי';
-                $output .= say("פרסום מספר {$num} בקטגוריית {$catName}.");
-                $output .= playFile($ad['recording']);
-                $output .= say("מספר ליצירת קשר: " . $ad['phone'] . ".");
-                $output .= say("להמשך הקש 1. לחזרה לתפריט הקש 9.");
-                $output .= getInput(5);
-                $output .= "if_digit:9:goto:menu1\n";
-            }
-            $output .= say("הגעת לסוף כל הפרסומים.");
-            $output .= gotoMenu('menu1');
-        }
-        break;
-
-    // ==========================================
-    // תפריט 2 - פרסום קורס חדש
-    // ==========================================
     case 'menu2_start':
-        $output .= say("ברוכים הבאים למערכת הפרסום.");
-        $output .= say("עלות פרסום: 25 שקל לשבוע אחד.");
-        $output .= say("אנא הקש את מספר הטלפון שלך ולחץ על סולמית.");
-        $output .= "read:PUB_PHONE,15,10\n";
-        $output .= gotoMenu('menu2_category');
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'ברוכים הבאים למערכת הפרסום.',
+                'עלות פרסום 25 שקל לשבוע אחד.',
+                'אנא הקש את מספר הטלפון שלך ולחץ על סולמית.',
+            ],
+            'read_type' => 'phone',
+            'read_variable' => 'PUB_PHONE',
+            'goto' => stepUrl('menu2_category'),
+        ]);
         break;
 
     case 'menu2_category':
-        $output .= say("בחר קטגוריה לפרסום.");
-        $output .= say("הקש 1 לקורסים ושיעורי תורה.");
-        $output .= say("הקש 2 לשיעורים פרטיים כולל לימוד לבר מצווה.");
-        $output .= say("הקש 3 לסדנאות ופיתוח אישי.");
-        $output .= say("הקש 4 לקייטנות וחוגים לילדים.");
-        $output .= say("הקש 5 לקורסים מקצועיים.");
-        $output .= getInput(7);
-        for ($i = 1; $i <= 5; $i++) {
-            $output .= "if_digit:{$i}:setvar:PUB_CAT={$i}\n";
-            $output .= "if_digit:{$i}:goto:menu2_region\n";
-        }
-        $output .= gotoMenu('menu2_category');
+        $pubPhone = $_GET['PUB_PHONE'] ?? $phone;
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'בחר קטגוריה לפרסום.',
+                'הקש 1 לקורסים ושיעורי תורה.',
+                'הקש 2 לשיעורים פרטיים.',
+                'הקש 3 לסדנאות ופיתוח אישי.',
+                'הקש 4 לקייטנות וחוגים לילדים.',
+                'הקש 5 לקורסים מקצועיים.',
+            ],
+            'id_list_1' => stepUrl('menu2_region', ['cat' => 1, 'pub_phone' => $pubPhone]),
+            'id_list_2' => stepUrl('menu2_region', ['cat' => 2, 'pub_phone' => $pubPhone]),
+            'id_list_3' => stepUrl('menu2_region', ['cat' => 3, 'pub_phone' => $pubPhone]),
+            'id_list_4' => stepUrl('menu2_region', ['cat' => 4, 'pub_phone' => $pubPhone]),
+            'id_list_5' => stepUrl('menu2_region', ['cat' => 5, 'pub_phone' => $pubPhone]),
+        ]);
         break;
 
     case 'menu2_region':
-        $output .= say("בחר אזור.");
-        $output .= say("הקש 1 לירושלים והסביבה.");
-        $output .= say("הקש 2 למרכז.");
-        $output .= say("הקש 3 לצפון.");
-        $output .= say("הקש 4 לדרום.");
-        $output .= getInput(7);
-        for ($i = 1; $i <= 4; $i++) {
-            $output .= "if_digit:{$i}:setvar:PUB_REGION={$i}\n";
-            $output .= "if_digit:{$i}:goto:menu2_city_first\n";
-        }
-        $output .= gotoMenu('menu2_region');
-        break;
-
-    case 'menu2_city_first':
-        $output .= say("לעיר המתחילה באות א עד ל - הקש 1.");
-        $output .= say("לעיר המתחילה באות מ עד ת - הקש 2.");
-        $output .= getInput(5);
-        $output .= "if_digit:1:goto:menu2_city_alef\n";
-        $output .= "if_digit:2:goto:menu2_city_mem\n";
-        $output .= gotoMenu('menu2_city_first');
-        break;
-
-    case 'menu2_city_alef':
-        $output .= say("לעיר המתחילה באות א - הקש 1.");
-        $output .= say("לעיר המתחילה באות ב - הקש 2.");
-        $output .= say("לעיר המתחילה באות ג - הקש 3.");
-        $output .= say("לעיר המתחילה באות ד - הקש 4.");
-        $output .= say("לעיר המתחילה באות ה - הקש 5.");
-        $output .= say("לעיר המתחילה באות ו - הקש 6.");
-        $output .= say("לעיר המתחילה באות ז עד י - הקש 7.");
-        $output .= say("לעיר המתחילה באות כ עד ל - הקש 8.");
-        $output .= getInput(5);
-        $output .= "if_digit:1:setvar:PUB_CITY_LETTER=א\n";
-        $output .= "if_digit:2:setvar:PUB_CITY_LETTER=ב\n";
-        $output .= "if_digit:3:setvar:PUB_CITY_LETTER=ג\n";
-        $output .= "if_digit:4:setvar:PUB_CITY_LETTER=ד\n";
-        $output .= "if_digit:5:setvar:PUB_CITY_LETTER=ה\n";
-        $output .= "if_digit:6:setvar:PUB_CITY_LETTER=ו\n";
-        $output .= "if_digit:7:setvar:PUB_CITY_LETTER=ז\n";
-        $output .= "if_digit:8:setvar:PUB_CITY_LETTER=כ\n";
-        for ($i = 1; $i <= 8; $i++) {
-            $output .= "if_digit:{$i}:goto:menu2_city_input\n";
-        }
-        $output .= gotoMenu('menu2_city_alef');
-        break;
-
-    case 'menu2_city_mem':
-        $output .= say("לעיר המתחילה באות מ - הקש 1.");
-        $output .= say("לעיר המתחילה באות נ - הקש 2.");
-        $output .= say("לעיר המתחילה באות ס עד ע - הקש 3.");
-        $output .= say("לעיר המתחילה באות פ - הקש 4.");
-        $output .= say("לעיר המתחילה באות צ - הקש 5.");
-        $output .= say("לעיר המתחילה באות ק - הקש 6.");
-        $output .= say("לעיר המתחילה באות ר - הקש 7.");
-        $output .= say("לעיר המתחילה באות ש עד ת - הקש 8.");
-        $output .= getInput(5);
-        $output .= "if_digit:1:setvar:PUB_CITY_LETTER=מ\n";
-        $output .= "if_digit:2:setvar:PUB_CITY_LETTER=נ\n";
-        $output .= "if_digit:3:setvar:PUB_CITY_LETTER=ס\n";
-        $output .= "if_digit:4:setvar:PUB_CITY_LETTER=פ\n";
-        $output .= "if_digit:5:setvar:PUB_CITY_LETTER=צ\n";
-        $output .= "if_digit:6:setvar:PUB_CITY_LETTER=ק\n";
-        $output .= "if_digit:7:setvar:PUB_CITY_LETTER=ר\n";
-        $output .= "if_digit:8:setvar:PUB_CITY_LETTER=ש\n";
-        for ($i = 1; $i <= 8; $i++) {
-            $output .= "if_digit:{$i}:goto:menu2_city_input\n";
-        }
-        $output .= gotoMenu('menu2_city_mem');
-        break;
-
-    case 'menu2_city_input':
-        $output .= say("אנא אמור את שם העיר לאחר הצפצוף.");
-        $output .= "record:PUB_CITY_REC," . RECORDINGS_PATH . "city_" . time() . ".wav,10\n";
-        $output .= gotoMenu('menu2_duration');
+        $cat = $_GET['cat'] ?? 1;
+        $pubPhone = $_GET['pub_phone'] ?? $phone;
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'בחר אזור.',
+                'הקש 1 לירושלים והסביבה.',
+                'הקש 2 למרכז.',
+                'הקש 3 לצפון.',
+                'הקש 4 לדרום.',
+            ],
+            'id_list_1' => stepUrl('menu2_duration', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => 1]),
+            'id_list_2' => stepUrl('menu2_duration', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => 2]),
+            'id_list_3' => stepUrl('menu2_duration', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => 3]),
+            'id_list_4' => stepUrl('menu2_duration', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => 4]),
+        ]);
         break;
 
     case 'menu2_duration':
-        $output .= say("לכמה ימים תרצה שהפרסום שלך יישמע?");
-        $output .= say("למשך יום אחד - הקש 1.");
-        $output .= say("למשך יומיים - הקש 2.");
-        $output .= say("למשך 3 ימים - הקש 3.");
-        $output .= say("למשך 4 ימים - הקש 4.");
-        $output .= say("למשך 5 ימים - הקש 5.");
-        $output .= say("למשך 6 ימים - הקש 6.");
-        $output .= say("למשך שבוע שלם - הקש 7.");
-        $output .= getInput(7);
-        for ($i = 1; $i <= 7; $i++) {
-            $output .= "if_digit:{$i}:setvar:PUB_DAYS={$i}\n";
-            $output .= "if_digit:{$i}:goto:menu2_record\n";
-        }
-        $output .= gotoMenu('menu2_duration');
+        $cat = $_GET['cat'] ?? 1;
+        $pubPhone = $_GET['pub_phone'] ?? $phone;
+        $region = $_GET['region'] ?? 1;
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'לכמה ימים תרצה שהפרסום שלך יישמע?',
+                'הקש 1 ליום אחד.',
+                'הקש 2 ליומיים.',
+                'הקש 3 לשלושה ימים.',
+                'הקש 4 לארבעה ימים.',
+                'הקש 5 לחמישה ימים.',
+                'הקש 6 לששה ימים.',
+                'הקש 7 לשבוע שלם.',
+            ],
+            'id_list_1' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 1]),
+            'id_list_2' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 2]),
+            'id_list_3' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 3]),
+            'id_list_4' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 4]),
+            'id_list_5' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 5]),
+            'id_list_6' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 6]),
+            'id_list_7' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 7]),
+        ]);
         break;
 
     case 'menu2_record':
-        $recFile = RECORDINGS_PATH . "ad_" . time() . "_" . rand(1000,9999) . ".wav";
-        $output .= say("לאחר הצפצוף הקלט את הפרסומת שלך. עד דקה וחצי.");
-        $output .= say("לסיום ההקלטה לחץ סולמית.");
-        $output .= "record:PUB_REC,{$recFile},90\n";
-        $output .= setVar('PUB_REC_FILE', $recFile);
-        $output .= gotoMenu('menu2_review');
+        $cat = $_GET['cat'] ?? 1;
+        $pubPhone = $_GET['pub_phone'] ?? $phone;
+        $region = $_GET['region'] ?? 1;
+        $days = $_GET['days'] ?? 7;
+        $recFile = 'ad_' . time() . '_' . rand(1000, 9999);
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['לאחר הצפצוף הקלט את הפרסומת שלך עד דקה וחצי. לסיום לחץ סולמית.'],
+            'record_type' => 'record',
+            'record_file' => $recFile,
+            'record_max_time' => '90',
+            'goto' => stepUrl('menu2_review', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => $days, 'rec' => $recFile]),
+        ]);
         break;
 
     case 'menu2_review':
-        $output .= say("להאזנה להקלטה - הקש 1.");
-        $output .= say("להקליט מחדש - הקש 2.");
-        $output .= say("לאישור ומעבר לתשלום - הקש 3.");
-        $output .= getInput(7);
-        $output .= "if_digit:1:play:\$PUB_REC_FILE\n";
-        $output .= "if_digit:1:goto:menu2_review\n";
-        $output .= "if_digit:2:goto:menu2_record\n";
-        $output .= "if_digit:3:goto:menu2_payment\n";
-        $output .= gotoMenu('menu2_review');
+        $cat = $_GET['cat'] ?? 1;
+        $pubPhone = $_GET['pub_phone'] ?? $phone;
+        $region = $_GET['region'] ?? 1;
+        $days = $_GET['days'] ?? 7;
+        $rec = $_GET['rec'] ?? '';
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'להאזנה להקלטה הקש 1.',
+                'להקליט מחדש הקש 2.',
+                'לאישור ומעבר לתשלום הקש 3.',
+            ],
+            'id_list_1' => stepUrl('play_rec', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => $days, 'rec' => $rec]),
+            'id_list_2' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => $days]),
+            'id_list_3' => stepUrl('menu2_payment', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => $days, 'rec' => $rec]),
+        ]);
+        break;
+
+    case 'play_rec':
+        $rec = $_GET['rec'] ?? '';
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['t:' . $rec],
+            'goto' => stepUrl('menu2_review', $_GET),
+        ]);
         break;
 
     case 'menu2_payment':
-        $output .= say("לתשלום דרך נדרים פלוס - הקש 1.");
-        $output .= say("לחזרה - הקש 9.");
-        $output .= getInput(7);
-        $output .= "if_digit:1:goto:menu2_nedarim\n";
-        $output .= "if_digit:9:goto:menu2_review\n";
-        $output .= gotoMenu('menu2_payment');
-        break;
-
-    case 'menu2_nedarim':
-        $pubPhone = $_GET['PUB_PHONE'] ?? $phone;
-        $days     = intval($_GET['PUB_DAYS'] ?? 7);
-        // מחיר יחסי לפי מספר ימים
-        $amount   = round((PRICE_WEEK / 7) * $days);
-        $desc     = "פרסום קורס/סדנה - {$days} ימים";
-
-        $output .= say("סכום לתשלום: {$amount} שקלים עבור {$days} ימי פרסום.");
-        $output .= say("מבצע חיוב דרך נדרים פלוס. אנא המתן.");
-
-        $result = nedarimCharge($pubPhone, $amount, $desc);
-
-        if ($result['success']) {
-            // תשלום עבר בהצלחה
-            $output .= setVar('PAYMENT_OK', '1');
-            $output .= setVar('PAYMENT_TID', $result['transaction_id']);
-            $output .= gotoMenu('menu2_success');
+        $pubPhone = $_GET['pub_phone'] ?? $phone;
+        $days = intval($_GET['days'] ?? 7);
+        $amount = round((PRICE_WEEK / 7) * $days);
+        $params = [
+            'MosadId' => NEDARIM_MOSAD_ID,
+            'ApiPassword' => NEDARIM_API_PASS,
+            'Action' => 'ChargeByPhone',
+            'Phone' => $pubPhone,
+            'Amount' => $amount,
+            'Designation' => 'פרסום קורס ' . $days . ' ימים',
+            'Currency' => '1',
+        ];
+        $url = NEDARIM_API_URL . '?' . http_build_query($params);
+        $response = @file_get_contents($url);
+        $xml = @simplexml_load_string($response);
+        $success = ($xml && (string)$xml->Status === '000');
+        if ($success) {
+            respond([
+                'type' => 'menu',
+                'id_list_message' => ['התשלום התקבל בהצלחה!'],
+                'goto' => stepUrl('menu2_success', $_GET),
+            ]);
         } else {
-            // תשלום נכשל — שלח קישור SMS
-            $link = nedarimPaymentLink($pubPhone, $amount, $desc);
-            if ($link) {
-                sendSMS($pubPhone, "לתשלום פרסום הקורס שלך ({$amount} ₪) לחץ: {$link}");
-                $output .= say("לא נמצא כרטיס אשראי רשום. נשלח אליך קישור תשלום ב-SMS.");
-                $output .= say("לאחר התשלום, התקשר שוב כדי לאשר את הפרסום.");
-            } else {
-                $output .= say("אירעה שגיאה בתשלום. אנא נסה שוב מאוחר יותר.");
-            }
-            $output .= say("לחזרה לתפריט הראשי - הקש 9.");
-            $output .= getInput(7);
-            $output .= "if_digit:9:goto:main\n";
-            $output .= gotoMenu('main');
+            $linkParams = array_merge($params, ['Action' => 'GetPaymentLink']);
+            $linkUrl = NEDARIM_API_URL . '?' . http_build_query($linkParams);
+            $linkResponse = @file_get_contents($linkUrl);
+            $linkXml = @simplexml_load_string($linkResponse);
+            $link = $linkXml ? (string)$linkXml->URL : '';
+            if ($link) sendSMS($pubPhone, "לתשלום פרסום הקורס ({$amount} ₪) לחץ: {$link}");
+            respond([
+                'type' => 'menu',
+                'id_list_message' => [
+                    'לא נמצא כרטיס אשראי רשום.',
+                    'נשלח אליך קישור תשלום ב SMS.',
+                    'לאחר התשלום התקשר שוב.',
+                ],
+                'goto' => stepUrl('main'),
+            ]);
         }
         break;
 
     case 'menu2_success':
-        // שמירת הפרסום
-        $adId = saveNewAd(
-            $_GET['PUB_PHONE'] ?? $phone,
-            $_GET['PUB_CAT']  ?? 1,
-            $_GET['PUB_REGION'] ?? 1,
-            $_GET['PUB_CITY_LETTER'] ?? '',
-            $_GET['PUB_REC_FILE'] ?? '',
-            $_GET['PUB_DAYS'] ?? 7
-        );
-        
-        // שליחת SMS
-        $pubPhone = $_GET['PUB_PHONE'] ?? $phone;
-        $days     = $_GET['PUB_DAYS'] ?? 7;
-        $expDate  = date('d/m/Y', time() + ($days * 86400));
-        sendSMS($pubPhone, "הפרסום שלך התקבל! מספר אסמכתא: {$adId}. תוקף עד: {$expDate}.");
-        
-        // התראה למשתמשים רשומים
-        $cat = $_GET['PUB_CAT'] ?? 1;
-        notifyUsersForCategory($cat);
-        
-        $output .= say("תודה! הפרסומת שלך פורסמה בהצלחה למשך {$days} ימים.");
-        $output .= say("מספר אסמכתא: " . implode(', ', str_split($adId)));
-        $output .= say("נשלח אליך אישור ב-SMS.");
-        $output .= say("לחזרה לתפריט הראשי - הקש 9.");
-        $output .= getInput(7);
-        $output .= "if_digit:9:goto:main\n";
-        $output .= gotoMenu('main');
+        $pubPhone = $_GET['pub_phone'] ?? $phone;
+        $cat = intval($_GET['cat'] ?? 1);
+        $region = intval($_GET['region'] ?? 1);
+        $days = intval($_GET['days'] ?? 7);
+        $rec = $_GET['rec'] ?? '';
+        $adsRaw = callAPI('GetVar', ['var' => 'ads_list']);
+        $allAds = isset($adsRaw['value']) ? json_decode($adsRaw['value'], true) : [];
+        if (!is_array($allAds)) $allAds = [];
+        $adId = time() . '_' . rand(1000, 9999);
+        $allAds[] = [
+            'id' => $adId, 'phone' => $pubPhone, 'category' => $cat,
+            'region' => $region, 'recording' => $rec, 'days' => $days,
+            'created' => time(), 'expires' => time() + ($days * 86400),
+        ];
+        callAPI('SetVar', ['var' => 'ads_list', 'value' => json_encode($allAds)]);
+        $expDate = date('d/m/Y', time() + ($days * 86400));
+        sendSMS($pubPhone, "הפרסום שלך התקבל! אסמכתא: {$adId}. תוקף עד: {$expDate}.");
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'תודה! הפרסומת שלך פורסמה בהצלחה למשך ' . $days . ' ימים.',
+                'נשלח אליך אישור ב SMS.',
+            ],
+            'goto' => stepUrl('main'),
+        ]);
         break;
 
-    // ==========================================
-    // תפריט 3 - אזור אישי והתראות
-    // ==========================================
     case 'menu3_start':
-        $output .= say("ברוכים הבאים לאזור האישי.");
-        $output .= say("אנא הקש את מספר הטלפון שלך ולחץ סולמית.");
-        $output .= "read:USER_PHONE,15,10\n";
-        $output .= gotoMenu('menu3_check');
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'ברוכים הבאים לאזור האישי.',
+                'אנא הקש את מספר הטלפון שלך ולחץ סולמית.',
+            ],
+            'read_type' => 'phone',
+            'read_variable' => 'USER_PHONE',
+            'goto' => stepUrl('menu3_check'),
+        ]);
         break;
 
     case 'menu3_check':
         $userPhone = $_GET['USER_PHONE'] ?? $phone;
         if (!isUserRegistered($userPhone)) {
-            $output .= say("מספר זה אינו רשום במערכת.");
-            $output .= say("להרשמה חינם - הקש 1.");
-            $output .= say("חזרה לתפריט הראשי - הקש 9.");
-            $output .= getInput(7);
-            $output .= "if_digit:1:goto:menu3_register\n";
-            $output .= "if_digit:9:goto:main\n";
-            $output .= gotoMenu('menu3_check');
+            respond([
+                'type' => 'menu',
+                'id_list_message' => [
+                    'מספר זה אינו רשום במערכת.',
+                    'להרשמה חינם הקש 1.',
+                    'חזרה לתפריט הראשי הקש 9.',
+                ],
+                'id_list_1' => stepUrl('menu3_register', ['user_phone' => $userPhone]),
+                'id_list_9' => stepUrl('main'),
+            ]);
         } else {
-            $output .= gotoMenu('menu3_logged_in');
+            respond(['type' => 'menu', 'goto' => stepUrl('menu3_logged_in', ['user_phone' => $userPhone])]);
         }
         break;
 
     case 'menu3_register':
-        $userPhone = $_GET['USER_PHONE'] ?? $phone;
+        $userPhone = $_GET['user_phone'] ?? $phone;
         registerUser($userPhone);
-        
-        // הוספה לרשימת כל המשתמשים
-        $allUsersRaw = callAPI('GetVar', ['var' => 'all_users']);
-        $allUsers = isset($allUsersRaw['value']) ? json_decode($allUsersRaw['value'], true) : [];
-        if (!in_array($userPhone, $allUsers)) {
-            $allUsers[] = $userPhone;
-            callAPI('SetVar', ['var' => 'all_users', 'value' => json_encode($allUsers)]);
-        }
-        
-        $output .= say("נרשמת בהצלחה! ברוך הבא.");
-        $output .= gotoMenu('menu3_logged_in');
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['נרשמת בהצלחה! ברוך הבא.'],
+            'goto' => stepUrl('menu3_logged_in', ['user_phone' => $userPhone]),
+        ]);
         break;
 
     case 'menu3_logged_in':
-        $output .= say("לרישום להתראות על קורסים חדשים - הקש 1.");
-        $output .= say("לצפייה בהתראות הרשומות שלי - הקש 2.");
-        $output .= say("לביטול התראות - הקש 3.");
-        $output .= say("לחזרה לתפריט הראשי - הקש 9.");
-        $output .= getInput(7);
-        $output .= "if_digit:1:goto:menu3_alerts\n";
-        $output .= "if_digit:2:goto:menu3_view_alerts\n";
-        $output .= "if_digit:3:goto:menu3_cancel_alerts\n";
-        $output .= "if_digit:9:goto:main\n";
-        $output .= gotoMenu('menu3_logged_in');
+        $userPhone = $_GET['user_phone'] ?? $phone;
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'לרישום להתראות על קורסים חדשים הקש 1.',
+                'לביטול התראות הקש 3.',
+                'לחזרה לתפריט הראשי הקש 9.',
+            ],
+            'id_list_1' => stepUrl('menu3_alerts', ['user_phone' => $userPhone]),
+            'id_list_3' => stepUrl('menu3_cancel', ['user_phone' => $userPhone]),
+            'id_list_9' => stepUrl('main'),
+        ]);
         break;
 
     case 'menu3_alerts':
-        $output .= say("בחר קטגוריה לקבלת התראות.");
-        $output .= say("הקש 1 לקורסים ושיעורי תורה.");
-        $output .= say("הקש 2 לשיעורים פרטיים ולימוד לבר מצווה.");
-        $output .= say("הקש 3 לסדנאות ופיתוח אישי.");
-        $output .= say("הקש 4 לקייטנות וחוגים לילדים.");
-        $output .= say("הקש 5 לקורסים מקצועיים.");
-        $output .= say("הקש 6 לכל הקטגוריות.");
-        $output .= getInput(7);
-        for ($i = 1; $i <= 6; $i++) {
-            $output .= "if_digit:{$i}:setvar:ALERT_CAT={$i}\n";
-            $output .= "if_digit:{$i}:goto:menu3_record_alert\n";
-        }
-        $output .= gotoMenu('menu3_alerts');
-        break;
-
-    case 'menu3_record_alert':
-        $output .= say("לאחר הצפצוף הקלט את בקשתך.");
-        $recFile = RECORDINGS_PATH . "alert_" . $phone . "_" . time() . ".wav";
-        $output .= "record:ALERT_REC,{$recFile},30\n";
-        $output .= setVar('ALERT_REC_FILE', $recFile);
-        $output .= gotoMenu('menu3_confirm_alert');
-        break;
-
-    case 'menu3_confirm_alert':
-        $output .= say("לשמיעת ההקלטה - הקש 1.");
-        $output .= say("לאישור ושמירה - הקש 2.");
-        $output .= say("להקלטה מחדש - הקש 3.");
-        $output .= getInput(7);
-        $output .= "if_digit:1:play:\$ALERT_REC_FILE\n";
-        $output .= "if_digit:1:goto:menu3_confirm_alert\n";
-        $output .= "if_digit:2:goto:menu3_save_alert\n";
-        $output .= "if_digit:3:goto:menu3_record_alert\n";
-        $output .= gotoMenu('menu3_confirm_alert');
+        $userPhone = $_GET['user_phone'] ?? $phone;
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'בחר קטגוריה לקבלת התראות.',
+                'הקש 1 לקורסים ושיעורי תורה.',
+                'הקש 2 לשיעורים פרטיים.',
+                'הקש 3 לסדנאות ופיתוח אישי.',
+                'הקש 4 לקייטנות וחוגים לילדים.',
+                'הקש 5 לקורסים מקצועיים.',
+                'הקש 6 לכל הקטגוריות.',
+            ],
+            'id_list_1' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 1]),
+            'id_list_2' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 2]),
+            'id_list_3' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 3]),
+            'id_list_4' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 4]),
+            'id_list_5' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 5]),
+            'id_list_6' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 6]),
+        ]);
         break;
 
     case 'menu3_save_alert':
-        $userPhone = $_GET['USER_PHONE'] ?? $phone;
-        $alertCat  = $_GET['ALERT_CAT'] ?? 6;
-        $alertRec  = $_GET['ALERT_REC_FILE'] ?? '';
-        
-        if ($alertCat == 6) {
-            // כל הקטגוריות
-            foreach (array_keys(CATEGORIES) as $c) {
-                saveUserAlert($userPhone, $c, $alertRec);
+        $userPhone = $_GET['user_phone'] ?? $phone;
+        $alertCat = intval($_GET['alert_cat'] ?? 6);
+        $user = getUser($userPhone);
+        if ($user) {
+            if ($alertCat == 6) {
+                foreach (array_keys(CATEGORIES) as $c) $user['alerts'][$c] = 1;
+            } else {
+                $user['alerts'][$alertCat] = 1;
             }
-        } else {
-            saveUserAlert($userPhone, $alertCat, $alertRec);
+            callAPI('SetVar', ['var' => 'user_' . $userPhone, 'value' => json_encode($user)]);
         }
-        
-        $catName = ($alertCat == 6) ? 'כל הקטגוריות' : (CATEGORIES[$alertCat] ?? '');
-        $output .= say("ההרשמה בוצעה בהצלחה! תקבל צלצול אוטומטי ברגע שיפורסם פריט חדש בקטגוריית {$catName}.");
-        $output .= gotoMenu('main');
+        $catName = $alertCat == 6 ? 'כל הקטגוריות' : (CATEGORIES[$alertCat] ?? '');
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['ההרשמה בוצעה בהצלחה! תקבל התראה כשיפורסם פריט חדש ב' . $catName . '.'],
+            'goto' => stepUrl('main'),
+        ]);
         break;
 
-    case 'menu3_view_alerts':
-        $userPhone = $_GET['USER_PHONE'] ?? $phone;
-        $user      = getUser($userPhone);
-        if (empty($user['alerts'])) {
-            $output .= say("אין לך התראות רשומות כרגע.");
-        } else {
-            $output .= say("ההתראות הרשומות שלך:");
-            foreach ($user['alerts'] as $cat => $rec) {
-                $catName = CATEGORIES[$cat] ?? 'קטגוריה ' . $cat;
-                $output .= say("קטגוריה: {$catName}.");
-            }
+    case 'menu3_cancel':
+        $userPhone = $_GET['user_phone'] ?? $phone;
+        $user = getUser($userPhone);
+        if ($user) {
+            $user['alerts'] = [];
+            callAPI('SetVar', ['var' => 'user_' . $userPhone, 'value' => json_encode($user)]);
         }
-        $output .= say("לחזרה - הקש 9.");
-        $output .= getInput(5);
-        $output .= "if_digit:9:goto:menu3_logged_in\n";
-        $output .= gotoMenu('menu3_logged_in');
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['כל ההתראות שלך בוטלו בהצלחה.'],
+            'goto' => stepUrl('main'),
+        ]);
         break;
 
-    case 'menu3_cancel_alerts':
-        $userPhone = $_GET['USER_PHONE'] ?? $phone;
-        $user      = getUser($userPhone);
-        $user['alerts'] = [];
-        callAPI('SetVar', ['var' => 'user_' . $userPhone, 'value' => json_encode($user)]);
-        $output .= say("כל ההתראות שלך בוטלו בהצלחה.");
-        $output .= gotoMenu('menu3_logged_in');
-        break;
-
-    // ==========================================
-    // תפריט 4 - מידע ותעריפים + פרסומת פתיח
-    // ==========================================
     case 'menu4_info':
-        $output .= say("מידע על המערכת ותעריפים.");
-        $output .= say("פרסום קורס או שיעור: 25 שקל לשבוע.");
-        $output .= say("פרסומת בפתיח הקו: 25 שקל ל-24 שעות.");
-        $output .= say("הרשמה לאזור האישי: חינם לגמרי.");
-        $output .= say("לפרסום פרסומת בפתיח הקו - הקש 1.");
-        $output .= say("לחזרה לתפריט הראשי - הקש 9.");
-        $output .= getInput(7);
-        $output .= "if_digit:1:goto:menu4_opening_ad\n";
-        $output .= "if_digit:9:goto:main\n";
-        $output .= gotoMenu('menu4_info');
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'מידע על המערכת.',
+                'פרסום קורס או שיעור 25 שקל לשבוע.',
+                'פרסומת בפתיח הקו 25 שקל ל 24 שעות.',
+                'הרשמה לאזור האישי חינם.',
+                'לפרסום פרסומת בפתיח הקו הקש 1.',
+                'לחזרה לתפריט הראשי הקש 9.',
+            ],
+            'id_list_1' => stepUrl('menu4_opening_ad'),
+            'id_list_9' => stepUrl('main'),
+        ]);
         break;
 
     case 'menu4_opening_ad':
-        $output .= say("פרסומת בפתיח הקו: 25 שקל ל-24 שעות.");
-        $output .= say("הפרסומת תושמע לכל מתקשר מיד לאחר הפתיח.");
-        $output .= say("אנא הקש את מספר הטלפון שלך ולחץ סולמית.");
-        $output .= "read:OPEN_PHONE,15,10\n";
-        $output .= gotoMenu('menu4_record_opening');
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'פרסומת בפתיח הקו 25 שקל ל 24 שעות.',
+                'אנא הקש את מספר הטלפון שלך ולחץ סולמית.',
+            ],
+            'read_type' => 'phone',
+            'read_variable' => 'OPEN_PHONE',
+            'goto' => stepUrl('menu4_record_opening'),
+        ]);
         break;
 
     case 'menu4_record_opening':
-        $output .= say("לאחר הצפצוף, הקלט את הפרסומת. עד 10 שניות בלבד. לסיום - לחץ סולמית.");
-        $recFile = RECORDINGS_PATH . "opening_" . time() . ".wav";
-        $output .= "record:OPEN_REC,{$recFile},10\n";
-        $output .= setVar('OPEN_REC_FILE', $recFile);
-        $output .= gotoMenu('menu4_review_opening');
-        break;
-
-    case 'menu4_review_opening':
-        $output .= say("להאזנה - הקש 1. להקלטה מחדש - הקש 2. לאישור ותשלום - הקש 3.");
-        $output .= getInput(7);
-        $output .= "if_digit:1:play:\$OPEN_REC_FILE\n";
-        $output .= "if_digit:1:goto:menu4_review_opening\n";
-        $output .= "if_digit:2:goto:menu4_record_opening\n";
-        $output .= "if_digit:3:goto:menu4_pay_opening\n";
-        $output .= gotoMenu('menu4_review_opening');
+        $openPhone = $_GET['OPEN_PHONE'] ?? $phone;
+        $recFile = 'opening_' . time();
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['לאחר הצפצוף הקלט את הפרסומת עד 10 שניות. לסיום לחץ סולמית.'],
+            'record_type' => 'record',
+            'record_file' => $recFile,
+            'record_max_time' => '10',
+            'goto' => stepUrl('menu4_pay_opening', ['open_phone' => $openPhone, 'rec' => $recFile]),
+        ]);
         break;
 
     case 'menu4_pay_opening':
-        $openPhone = $_GET['OPEN_PHONE'] ?? $phone;
-        $amount    = PRICE_OPENING_AD;
-        $desc      = "פרסומת פתיח - 24 שעות";
-
-        $output .= say("סכום לתשלום: {$amount} שקלים עבור פרסומת פתיח ל-24 שעות.");
-        $output .= say("מבצע חיוב דרך נדרים פלוס. אנא המתן.");
-
-        $result = nedarimCharge($openPhone, $amount, $desc);
-
-        if ($result['success']) {
-            $output .= setVar('OPEN_PAYMENT_OK', '1');
-            $output .= gotoMenu('menu4_save_opening');
+        $openPhone = $_GET['open_phone'] ?? $phone;
+        $rec = $_GET['rec'] ?? '';
+        $params = [
+            'MosadId' => NEDARIM_MOSAD_ID,
+            'ApiPassword' => NEDARIM_API_PASS,
+            'Action' => 'ChargeByPhone',
+            'Phone' => $openPhone,
+            'Amount' => PRICE_OPENING_AD,
+            'Designation' => 'פרסומת פתיח 24 שעות',
+            'Currency' => '1',
+        ];
+        $url = NEDARIM_API_URL . '?' . http_build_query($params);
+        $response = @file_get_contents($url);
+        $xml = @simplexml_load_string($response);
+        $success = ($xml && (string)$xml->Status === '000');
+        if ($success) {
+            $ad = ['phone' => $openPhone, 'recording' => $rec, 'created' => time(), 'expires' => time() + 86400];
+            callAPI('SetVar', ['var' => 'opening_ad', 'value' => json_encode($ad)]);
+            sendSMS($openPhone, "פרסומת הפתיח שלך פעילה! תוקף: 24 שעות.");
+            respond([
+                'type' => 'menu',
+                'id_list_message' => ['הפרסומת שלך תשודר מעכשיו למשך 24 שעות. תודה!'],
+                'goto' => stepUrl('main'),
+            ]);
         } else {
-            $link = nedarimPaymentLink($openPhone, $amount, $desc);
-            if ($link) {
-                sendSMS($openPhone, "לתשלום פרסומת הפתיח ({$amount} ₪) לחץ: {$link}");
-                $output .= say("לא נמצא כרטיס אשראי רשום. נשלח אליך קישור תשלום ב-SMS.");
-                $output .= say("לאחר התשלום, התקשר שוב להשלמת הפרסומת.");
-            } else {
-                $output .= say("אירעה שגיאה בתשלום. אנא נסה שוב מאוחר יותר.");
-            }
-            $output .= say("לחזרה לתפריט הראשי - הקש 9.");
-            $output .= getInput(7);
-            $output .= "if_digit:9:goto:main\n";
-            $output .= gotoMenu('main');
+            respond([
+                'type' => 'menu',
+                'id_list_message' => ['אירעה שגיאה בתשלום. אנא נסה שוב מאוחר יותר.'],
+                'goto' => stepUrl('main'),
+            ]);
         }
         break;
 
-    case 'menu4_save_opening':
-        $openPhone = $_GET['OPEN_PHONE'] ?? $phone;
-        $openRec   = $_GET['OPEN_REC_FILE'] ?? '';
-        $ad = [
-            'phone'     => $openPhone,
-            'recording' => $openRec,
-            'created'   => time(),
-            'expires'   => time() + 86400, // 24 שעות
-        ];
-        callAPI('SetVar', ['var' => 'opening_ad', 'value' => json_encode($ad)]);
-        $output .= say("הפרסומת שלך תשודר מעכשיו למשך 24 שעות.");
-        $output .= say("בסוף הפרסומת יוכרז מספר הטלפון: " . $openPhone . ".");
-        sendSMS($openPhone, "פרסומת הפתיח שלך פעילה! תוקף: 24 שעות. תזכורת תישלח שעה לפני הסיום.");
-        $output .= gotoMenu('main');
-        break;
-
-    // ==========================================
-    // תפריט 5 - הודעה למנהל
-    // ==========================================
     case 'menu5_voicemail':
-        $output .= say("אנא השאר הודעה לאחר הצפצוף. לסיום לחץ סולמית.");
-        $recFile = RECORDINGS_PATH . "admin_msg_" . time() . ".wav";
-        $output .= "record:ADMIN_MSG,{$recFile},120\n";
-        $output .= say("תודה! ההודעה שלך התקבלה. חוזרים לתפריט הראשי.");
-        // שלח התראת SMS למנהל
-        sendSMS('05XXXXXXXX', "הודעה חדשה מ-{$phone} נשמרה: {$recFile}"); // החלף למספר שלך
-        $output .= gotoMenu('main');
+        $recFile = 'admin_msg_' . time();
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['אנא השאר הודעה לאחר הצפצוף. לסיום לחץ סולמית.'],
+            'record_type' => 'record',
+            'record_file' => $recFile,
+            'record_max_time' => '120',
+            'goto' => stepUrl('main'),
+        ]);
         break;
 
     default:
-        $output .= gotoMenu('main');
+        respond(['type' => 'menu', 'goto' => stepUrl('main')]);
         break;
 }
-
-// פלט לימות המשיח
-header('Content-Type: text/plain; charset=utf-8');
-echo $output;
-
