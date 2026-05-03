@@ -124,7 +124,7 @@ function deleteAd($adId) {
 }
 
 function stepUrl($step, $extra = []) {
-    $params = array_merge(['step' => $step], $extra);
+    $params = array_merge($extra, ['step' => $step]);
     return SELF_URL . '?' . http_build_query($params);
 }
 
@@ -225,9 +225,11 @@ switch ($step) {
                 'מספר ליצירת קשר ' . $ad['phone'] . '.',
                 'להאזנה חוזרת הקש כוכבית.',
                 'לפרסום הבא הקש 1.',
+                'להתקשרות ישירה למפרסם הקש 2.',
                 'לחזרה לתפריט הקש 9.',
             ],
             'id_list_1' => stepUrl('listen', ['cat' => $cat, 'idx' => $idx + 1]),
+            'id_list_2' => stepUrl('transfer', ['to' => $ad['phone'], 'cat' => $cat, 'idx' => $idx]),
             'id_list_*' => stepUrl('listen', ['cat' => $cat, 'idx' => $idx]),
             'id_list_9' => stepUrl('menu1'),
         ]);
@@ -474,11 +476,11 @@ switch ($step) {
             'type' => 'menu',
             'id_list_message' => [
                 'לרישום להתראות על קורסים חדשים הקש 1.',
-                'לביטול התראות הקש 3.',
+                'לביטול התראות הקש 2.',
                 'לחזרה לתפריט הראשי הקש 9.',
             ],
             'id_list_1' => stepUrl('menu3_alerts', ['user_phone' => $userPhone]),
-            'id_list_3' => stepUrl('menu3_cancel', ['user_phone' => $userPhone]),
+            'id_list_2' => stepUrl('menu3_cancel', ['user_phone' => $userPhone]),
             'id_list_9' => stepUrl('main'),
         ]);
         break;
@@ -607,9 +609,19 @@ switch ($step) {
                 'goto' => stepUrl('main'),
             ]);
         } else {
+            $linkParams = array_merge($params, ['Action' => 'GetPaymentLink']);
+            $linkUrl = NEDARIM_API_URL . '?' . http_build_query($linkParams);
+            $linkResponse = @file_get_contents($linkUrl);
+            $linkXml = @simplexml_load_string($linkResponse);
+            $link = $linkXml ? (string)$linkXml->URL : '';
+            if ($link) sendSMS($openPhone, "לתשלום פרסומת הפתיח (" . PRICE_OPENING_AD . " ₪) לחץ: {$link}");
             respond([
                 'type' => 'menu',
-                'id_list_message' => ['אירעה שגיאה בתשלום. אנא נסה שוב מאוחר יותר.'],
+                'id_list_message' => [
+                    'לא נמצא כרטיס אשראי רשום.',
+                    'נשלח אליך קישור תשלום ב SMS.',
+                    'לאחר התשלום התקשר שוב.',
+                ],
                 'goto' => stepUrl('main'),
             ]);
         }
@@ -636,6 +648,15 @@ switch ($step) {
             'type' => 'menu',
             'id_list_message' => ['תודה! ההודעה שלך נשלחה למנהל המערכת.'],
             'goto' => stepUrl('main'),
+        ]);
+        break;
+
+    case 'transfer':
+        $to = $_GET['to'] ?? '';
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['מעביר אותך למפרסם. שיחה טובה!'],
+            'transfer' => $to,
         ]);
         break;
 
