@@ -106,7 +106,7 @@ function notifySubscribers($category) {
         $alerts = $user['alerts'] ?? [];
         if (isset($alerts[$category]) || isset($alerts[6])) {
             $catName = CATEGORIES[$category] ?? '';
-            sendSMS($p, "פרסום חדש ב{$catName}! התקשר לקו הקורסים לפרטים.");
+            sendSMS($p, "פרסום חדש זמין בקטגוריית {$catName}. להאזנה התקשר לקו הקורסים.");
         }
     }
 }
@@ -153,14 +153,14 @@ switch ($step) {
         incrementTotalUsers();
         $total = getTotalUsers();
         $openAd = getActiveOpeningAd();
-        $messages = ['שלום וברכה! ברוכים הבאים לקו הקורסים והסדנאות.'];
+        $messages = ['שלום! ברוכים הבאים לקו הקורסים, השיעורים והסדנאות.'];
         if ($openAd) $messages[] = 't:' . $openAd['recording'];
-        $messages[] = 'סך האנשים שהשתמשו במערכת הם ' . $total . ' אנשים.';
-        $messages[] = 'לשמיעת הקורסים ושיעורים זמינים הקש 1.';
-        $messages[] = 'לפרסום קורס שיעור סדנה או קייטנה הקש 2.';
-        $messages[] = 'לכניסה לאזור האישי ורישום להתראות הקש 3.';
-        $messages[] = 'למידע על המערכת ותעריפים הקש 4.';
-        $messages[] = 'להשארת הודעה למנהל המערכת הקש 5.';
+        $messages[] = 'עד כה התקשרו אלינו ' . $total . ' מתקשרים.';
+        $messages[] = 'לשמיעת הפרסומים הקש 1.';
+        $messages[] = 'לפרסום קורס, שיעור, סדנה או חוג הקש 2.';
+        $messages[] = 'לאזור האישי והרשמה להתראות הקש 3.';
+        $messages[] = 'למידע ותעריפים הקש 4.';
+        $messages[] = 'להשארת הודעה למנהל הקש 5.';
         respond([
             'type' => 'menu',
             'id_list_message' => $messages,
@@ -177,13 +177,14 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'הקש 1 לקורסים ושיעורי תורה.',
-                'הקש 2 לשיעורים פרטיים כולל לימוד לבר מצווה.',
-                'הקש 3 לסדנאות ופיתוח אישי.',
-                'הקש 4 לקייטנות וחוגים לילדים.',
-                'הקש 5 לקורסים מקצועיים.',
-                'הקש 6 לכל הפרסומים ברצף.',
-                'הקש 9 לחזרה לתפריט הראשי.',
+                'בחר את הקטגוריה שברצונך לשמוע.',
+                'קורסים ושיעורי תורה - הקש 1.',
+                'שיעורים פרטיים ולימוד לבר מצווה - הקש 2.',
+                'סדנאות ופיתוח אישי - הקש 3.',
+                'קייטנות וחוגים לילדים - הקש 4.',
+                'קורסים מקצועיים - הקש 5.',
+                'לשמיעת כל הפרסומים - הקש 6.',
+                'לחזרה לתפריט הראשי - הקש 9.',
             ],
             'id_list_1' => stepUrl('listen', ['cat' => 1]),
             'id_list_2' => stepUrl('listen', ['cat' => 2]),
@@ -203,14 +204,14 @@ switch ($step) {
         if (empty($ads)) {
             respond([
                 'type' => 'menu',
-                'id_list_message' => ['אין כרגע פרסומים ב' . $catName . '. חוזרים לתפריט.'],
+                'id_list_message' => ['אין כרגע פרסומים בקטגוריית ' . $catName . '. חוזרים לתפריט הקטגוריות.'],
                 'goto' => stepUrl('menu1'),
             ]);
         }
         if ($idx >= count($ads)) {
             respond([
                 'type' => 'menu',
-                'id_list_message' => ['הגעת לסוף הפרסומים. חוזרים לתפריט.'],
+                'id_list_message' => ['הגעת לסוף הפרסומים בקטגוריה זו. חוזרים לתפריט.'],
                 'goto' => stepUrl('menu1'),
             ]);
         }
@@ -220,10 +221,10 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'פרסום מספר ' . $num . ' מתוך ' . $total . '.',
+                'פרסום ' . $num . ' מתוך ' . $total . '.',
                 't:' . $ad['recording'],
-                'מספר ליצירת קשר ' . $ad['phone'] . '.',
-                'להאזנה חוזרת הקש כוכבית.',
+                'ליצירת קשר עם המפרסם חייג: ' . $ad['phone'] . '.',
+                'לחזרה על ההקלטה הקש כוכבית.',
                 'לפרסום הבא הקש 1.',
                 'להתקשרות ישירה למפרסם הקש 2.',
                 'לחזרה לתפריט הקש 9.',
@@ -240,8 +241,8 @@ switch ($step) {
             'type' => 'menu',
             'id_list_message' => [
                 'ברוכים הבאים למערכת הפרסום.',
-                'עלות פרסום 25 שקל לשבוע אחד.',
-                'אנא הקש את מספר הטלפון שלך ולחץ על סולמית.',
+                'עלות פרסום שבועי היא 25 שקלים.',
+                'הקש את מספר הטלפון שלך ולאחר מכן לחץ על סולמית.',
             ],
             'read_type' => 'phone',
             'read_variable' => 'PUB_PHONE',
@@ -254,12 +255,12 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'בחר קטגוריה לפרסום.',
-                'הקש 1 לקורסים ושיעורי תורה.',
-                'הקש 2 לשיעורים פרטיים.',
-                'הקש 3 לסדנאות ופיתוח אישי.',
-                'הקש 4 לקייטנות וחוגים לילדים.',
-                'הקש 5 לקורסים מקצועיים.',
+                'בחר את קטגוריית הפרסום שלך.',
+                'קורסים ושיעורי תורה - הקש 1.',
+                'שיעורים פרטיים - הקש 2.',
+                'סדנאות ופיתוח אישי - הקש 3.',
+                'קייטנות וחוגים לילדים - הקש 4.',
+                'קורסים מקצועיים - הקש 5.',
             ],
             'id_list_1' => stepUrl('menu2_region', ['cat' => 1, 'pub_phone' => $pubPhone]),
             'id_list_2' => stepUrl('menu2_region', ['cat' => 2, 'pub_phone' => $pubPhone]),
@@ -275,11 +276,11 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'בחר אזור.',
-                'הקש 1 לירושלים והסביבה.',
-                'הקש 2 למרכז.',
-                'הקש 3 לצפון.',
-                'הקש 4 לדרום.',
+                'בחר את האזור הגיאוגרפי של הפרסום שלך.',
+                'ירושלים והסביבה - הקש 1.',
+                'מרכז הארץ - הקש 2.',
+                'צפון - הקש 3.',
+                'דרום - הקש 4.',
             ],
             'id_list_1' => stepUrl('menu2_duration', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => 1]),
             'id_list_2' => stepUrl('menu2_duration', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => 2]),
@@ -295,14 +296,14 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'לכמה ימים תרצה שהפרסום שלך יישמע?',
-                'הקש 1 ליום אחד.',
-                'הקש 2 ליומיים.',
-                'הקש 3 לשלושה ימים.',
-                'הקש 4 לארבעה ימים.',
-                'הקש 5 לחמישה ימים.',
-                'הקש 6 לששה ימים.',
-                'הקש 7 לשבוע שלם.',
+                'לכמה ימים תרצה לפרסם?',
+                'יום אחד - הקש 1.',
+                'יומיים - הקש 2.',
+                'שלושה ימים - הקש 3.',
+                'ארבעה ימים - הקש 4.',
+                'חמישה ימים - הקש 5.',
+                'ששה ימים - הקש 6.',
+                'שבוע שלם - הקש 7.',
             ],
             'id_list_1' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 1]),
             'id_list_2' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 2]),
@@ -322,7 +323,7 @@ switch ($step) {
         $recFile = 'ad_' . time() . '_' . rand(1000, 9999);
         respond([
             'type' => 'menu',
-            'id_list_message' => ['לאחר הצפצוף הקלט את הפרסומת שלך עד דקה וחצי. לסיום לחץ סולמית.'],
+            'id_list_message' => ['לאחר הצפצוף הקלט את הפרסומת שלך. משך מקסימלי דקה וחצי. לסיום ההקלטה לחץ סולמית.'],
             'record_type' => 'record',
             'record_file' => $recFile,
             'record_max_time' => '90',
@@ -339,8 +340,8 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'להאזנה להקלטה הקש 1.',
-                'להקליט מחדש הקש 2.',
+                'להאזנה להקלטה שלך הקש 1.',
+                'להקלטה מחדש הקש 2.',
                 'לאישור ומעבר לתשלום הקש 3.',
             ],
             'id_list_1' => stepUrl('play_rec', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => $days, 'rec' => $rec]),
@@ -378,7 +379,7 @@ switch ($step) {
         if ($success) {
             respond([
                 'type' => 'menu',
-                'id_list_message' => ['התשלום התקבל בהצלחה!'],
+                'id_list_message' => ['תשלומך התקבל בהצלחה.'],
                 'goto' => stepUrl('menu2_success', $_GET),
             ]);
         } else {
@@ -391,9 +392,9 @@ switch ($step) {
             respond([
                 'type' => 'menu',
                 'id_list_message' => [
-                    'לא נמצא כרטיס אשראי רשום.',
-                    'נשלח אליך קישור תשלום ב SMS.',
-                    'לאחר התשלום התקשר שוב.',
+                    'לא נמצא כרטיס אשראי מעודכן עבור מספר זה.',
+                    'שלחנו לך קישור לתשלום מאובטח ב-SMS.',
+                    'לאחר השלמת התשלום, אנא התקשר שוב לפרסום.',
                 ],
                 'goto' => stepUrl('main'),
             ]);
@@ -417,13 +418,13 @@ switch ($step) {
         ];
         callAPI('SetVar', ['var' => 'ads_list', 'value' => json_encode($allAds)]);
         $expDate = date('d/m/Y', time() + ($days * 86400));
-        sendSMS($pubPhone, "הפרסום שלך התקבל! אסמכתא: {$adId}. תוקף עד: {$expDate}.");
+        sendSMS($pubPhone, "פרסומך התקבל ופורסם בהצלחה! אסמכתא: {$adId}. תוקף עד: {$expDate}.");
         notifySubscribers($cat);
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'תודה! הפרסומת שלך פורסמה בהצלחה למשך ' . $days . ' ימים.',
-                'נשלח אליך אישור ב SMS.',
+                'תודה! הפרסומת שלך פורסמה בהצלחה ותישמע במשך ' . $days . ' ימים.',
+                'אישור ואסמכתא נשלחו אליך ב-SMS.',
             ],
             'goto' => stepUrl('main'),
         ]);
@@ -434,7 +435,7 @@ switch ($step) {
             'type' => 'menu',
             'id_list_message' => [
                 'ברוכים הבאים לאזור האישי.',
-                'אנא הקש את מספר הטלפון שלך ולחץ סולמית.',
+                'הקש את מספר הטלפון שלך ולחץ סולמית.',
             ],
             'read_type' => 'phone',
             'read_variable' => 'USER_PHONE',
@@ -449,8 +450,8 @@ switch ($step) {
                 'type' => 'menu',
                 'id_list_message' => [
                     'מספר זה אינו רשום במערכת.',
-                    'להרשמה חינם הקש 1.',
-                    'חזרה לתפריט הראשי הקש 9.',
+                    'להרשמה חינמית הקש 1.',
+                    'לחזרה לתפריט הראשי הקש 9.',
                 ],
                 'id_list_1' => stepUrl('menu3_register', ['user_phone' => $userPhone]),
                 'id_list_9' => stepUrl('main'),
@@ -465,7 +466,7 @@ switch ($step) {
         registerUser($userPhone);
         respond([
             'type' => 'menu',
-            'id_list_message' => ['נרשמת בהצלחה! ברוך הבא.'],
+            'id_list_message' => ['נרשמת בהצלחה! ברוך הבא למערכת.'],
             'goto' => stepUrl('menu3_logged_in', ['user_phone' => $userPhone]),
         ]);
         break;
@@ -475,8 +476,9 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'לרישום להתראות על קורסים חדשים הקש 1.',
-                'לביטול התראות הקש 2.',
+                'ברוך הבא לאזור האישי שלך.',
+                'להרשמה לקבלת התראות על פרסומים חדשים הקש 1.',
+                'לביטול התראות קיימות הקש 2.',
                 'לחזרה לתפריט הראשי הקש 9.',
             ],
             'id_list_1' => stepUrl('menu3_alerts', ['user_phone' => $userPhone]),
@@ -490,13 +492,13 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'בחר קטגוריה לקבלת התראות.',
-                'הקש 1 לקורסים ושיעורי תורה.',
-                'הקש 2 לשיעורים פרטיים.',
-                'הקש 3 לסדנאות ופיתוח אישי.',
-                'הקש 4 לקייטנות וחוגים לילדים.',
-                'הקש 5 לקורסים מקצועיים.',
-                'הקש 6 לכל הקטגוריות.',
+                'בחר את הקטגוריה שעליה תרצה לקבל התראות.',
+                'קורסים ושיעורי תורה - הקש 1.',
+                'שיעורים פרטיים - הקש 2.',
+                'סדנאות ופיתוח אישי - הקש 3.',
+                'קייטנות וחוגים לילדים - הקש 4.',
+                'קורסים מקצועיים - הקש 5.',
+                'כל הקטגוריות - הקש 6.',
             ],
             'id_list_1' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 1]),
             'id_list_2' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 2]),
@@ -522,7 +524,7 @@ switch ($step) {
         $catName = $alertCat == 6 ? 'כל הקטגוריות' : (CATEGORIES[$alertCat] ?? '');
         respond([
             'type' => 'menu',
-            'id_list_message' => ['ההרשמה בוצעה בהצלחה! תקבל התראה כשיפורסם פריט חדש ב' . $catName . '.'],
+            'id_list_message' => ['נרשמת בהצלחה לקבלת התראות על פרסומים חדשים ב' . $catName . '. תודה!'],
             'goto' => stepUrl('main'),
         ]);
         break;
@@ -536,7 +538,7 @@ switch ($step) {
         }
         respond([
             'type' => 'menu',
-            'id_list_message' => ['כל ההתראות שלך בוטלו בהצלחה.'],
+            'id_list_message' => ['כל ההתראות שלך בוטלו. תמיד תוכל להירשם מחדש.'],
             'goto' => stepUrl('main'),
         ]);
         break;
@@ -545,11 +547,11 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'מידע על המערכת.',
-                'פרסום קורס או שיעור 25 שקל לשבוע.',
-                'פרסומת בפתיח הקו 25 שקל ל 24 שעות.',
-                'הרשמה לאזור האישי חינם.',
-                'לפרסום פרסומת בפתיח הקו הקש 1.',
+                'מידע על תעריפי המערכת.',
+                'פרסום שבועי - 25 שקלים.',
+                'פרסומת בפתיח הקו למשך 24 שעות - 25 שקלים.',
+                'הרשמה לאזור האישי - חינם.',
+                'לרכישת פרסומת פתיח הקש 1.',
                 'לחזרה לתפריט הראשי הקש 9.',
             ],
             'id_list_1' => stepUrl('menu4_opening_ad'),
@@ -561,8 +563,9 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'פרסומת בפתיח הקו 25 שקל ל 24 שעות.',
-                'אנא הקש את מספר הטלפון שלך ולחץ סולמית.',
+                'פרסומת הפתיח תישמע לכל מתקשר בתחילת השיחה.',
+                'עלות: 25 שקלים ל-24 שעות.',
+                'הקש את מספר הטלפון שלך ולחץ סולמית.',
             ],
             'read_type' => 'phone',
             'read_variable' => 'OPEN_PHONE',
@@ -575,7 +578,7 @@ switch ($step) {
         $recFile = 'opening_' . time();
         respond([
             'type' => 'menu',
-            'id_list_message' => ['לאחר הצפצוף הקלט את הפרסומת עד 10 שניות. לסיום לחץ סולמית.'],
+            'id_list_message' => ['לאחר הצפצוף הקלט את פרסומת הפתיח שלך. משך מקסימלי 10 שניות. לסיום לחץ סולמית.'],
             'record_type' => 'record',
             'record_file' => $recFile,
             'record_max_time' => '10',
@@ -602,10 +605,10 @@ switch ($step) {
         if ($success) {
             $ad = ['phone' => $openPhone, 'recording' => $rec, 'created' => time(), 'expires' => time() + 86400];
             callAPI('SetVar', ['var' => 'opening_ad', 'value' => json_encode($ad)]);
-            sendSMS($openPhone, "פרסומת הפתיח שלך פעילה! תוקף: 24 שעות.");
+            sendSMS($openPhone, "פרסומת הפתיח שלך פעילה ומשודרת! תוקף: 24 שעות.");
             respond([
                 'type' => 'menu',
-                'id_list_message' => ['הפרסומת שלך תשודר מעכשיו למשך 24 שעות. תודה!'],
+                'id_list_message' => ['תשלומך התקבל. פרסומת הפתיח שלך תשודר מיידית למשך 24 שעות. תודה!'],
                 'goto' => stepUrl('main'),
             ]);
         } else {
@@ -618,9 +621,9 @@ switch ($step) {
             respond([
                 'type' => 'menu',
                 'id_list_message' => [
-                    'לא נמצא כרטיס אשראי רשום.',
-                    'נשלח אליך קישור תשלום ב SMS.',
-                    'לאחר התשלום התקשר שוב.',
+                    'לא נמצא כרטיס אשראי מעודכן.',
+                    'שלחנו לך קישור לתשלום ב-SMS.',
+                    'לאחר התשלום, אנא התקשר שוב.',
                 ],
                 'goto' => stepUrl('main'),
             ]);
@@ -631,7 +634,7 @@ switch ($step) {
         $recFile = 'admin_msg_' . time() . '_' . rand(1000, 9999);
         respond([
             'type' => 'menu',
-            'id_list_message' => ['אנא השאר הודעה לאחר הצפצוף. לסיום לחץ סולמית.'],
+            'id_list_message' => ['השאר את הודעתך למנהל המערכת לאחר הצפצוף. לסיום לחץ סולמית.'],
             'record_type' => 'record',
             'record_file' => $recFile,
             'record_max_time' => '120',
@@ -643,10 +646,10 @@ switch ($step) {
         $rec = $_GET['rec'] ?? '';
         $caller = $_GET['caller'] ?? '';
         $callerInfo = $caller ? " ממתקשר: {$caller}" : '';
-        sendSMS(ADMIN_PHONE, "הודעה חדשה למנהל{$callerInfo}. קובץ: {$rec}");
+        sendSMS(ADMIN_PHONE, "הודעה קולית חדשה{$callerInfo}. קובץ הקלטה: {$rec}");
         respond([
             'type' => 'menu',
-            'id_list_message' => ['תודה! ההודעה שלך נשלחה למנהל המערכת.'],
+            'id_list_message' => ['תודה! הודעתך הועברה למנהל המערכת.'],
             'goto' => stepUrl('main'),
         ]);
         break;
@@ -655,7 +658,7 @@ switch ($step) {
         $to = $_GET['to'] ?? '';
         respond([
             'type' => 'menu',
-            'id_list_message' => ['מעביר אותך למפרסם. שיחה טובה!'],
+            'id_list_message' => ['מחבר אותך כעת למפרסם. אנא המתן.'],
             'transfer' => $to,
         ]);
         break;
@@ -665,7 +668,7 @@ switch ($step) {
     case 'admin_login':
         respond([
             'type' => 'menu',
-            'id_list_message' => ['כניסה לפאנל ניהול. הקש את קוד הניהול ולחץ סולמית.'],
+            'id_list_message' => ['כניסה לממשק הניהול. הקש את קוד הסיסמה ולחץ סולמית.'],
             'read_type' => 'phone',
             'read_variable' => 'ADMIN_CODE',
             'goto' => stepUrl('admin_verify'),
@@ -692,10 +695,10 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'פאנל ניהול.',
-                'יש כרגע ' . $total . ' מודעות פעילות.',
-                'להאזנה ומחיקת מודעות הקש 1.',
-                'לניהול מודעת פתיח הקש 2.',
+                'ממשק ניהול מערכת.',
+                'יש כרגע ' . $total . ' מודעות פעילות במערכת.',
+                'לסקירה ועריכת מודעות הקש 1.',
+                'לניהול מודעת הפתיח הקש 2.',
                 'לחזרה לתפריט הראשי הקש 9.',
             ],
             'id_list_1' => stepUrl('admin_ads', ['idx' => 0]),
@@ -712,14 +715,14 @@ switch ($step) {
         if (empty($activeAds)) {
             respond([
                 'type' => 'menu',
-                'id_list_message' => ['אין מודעות פעילות כרגע.'],
+                'id_list_message' => ['אין מודעות פעילות במערכת כרגע.'],
                 'goto' => stepUrl('admin_menu'),
             ]);
         }
         if ($idx >= count($activeAds)) {
             respond([
                 'type' => 'menu',
-                'id_list_message' => ['הגעת לסוף המודעות.'],
+                'id_list_message' => ['הגעת לסוף רשימת המודעות.'],
                 'goto' => stepUrl('admin_menu'),
             ]);
         }
@@ -733,12 +736,12 @@ switch ($step) {
             'id_list_message' => [
                 'מודעה ' . $num . ' מתוך ' . $total . '.',
                 'קטגוריה: ' . $catName . '.',
-                'טלפון מפרסם: ' . $ad['phone'] . '.',
-                'תוקף: ' . $expDate . '.',
+                'מפרסם: ' . $ad['phone'] . '.',
+                'תוקף עד: ' . $expDate . '.',
                 't:' . $ad['recording'],
                 'למודעה הבאה הקש 1.',
                 'למחיקת מודעה זו הקש 5.',
-                'חזרה לתפריט ניהול הקש 9.',
+                'לחזרה לתפריט הניהול הקש 9.',
             ],
             'id_list_1' => stepUrl('admin_ads', ['idx' => $idx + 1]),
             'id_list_5' => stepUrl('admin_delete', ['ad_id' => $ad['id'], 'idx' => $idx]),
@@ -752,9 +755,9 @@ switch ($step) {
         respond([
             'type' => 'menu',
             'id_list_message' => [
-                'האם למחוק מודעה זו?',
+                'האם אתה בטוח שברצונך למחוק מודעה זו?',
                 'לאישור מחיקה הקש 1.',
-                'לביטול הקש 9.',
+                'לביטול וחזרה הקש 9.',
             ],
             'id_list_1' => stepUrl('admin_delete_confirm', ['ad_id' => $adId, 'idx' => $idx]),
             'id_list_9' => stepUrl('admin_ads', ['idx' => $idx]),
@@ -767,7 +770,7 @@ switch ($step) {
         deleteAd($adId);
         respond([
             'type' => 'menu',
-            'id_list_message' => ['המודעה נמחקה בהצלחה.'],
+            'id_list_message' => ['המודעה נמחקה.'],
             'goto' => stepUrl('admin_ads', ['idx' => max(0, $idx - 1)]),
         ]);
         break;
@@ -779,11 +782,11 @@ switch ($step) {
             respond([
                 'type' => 'menu',
                 'id_list_message' => [
-                    'מודעת פתיח פעילה עד: ' . $expDate . '.',
-                    'טלפון מפרסם: ' . $openAd['phone'] . '.',
+                    'מודעת הפתיח הפעילה תפוג ב-' . $expDate . '.',
+                    'מפרסם: ' . $openAd['phone'] . '.',
                     't:' . $openAd['recording'],
                     'למחיקת מודעת הפתיח הקש 5.',
-                    'לחזרה הקש 9.',
+                    'לחזרה לתפריט הניהול הקש 9.',
                 ],
                 'id_list_5' => stepUrl('admin_delete_opening'),
                 'id_list_9' => stepUrl('admin_menu'),
@@ -791,7 +794,7 @@ switch ($step) {
         } else {
             respond([
                 'type' => 'menu',
-                'id_list_message' => ['אין מודעת פתיח פעילה כרגע.'],
+                'id_list_message' => ['אין מודעת פתיח פעילה כרגע במערכת.'],
                 'goto' => stepUrl('admin_menu'),
             ]);
         }
@@ -801,7 +804,7 @@ switch ($step) {
         callAPI('SetVar', ['var' => 'opening_ad', 'value' => '']);
         respond([
             'type' => 'menu',
-            'id_list_message' => ['מודעת הפתיח נמחקה.'],
+            'id_list_message' => ['מודעת הפתיח נמחקה בהצלחה.'],
             'goto' => stepUrl('admin_menu'),
         ]);
         break;
