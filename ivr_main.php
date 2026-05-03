@@ -12,6 +12,8 @@ define('NEDARIM_API_URL', 'https://matara.pro/nedarimplus/online/api.aspx');
 define('PRICE_WEEK', 25);
 define('PRICE_OPENING_AD', 25);
 define('SELF_URL', 'https://ivr-kursim.onrender.com/ivr_main.php');
+define('ADMIN_PHONE', '0500000000'); // מספר טלפון מנהל - יש לעדכן
+define('ADMIN_PIN', '1234');         // קוד כניסה לפאנל ניהול - יש לעדכן
 
 define('CATEGORIES', [
     1 => 'קורסים ושיעורי תורה',
@@ -64,6 +66,7 @@ function isUserRegistered($phone) {
 function registerUser($phone) {
     $user = ['phone' => $phone, 'alerts' => [], 'registered' => time()];
     callAPI('SetVar', ['var' => 'user_' . $phone, 'value' => json_encode($user)]);
+    addToUsersList($phone);
 }
 
 function getUser($phone) {
@@ -81,8 +84,47 @@ function incrementTotalUsers() {
     callAPI('SetVar', ['var' => 'total_users', 'value' => $current + 1]);
 }
 
+function getUsersList() {
+    $result = callAPI('GetVar', ['var' => 'users_list']);
+    $list = isset($result['value']) ? json_decode($result['value'], true) : [];
+    return is_array($list) ? $list : [];
+}
+
+function addToUsersList($phone) {
+    $list = getUsersList();
+    if (!in_array($phone, $list)) {
+        $list[] = $phone;
+        callAPI('SetVar', ['var' => 'users_list', 'value' => json_encode($list)]);
+    }
+}
+
+function notifySubscribers($category) {
+    $phones = getUsersList();
+    foreach ($phones as $p) {
+        $user = getUser($p);
+        if (!$user) continue;
+        $alerts = $user['alerts'] ?? [];
+        if (isset($alerts[$category]) || isset($alerts[6])) {
+            $catName = CATEGORIES[$category] ?? '';
+            sendSMS($p, "פרסום חדש ב{$catName}! התקשר לקו הקורסים לפרטים.");
+        }
+    }
+}
+
+function getAllAds() {
+    $raw = callAPI('GetVar', ['var' => 'ads_list']);
+    $ads = isset($raw['value']) ? json_decode($raw['value'], true) : [];
+    return is_array($ads) ? $ads : [];
+}
+
+function deleteAd($adId) {
+    $ads = getAllAds();
+    $ads = array_values(array_filter($ads, fn($a) => $a['id'] !== $adId));
+    callAPI('SetVar', ['var' => 'ads_list', 'value' => json_encode($ads)]);
+}
+
 function stepUrl($step, $extra = []) {
-    $params = array_merge(['step' => $step], $extra);
+    $params = array_merge($extra, ['step' => $step]);
     return SELF_URL . '?' . http_build_query($params);
 }
 
@@ -127,6 +169,7 @@ switch ($step) {
             'id_list_3' => stepUrl('menu3_start'),
             'id_list_4' => stepUrl('menu4_info'),
             'id_list_5' => stepUrl('menu5_voicemail'),
+            'id_list_0' => stepUrl('admin_login'),
         ]);
         break;
 
@@ -182,9 +225,11 @@ switch ($step) {
                 'מספר ליצירת קשר ' . $ad['phone'] . '.',
                 'להאזנה חוזרת הקש כוכבית.',
                 'לפרסום הבא הקש 1.',
+                'להתקשרות ישירה למפרסם הקש 2.',
                 'לחזרה לתפריט הקש 9.',
             ],
             'id_list_1' => stepUrl('listen', ['cat' => $cat, 'idx' => $idx + 1]),
+            'id_list_2' => stepUrl('transfer', ['to' => $ad['phone'], 'cat' => $cat, 'idx' => $idx]),
             'id_list_*' => stepUrl('listen', ['cat' => $cat, 'idx' => $idx]),
             'id_list_9' => stepUrl('menu1'),
         ]);
@@ -373,6 +418,7 @@ switch ($step) {
         callAPI('SetVar', ['var' => 'ads_list', 'value' => json_encode($allAds)]);
         $expDate = date('d/m/Y', time() + ($days * 86400));
         sendSMS($pubPhone, "הפרסום שלך התקבל! אסמכתא: {$adId}. תוקף עד: {$expDate}.");
+        notifySubscribers($cat);
         respond([
             'type' => 'menu',
             'id_list_message' => [
@@ -430,11 +476,11 @@ switch ($step) {
             'type' => 'menu',
             'id_list_message' => [
                 'לרישום להתראות על קורסים חדשים הקש 1.',
-                'לביטול התראות הקש 3.',
+                'לביטול התראות הקש 2.',
                 'לחזרה לתפריט הראשי הקש 9.',
             ],
             'id_list_1' => stepUrl('menu3_alerts', ['user_phone' => $userPhone]),
-            'id_list_3' => stepUrl('menu3_cancel', ['user_phone' => $userPhone]),
+            'id_list_2' => stepUrl('menu3_cancel', ['user_phone' => $userPhone]),
             'id_list_9' => stepUrl('main'),
         ]);
         break;
@@ -563,23 +609,200 @@ switch ($step) {
                 'goto' => stepUrl('main'),
             ]);
         } else {
+            $linkParams = array_merge($params, ['Action' => 'GetPaymentLink']);
+            $linkUrl = NEDARIM_API_URL . '?' . http_build_query($linkParams);
+            $linkResponse = @file_get_contents($linkUrl);
+            $linkXml = @simplexml_load_string($linkResponse);
+            $link = $linkXml ? (string)$linkXml->URL : '';
+            if ($link) sendSMS($openPhone, "לתשלום פרסומת הפתיח (" . PRICE_OPENING_AD . " ₪) לחץ: {$link}");
             respond([
                 'type' => 'menu',
-                'id_list_message' => ['אירעה שגיאה בתשלום. אנא נסה שוב מאוחר יותר.'],
+                'id_list_message' => [
+                    'לא נמצא כרטיס אשראי רשום.',
+                    'נשלח אליך קישור תשלום ב SMS.',
+                    'לאחר התשלום התקשר שוב.',
+                ],
                 'goto' => stepUrl('main'),
             ]);
         }
         break;
 
     case 'menu5_voicemail':
-        $recFile = 'admin_msg_' . time();
+        $recFile = 'admin_msg_' . time() . '_' . rand(1000, 9999);
         respond([
             'type' => 'menu',
             'id_list_message' => ['אנא השאר הודעה לאחר הצפצוף. לסיום לחץ סולמית.'],
             'record_type' => 'record',
             'record_file' => $recFile,
             'record_max_time' => '120',
+            'goto' => stepUrl('menu5_notify', ['rec' => $recFile, 'caller' => $phone]),
+        ]);
+        break;
+
+    case 'menu5_notify':
+        $rec = $_GET['rec'] ?? '';
+        $caller = $_GET['caller'] ?? '';
+        $callerInfo = $caller ? " ממתקשר: {$caller}" : '';
+        sendSMS(ADMIN_PHONE, "הודעה חדשה למנהל{$callerInfo}. קובץ: {$rec}");
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['תודה! ההודעה שלך נשלחה למנהל המערכת.'],
             'goto' => stepUrl('main'),
+        ]);
+        break;
+
+    case 'transfer':
+        $to = $_GET['to'] ?? '';
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['מעביר אותך למפרסם. שיחה טובה!'],
+            'transfer' => $to,
+        ]);
+        break;
+
+    // ===== פאנל ניהול =====
+
+    case 'admin_login':
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['כניסה לפאנל ניהול. הקש את קוד הניהול ולחץ סולמית.'],
+            'read_type' => 'phone',
+            'read_variable' => 'ADMIN_CODE',
+            'goto' => stepUrl('admin_verify'),
+        ]);
+        break;
+
+    case 'admin_verify':
+        $code = $_GET['ADMIN_CODE'] ?? '';
+        if ($code !== ADMIN_PIN) {
+            respond([
+                'type' => 'menu',
+                'id_list_message' => ['קוד שגוי. חוזרים לתפריט הראשי.'],
+                'goto' => stepUrl('main'),
+            ]);
+        }
+        respond(['type' => 'menu', 'goto' => stepUrl('admin_menu')]);
+        break;
+
+    case 'admin_menu':
+        $allAds = getAllAds();
+        $now = time();
+        $activeAds = array_values(array_filter($allAds, fn($a) => $a['expires'] > $now));
+        $total = count($activeAds);
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'פאנל ניהול.',
+                'יש כרגע ' . $total . ' מודעות פעילות.',
+                'להאזנה ומחיקת מודעות הקש 1.',
+                'לניהול מודעת פתיח הקש 2.',
+                'לחזרה לתפריט הראשי הקש 9.',
+            ],
+            'id_list_1' => stepUrl('admin_ads', ['idx' => 0]),
+            'id_list_2' => stepUrl('admin_opening'),
+            'id_list_9' => stepUrl('main'),
+        ]);
+        break;
+
+    case 'admin_ads':
+        $idx = intval($_GET['idx'] ?? 0);
+        $allAds = getAllAds();
+        $now = time();
+        $activeAds = array_values(array_filter($allAds, fn($a) => $a['expires'] > $now));
+        if (empty($activeAds)) {
+            respond([
+                'type' => 'menu',
+                'id_list_message' => ['אין מודעות פעילות כרגע.'],
+                'goto' => stepUrl('admin_menu'),
+            ]);
+        }
+        if ($idx >= count($activeAds)) {
+            respond([
+                'type' => 'menu',
+                'id_list_message' => ['הגעת לסוף המודעות.'],
+                'goto' => stepUrl('admin_menu'),
+            ]);
+        }
+        $ad = $activeAds[$idx];
+        $num = $idx + 1;
+        $total = count($activeAds);
+        $catName = CATEGORIES[$ad['category']] ?? 'לא ידוע';
+        $expDate = date('d/m/Y', $ad['expires']);
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'מודעה ' . $num . ' מתוך ' . $total . '.',
+                'קטגוריה: ' . $catName . '.',
+                'טלפון מפרסם: ' . $ad['phone'] . '.',
+                'תוקף: ' . $expDate . '.',
+                't:' . $ad['recording'],
+                'למודעה הבאה הקש 1.',
+                'למחיקת מודעה זו הקש 5.',
+                'חזרה לתפריט ניהול הקש 9.',
+            ],
+            'id_list_1' => stepUrl('admin_ads', ['idx' => $idx + 1]),
+            'id_list_5' => stepUrl('admin_delete', ['ad_id' => $ad['id'], 'idx' => $idx]),
+            'id_list_9' => stepUrl('admin_menu'),
+        ]);
+        break;
+
+    case 'admin_delete':
+        $adId = $_GET['ad_id'] ?? '';
+        $idx = intval($_GET['idx'] ?? 0);
+        respond([
+            'type' => 'menu',
+            'id_list_message' => [
+                'האם למחוק מודעה זו?',
+                'לאישור מחיקה הקש 1.',
+                'לביטול הקש 9.',
+            ],
+            'id_list_1' => stepUrl('admin_delete_confirm', ['ad_id' => $adId, 'idx' => $idx]),
+            'id_list_9' => stepUrl('admin_ads', ['idx' => $idx]),
+        ]);
+        break;
+
+    case 'admin_delete_confirm':
+        $adId = $_GET['ad_id'] ?? '';
+        $idx = intval($_GET['idx'] ?? 0);
+        deleteAd($adId);
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['המודעה נמחקה בהצלחה.'],
+            'goto' => stepUrl('admin_ads', ['idx' => max(0, $idx - 1)]),
+        ]);
+        break;
+
+    case 'admin_opening':
+        $openAd = getActiveOpeningAd();
+        if ($openAd) {
+            $expDate = date('d/m H:i', $openAd['expires']);
+            respond([
+                'type' => 'menu',
+                'id_list_message' => [
+                    'מודעת פתיח פעילה עד: ' . $expDate . '.',
+                    'טלפון מפרסם: ' . $openAd['phone'] . '.',
+                    't:' . $openAd['recording'],
+                    'למחיקת מודעת הפתיח הקש 5.',
+                    'לחזרה הקש 9.',
+                ],
+                'id_list_5' => stepUrl('admin_delete_opening'),
+                'id_list_9' => stepUrl('admin_menu'),
+            ]);
+        } else {
+            respond([
+                'type' => 'menu',
+                'id_list_message' => ['אין מודעת פתיח פעילה כרגע.'],
+                'goto' => stepUrl('admin_menu'),
+            ]);
+        }
+        break;
+
+    case 'admin_delete_opening':
+        callAPI('SetVar', ['var' => 'opening_ad', 'value' => '']);
+        respond([
+            'type' => 'menu',
+            'id_list_message' => ['מודעת הפתיח נמחקה.'],
+            'goto' => stepUrl('admin_menu'),
         ]);
         break;
 
