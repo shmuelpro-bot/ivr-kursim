@@ -7,7 +7,7 @@
       "module": "gateway:CustomWebHook",
       "version": 1,
       "parameters": {
-        "hook": "CREATE_NEW_WEBHOOK_IN_MAKE",
+        "hook": "4121884",
         "maxResults": 1
       },
       "mapper": {},
