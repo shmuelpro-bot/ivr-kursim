@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>פרסום נכס - טופס פרטים</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 680px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 36px 40px;
+      text-align: center;
+      color: #fff;
+    }
+    .header h1 { font-size: 26px; margin-bottom: 8px; }
+    .header p  { opacity: 0.88; font-size: 15px; }
+
+    .form-body { padding: 36px 40px; }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #667eea;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 28px 0 14px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    .section-title:first-of-type { margin-top: 0; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-row.single { grid-template-columns: 1fr; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 6px;
+    }
+    label .required { color: #e53e3e; margin-right: 2px; }
+
+    input, select, textarea {
+      border: 2px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      direction: rtl;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fafafa;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+    }
+
+    textarea { resize: vertical; min-height: 90px; }
+
+    .price-wrap { position: relative; }
+    .price-wrap input { padding-left: 40px; }
+    .price-symbol {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: 700;
+      color: #888;
+      font-size: 15px;
+      pointer-events: none;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 28px;
+      transition: opacity 0.2s, transform 0.15s;
+      letter-spacing: 0.5px;
+    }
+    .submit-btn:hover  { opacity: 0.93; }
+    .submit-btn:active { transform: scale(0.99); }
+    .submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .alert {
+      display: none;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 18px;
+      text-align: center;
+    }
+    .alert-success { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
+    .alert-error   { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
+
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 540px) {
+      .form-body { padding: 24px 20px; }
+      .header    { padding: 28px 20px; }
+      .form-row  { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🏠 פרסום נכס למכירה / השכרה</h1>
+    <p>מלאו את הפרטים ונציגנו יצור איתכם קשר בהקדם</p>
+  </div>
+
+  <form class="form-body" id="propertyForm" novalidate>
+
+    <!-- פרטי הפונה -->
+    <div class="section-title">פרטי הפונה</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>שם מלא <span class="required">*</span></label>
+        <input type="text" name="שם מלא" placeholder="ישראל ישראלי" required>
+      </div>
+      <div class="form-group">
+        <label>טלפון <span class="required">*</span></label>
+        <input type="tel" name="טלפון" placeholder="05X-XXXXXXX" required>
+      </div>
+    </div>
+    <div class="form-row single">
+      <div class="form-group">
+        <label>דוא"ל</label>
+        <input type="email" name='דוא"ל' placeholder="name@example.com">
+      </div>
+    </div>
+
+    <!-- פרטי הנכס -->
+    <div class="section-title">פרטי הנכס</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>סוג נכס <span class="required">*</span></label>
+        <select name="סוג נכס" required>
+          <option value="">-- בחרו סוג --</option>
+          <option>דירה</option>
+          <option>קוטג'</option>
+          <option>בית פרטי</option>
+          <option>פנטהאוז</option>
+          <option>מסחרי</option>
+          <option>קרקע</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>אזור <span class="required">*</span></label>
+        <select name="אזור" required id="regionSelect">
+          <option value="">-- בחרו אזור --</option>
+          <option>תל אביב והמרכז</option>
+          <option>ירושלים</option>
+          <option>חיפה והצפון</option>
+          <option>באר שבע והדרום</option>
+          <option>שרון והשפלה</option>
+          <option>אחר</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>עיר <span class="required">*</span></label>
+        <input type="text" name="עיר" id="cityInput" placeholder="תל אביב" required>
+      </div>
+      <div class="form-group">
+        <label>כתובת</label>
+        <input type="text" name="כתובת" placeholder="רחוב הרצל 5">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>מספר חדרים <span class="required">*</span></label>
+        <select name="מספר חדרים" required>
+          <option value="">-- בחרו --</option>
+          <option value="1">1</option>
+          <option value="1.5">1.5</option>
+          <option value="2">2</option>
+          <option value="2.5">2.5</option>
+          <option value="3">3</option>
+          <option value="3.5">3.5</option>
+          <option value="4">4</option>
+          <option value="4.5">4.5</option>
+          <option value="5">5</option>
+          <option value="5.5">5.5</option>
+          <option value="6">6+</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>קומה</label>
+        <input type="number" name="קומה" placeholder="3" min="0" max="60">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>גודל במ"ר</label>
+        <input type="number" name='גודל במ"ר' placeholder="80" min="10">
+      </div>
+      <div class="form-group">
+        <label>מחיר מבוקש (₪)</label>
+        <div class="price-wrap">
+          <input type="number" name="מחיר מבוקש" placeholder="1500000" min="0" step="1000">
+          <span class="price-symbol">₪</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- פרטים נוספים -->
+    <div class="section-title">פרטים נוספים</div>
+    <div class="form-row single">
+      <div class="form-group">
+        <label>הערות / פרטים נוספים על הנכס</label>
+        <textarea name="הערות" placeholder="מצב הנכס, חניה, מחסן, מרפסת, נוף..."></textarea>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submitBtn">שליחת הפרטים</button>
+
+    <div class="alert alert-success" id="successMsg">
+      ✅ הפרטים נשלחו בהצלחה! נציגנו יצור איתכם קשר בקרוב.
+    </div>
+    <div class="alert alert-error" id="errorMsg">
+      ❌ אירעה שגיאה בשליחה. אנא נסו שוב או צרו קשר ישירות.
+    </div>
+  </form>
+</div>
+
+<script>
+  // ====================================================
+  //  הגדרות - עדכנו לאחר יצירת ה-Webhook ב-Make
+  // ====================================================
+  const MAKE_WEBHOOK_URL = 'PASTE_YOUR_MAKE_WEBHOOK_URL_HERE';
+  // ====================================================
+
+  const CITY_MAP = {
+    'תל אביב והמרכז': ['תל אביב','רמת גן','גבעתיים','חולון','בת ים','רמלה','לוד','פתח תקווה','ראשון לציון','רחובות'],
+    'ירושלים': ['ירושלים','מעלה אדומים','בית שמש','מודיעין','מבשרת ציון'],
+    'חיפה והצפון': ['חיפה','נצרת','עכו','נהריה','כרמיאל','טבריה','צפת'],
+    'באר שבע והדרום': ['באר שבע','אשדוד','אשקלון','אילת','נתיבות','שדרות'],
+    'שרון והשפלה': ['נתניה','הרצליה','כפר סבא','רעננה','הוד השרון','קריית אונו','ראש העין']
+  };
+
+  document.getElementById('regionSelect').addEventListener('change', function () {
+    const cityInput = document.getElementById('cityInput');
+    cityInput.value = '';
+    // Replace with datalist for suggestions
+    let dl = document.getElementById('cityList');
+    if (!dl) { dl = document.createElement('datalist'); dl.id = 'cityList'; document.body.appendChild(dl); }
+    cityInput.setAttribute('list', 'cityList');
+    dl.innerHTML = (CITY_MAP[this.value] || []).map(c => `<option value="${c}">`).join('');
+  });
+
+  document.getElementById('propertyForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('submitBtn');
+    const successMsg = document.getElementById('successMsg');
+    const errorMsg   = document.getElementById('errorMsg');
+    successMsg.style.display = 'none';
+    errorMsg.style.display   = 'none';
+
+    // Basic validation
+    const required = this.querySelectorAll('[required]');
+    let valid = true;
+    required.forEach(el => {
+      el.style.borderColor = '';
+      if (!el.value.trim()) { el.style.borderColor = '#e53e3e'; valid = false; }
+    });
+    if (!valid) {
+      errorMsg.textContent = '❌ יש למלא את כל שדות החובה המסומנים באדום.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = 'שולח... <span class="spinner"></span>';
+
+    // Collect all field values
+    const data = { מקור: 'טופס אינטרנט', סטטוס: 'טופס מולא' };
+    new FormData(this).forEach((v, k) => { if (v) data[k] = v; });
+    data['תאריך קבלה'] = new Date().toISOString();
+
+    try {
+      const resp = await fetch(MAKE_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (resp.ok || resp.status === 200) {
+        successMsg.style.display = 'block';
+        this.reset();
+      } else {
+        throw new Error('Server ' + resp.status);
+      }
+    } catch (err) {
+      console.error(err);
+      errorMsg.textContent = '❌ אירעה שגיאה בשליחה. אנא נסו שוב.';
+      errorMsg.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'שליחת הפרטים';
+    }
+  });
+</script>
+</body>
+</html>

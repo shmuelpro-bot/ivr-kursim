@@ -1,0 +1,133 @@
+{
+  "name": "IVR - זיהוי מיילים דירות (mag6285809@gmail.com) → Airtable → תשובה אוטומטית",
+  "_target_email": "mag6285809@gmail.com",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gmail:TriggerEmail",
+      "version": 1,
+      "parameters": {
+        "__IMTCONN__": "YOUR_GMAIL_CONNECTION_ID",
+        "label": "INBOX",
+        "searchQuery": "דירה OR apartment OR נכס OR קוטג OR השכרה OR מכירה OR to:mag6285809@gmail.com",
+        "markAsRead": true,
+        "maxResults": 10
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "Gmail - חשבון שלך" },
+            "label": { "label": "INBOX" }
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "regexp:Parser",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "pattern": "(?:0(?:[23489]|5[0-9]|7[2-9]))(?:-?\\d{7})",
+        "global": false,
+        "sensitive": false,
+        "multiline": false,
+        "singleline": false,
+        "text": "{{1.body.text}}"
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": {}
+      }
+    },
+    {
+      "id": 3,
+      "module": "airtable:ActionCreateRecord",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": "YOUR_AIRTABLE_CONNECTION_ID",
+        "base": "appXXjZbFbr3CCNh3",
+        "table": "tblcYHjOV4aBvplnK"
+      },
+      "mapper": {
+        "fields": {
+          "שם מלא": "{{1.from.name}}",
+          "דוא\"ל": "{{1.from.email}}",
+          "טלפון": "{{2.`0`}}",
+          "תוכן הפנייה המקורית": "{{1.body.text}}",
+          "סטטוס": "ממתין למילוי טופס",
+          "מקור": "דוא\"ל",
+          "תאריך קבלה": "{{now}}",
+          "מזהה רשומה": "{{1.id}}"
+        }
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "Airtable - חשבון שלך" },
+            "base": { "label": "מאגר לידים - דירות IVR" },
+            "table": { "label": "פניות נכסים" }
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "module": "gmail:ActionSendEmail",
+      "version": 1,
+      "parameters": {
+        "__IMTCONN__": "YOUR_GMAIL_CONNECTION_ID"
+      },
+      "mapper": {
+        "to": "{{1.from.email}}",
+        "subject": "Re: {{1.subject}} - נשמח לעזור!",
+        "html": "<!-- EMAIL TEMPLATE - see email_reply_template.html -->\n<!DOCTYPE html>\n<html dir=\"rtl\" lang=\"he\">\n<head><meta charset=\"UTF-8\"></head>\n<body style=\"font-family:Arial,sans-serif;direction:rtl;background:#f7f7f7;padding:20px\">\n<div style=\"max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1)\">\n  <div style=\"background:linear-gradient(135deg,#667eea,#764ba2);padding:32px;text-align:center;color:#fff\">\n    <h1 style=\"margin:0;font-size:22px\">🏠 תודה שפנית אלינו!</h1>\n    <p style=\"margin:8px 0 0;opacity:.88\">קיבלנו את פנייתך ונשמח לסייע</p>\n  </div>\n  <div style=\"padding:32px\">\n    <p style=\"font-size:16px;color:#333\">שלום {{1.from.name}},</p>\n    <p style=\"color:#555;line-height:1.7\">תודה על פנייתך! כדי שנוכל לטפל בנכס שלך בצורה הטובה ביותר,<br>אנא מלאו את הטופס הקצר הבא עם פרטי הנכס:</p>\n    <div style=\"text-align:center;margin:28px 0\">\n      <a href=\"FORM_URL_PLACEHOLDER\" style=\"background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:700\">📋 מלאו את הטופס כאן</a>\n    </div>\n    <p style=\"color:#888;font-size:13px\">הטיפול בנכסכם יחל מיד לאחר מילוי הטופס.<br>שאלות? השיבו למייל זה ישירות.</p>\n  </div>\n  <div style=\"background:#f9f9f9;padding:16px 32px;text-align:center;color:#aaa;font-size:12px\">\n    IVR נכסים | טיפול אוטומטי 24/7\n  </div>\n</div>\n</body></html>",
+        "threadId": "{{1.threadId}}"
+      },
+      "metadata": {
+        "designer": { "x": 900, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "Gmail - חשבון שלך" }
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "instant": false,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false
+    },
+    "designer": { "orphans": [] }
+  },
+  "_instructions": {
+    "target_email": "mag6285809@gmail.com",
+    "setup_steps": [
+      "1. ב-Make: צרו Scenario חדש",
+      "2. לחצו על שלוש הנקודות (⋯) ← Import Blueprint",
+      "3. העלו קובץ זה",
+      "4. בכל Module עם CONNECTION_ID - לחצו 'Add' וחברו את mag6285809@gmail.com ואת Airtable שלכם",
+      "5. ב-Gmail Trigger - ודאו שהחיבור הוא לחשבון mag6285809@gmail.com",
+      "6. במודול Gmail (מס' 4) - החליפו FORM_URL_PLACEHOLDER ב-URL האמיתי של הטופס",
+      "7. Activate את הסצנריו ← Run once לבדיקה"
+    ],
+    "airtable_ids": {
+      "base_id": "appXXjZbFbr3CCNh3",
+      "table_id": "tblcYHjOV4aBvplnK",
+      "base_name": "מאגר לידים - דירות IVR",
+      "table_name": "פניות נכסים"
+    }
+  }
+}

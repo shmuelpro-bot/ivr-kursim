@@ -1,0 +1,113 @@
+{
+  "name": "IVR - טופס נכסים → Airtable",
+  "_description": "מקבל נתוני טופס מ-property_form.html ושומר ב-Airtable",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": "CREATE_NEW_WEBHOOK_IN_MAKE",
+        "maxResults": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {
+          "parameters": {
+            "hook": { "label": "IVR Property Form Webhook" }
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "airtable:ActionCreateRecord",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": "YOUR_AIRTABLE_CONNECTION_ID",
+        "base": "appXXjZbFbr3CCNh3",
+        "table": "tblcYHjOV4aBvplnK"
+      },
+      "mapper": {
+        "fields": {
+          "שם מלא": "{{1.`שם מלא`}}",
+          "טלפון": "{{1.טלפון}}",
+          "דוא\"ל": "{{1.`דוא\"ל`}}",
+          "אזור": "{{1.אזור}}",
+          "עיר": "{{1.עיר}}",
+          "כתובת": "{{1.כתובת}}",
+          "סוג נכס": "{{1.`סוג נכס`}}",
+          "מספר חדרים": "{{parseFloat(1.`מספר חדרים`)}}",
+          "קומה": "{{parseFloat(1.קומה)}}",
+          "גודל במ\"ר": "{{parseFloat(1.`גודל במ\"ר`)}}",
+          "מחיר מבוקש": "{{parseFloat(1.`מחיר מבוקש`)}}",
+          "הערות": "{{1.הערות}}",
+          "סטטוס": "{{if(1.סטטוס; 1.סטטוס; `טופס מולא`)}}",
+          "מקור": "{{if(1.מקור; 1.מקור; `טופס אינטרנט`)}}",
+          "תאריך קבלה": "{{1.`תאריך קבלה`}}"
+        }
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "Airtable - חשבון שלך" },
+            "base": { "label": "מאגר לידים - דירות IVR" },
+            "table": { "label": "פניות נכסים" }
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "module": "gmail:ActionSendEmail",
+      "version": 1,
+      "parameters": {
+        "__IMTCONN__": "YOUR_GMAIL_CONNECTION_ID"
+      },
+      "mapper": {
+        "to": "{{1.`דוא\"ל`}}",
+        "subject": "קיבלנו את פרטי הנכס שלכם ✓",
+        "html": "<!DOCTYPE html><html dir=\"rtl\" lang=\"he\"><head><meta charset=\"UTF-8\"></head><body style=\"font-family:Arial,sans-serif;background:#f7f7f7;padding:20px\"><div style=\"max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden\"><div style=\"background:linear-gradient(135deg,#667eea,#764ba2);padding:28px;text-align:center;color:#fff\"><h1 style=\"margin:0;font-size:20px\">✅ פרטי הנכס התקבלו!</h1></div><div style=\"padding:28px\"><p style=\"color:#333\">שלום {{1.`שם מלא`}},</p><p style=\"color:#555;line-height:1.7\">תודה! קיבלנו את פרטי הנכס שלכם ונציגנו יצור איתכם קשר בהקדם.</p><p style=\"color:#888;font-size:13px;margin-top:20px\">IVR נכסים</p></div></div></body></html>"
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "Gmail - mag6285809@gmail.com" }
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false
+    },
+    "designer": { "orphans": [] }
+  },
+  "_instructions": {
+    "setup_steps": [
+      "1. ב-Make: צרו Scenario חדש → Import Blueprint (קובץ זה)",
+      "2. במודול Webhook (מס' 1): לחצו 'Add' → Custom Webhook → קראו לו 'IVR Property Form'",
+      "3. העתיקו את ה-Webhook URL שנוצר",
+      "4. פתחו property_form.html ועדכנו את MAKE_WEBHOOK_URL לכתובת שהעתקתם",
+      "5. חברו Airtable ו-Gmail (mag6285809@gmail.com)",
+      "6. Activate ← Test עם שליחת הטופס"
+    ],
+    "airtable_ids": {
+      "base_id": "appXXjZbFbr3CCNh3",
+      "table_id": "tblcYHjOV4aBvplnK"
+    }
+  }
+}
