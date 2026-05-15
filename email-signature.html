@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>חתימת מייל</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0f0f1a;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Heebo', Arial, sans-serif;
+      padding: 20px;
+      gap: 28px;
+    }
+
+    /* ===== STEP INSTRUCTIONS ===== */
+    .steps-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(0,198,255,0.25);
+      border-radius: 14px;
+      padding: 22px 28px;
+      max-width: 520px;
+      width: 100%;
+      color: #e8e8f0;
+      font-size: 14px;
+      line-height: 2;
+    }
+    .steps-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: #00c6ff;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .step { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+    .step-num {
+      background: linear-gradient(135deg, #00c6ff, #7b2ff7);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .step kbd {
+      background: rgba(255,255,255,0.15);
+      border-radius: 5px;
+      padding: 1px 7px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #fff;
+    }
+
+    /* ===== COPY BUTTON ===== */
+    .copy-btn {
+      background: linear-gradient(135deg, #00c6ff, #7b2ff7);
+      color: #fff;
+      font-family: 'Heebo', Arial, sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 36px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 20px rgba(0,198,255,0.4);
+      letter-spacing: 0.5px;
+      max-width: 520px;
+      width: 100%;
+    }
+    .copy-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 0 35px rgba(123,47,247,0.7);
+    }
+    .copy-btn.copied {
+      background: linear-gradient(135deg, #00e676, #00bfa5);
+      box-shadow: 0 0 25px rgba(0,230,118,0.5);
+    }
+
+    /* ===== PREVIEW LABEL ===== */
+    .preview-label {
+      color: rgba(255,255,255,0.35);
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: -10px;
+    }
+
+    /* ===== ANIMATED BORDER WRAPPER ===== */
+    .sig-border-wrap {
+      position: relative;
+      border-radius: 18px;
+      padding: 3px;
+      background: linear-gradient(135deg, #00c6ff, #7b2ff7, #ff416c, #00c6ff);
+      background-size: 300% 300%;
+      animation: borderFlow 4s ease infinite;
+      box-shadow:
+        0 0 25px rgba(0, 198, 255, 0.4),
+        0 0 60px rgba(123, 47, 247, 0.3),
+        0 0 100px rgba(255, 65, 108, 0.2);
+      max-width: 520px;
+      width: 100%;
+    }
+
+    @keyframes borderFlow {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* ===== MAIN CARD ===== */
+    .sig-card {
+      background: linear-gradient(145deg, #12122a 0%, #1a1a3e 50%, #0d1b2e 100%);
+      border-radius: 16px;
+      padding: 28px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sig-card::before,
+    .sig-card::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .sig-card::before {
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(0,198,255,0.15) 0%, transparent 70%);
+      top: -60px; left: -60px;
+      animation: orbPulse 5s ease-in-out infinite;
+    }
+    .sig-card::after {
+      width: 160px; height: 160px;
+      background: radial-gradient(circle, rgba(123,47,247,0.18) 0%, transparent 70%);
+      bottom: -40px; right: -40px;
+      animation: orbPulse 5s ease-in-out infinite reverse;
+    }
+
+    @keyframes orbPulse {
+      0%,100% { transform: scale(1); opacity: 0.8; }
+      50%      { transform: scale(1.3); opacity: 1; }
+    }
+
+    .sig-top {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sig-avatar {
+      width: 62px; height: 62px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00c6ff, #7b2ff7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 900;
+      color: #fff;
+      flex-shrink: 0;
+      animation: avatarGlow 3s ease-in-out infinite;
+      box-shadow: 0 0 20px rgba(0,198,255,0.5);
+    }
+
+    @keyframes avatarGlow {
+      0%,100% { box-shadow: 0 0 20px rgba(0,198,255,0.5); }
+      50%      { box-shadow: 0 0 35px rgba(123,47,247,0.8), 0 0 10px rgba(0,198,255,0.6); }
+    }
+
+    .sig-name-block { flex: 1; }
+
+    .sig-name {
+      font-size: 20px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    .sig-email {
+      font-size: 13px;
+      color: #00c6ff;
+      margin-top: 4px;
+      font-weight: 400;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .sig-email:hover { color: #7b2ff7; transition: color 0.3s; }
+
+    .sig-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #00c6ff, #7b2ff7, #ff416c, transparent);
+      background-size: 200% 100%;
+      animation: dividerShine 3s linear infinite;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes dividerShine {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .sig-services {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sig-service {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: default;
+      transition: all 0.3s ease;
+    }
+    .sig-service:hover {
+      background: rgba(0,198,255,0.12);
+      border-color: rgba(0,198,255,0.5);
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 6px 20px rgba(0,198,255,0.2);
+    }
+
+    .service-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      animation: iconFloat 3s ease-in-out infinite;
+    }
+    .sig-service:nth-child(1) .service-icon { animation-delay: 0s; }
+    .sig-service:nth-child(2) .service-icon { animation-delay: 0.8s; }
+    .sig-service:nth-child(3) .service-icon { animation-delay: 1.6s; }
+    .sig-service:nth-child(4) .service-icon { animation-delay: 2.4s; }
+
+    @keyframes iconFloat {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-3px); }
+    }
+
+    .service-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e8e8f0;
+      line-height: 1.3;
+    }
+
+    .sig-footer {
+      margin-top: 18px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sig-tagline {
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 0.3; }
+      50%      { opacity: 0.7; }
+    }
+
+    /* hidden element holding the copyable signature HTML */
+    #sig-source { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- STEP INSTRUCTIONS -->
+  <div class="steps-box">
+    <div class="steps-title">📋 איך מדביקים בגמייל?</div>
+    <div class="step">
+      <div class="step-num">1</div>
+      <span>לחץ על כפתור <strong>"העתק חתימה"</strong> למטה</span>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <span>פתח Gmail ← <strong>הגדרות</strong> (גלגל שיניים) ← <strong>ראה את כל ההגדרות</strong></span>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <span>גלול ל-<strong>חתימה</strong> ← לחץ <strong>צור חתימה חדשה</strong></span>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <span>בתיבת הטקסט של החתימה לחץ <kbd>Ctrl</kbd>+<kbd>V</kbd> להדביק</span>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <span>לחץ <strong>שמור שינויים</strong> — זהו! ✅</span>
+    </div>
+  </div>
+
+  <!-- COPY BUTTON -->
+  <button class="copy-btn" onclick="copySignature(this)">
+    📋 &nbsp; העתק חתימה ללחיצה אחת
+  </button>
+
+  <!-- PREVIEW LABEL -->
+  <div class="preview-label">תצוגה מקדימה</div>
+
+  <!-- SIGNATURE PREVIEW -->
+  <div class="sig-border-wrap" id="sig-preview">
+    <div class="sig-card">
+      <div class="sig-top">
+        <div class="sig-avatar">✦</div>
+        <div class="sig-name-block">
+          <div class="sig-name">פתרונות דיגיטליים מתקדמים</div>
+          <a href="mailto:hhyym189@gmail.com" class="sig-email">hhyym189@gmail.com</a>
+        </div>
+      </div>
+      <div class="sig-divider"></div>
+      <div class="sig-services">
+        <div class="sig-service">
+          <span class="service-icon">🌐</span>
+          <span class="service-text">בניית אתרים<br/>ודפי נחיתה</span>
+        </div>
+        <div class="sig-service">
+          <span class="service-icon">📞</span>
+          <span class="service-text">הקמת מערכת<br/>טלפונית</span>
+        </div>
+        <div class="sig-service">
+          <span class="service-icon">⚡</span>
+          <span class="service-text">אוטומציות</span>
+        </div>
+        <div class="sig-service">
+          <span class="service-icon">🎨</span>
+          <span class="service-text">גרפיקה</span>
+        </div>
+      </div>
+      <div class="sig-footer">
+        <span class="sig-tagline">✦ &nbsp; DIGITAL SOLUTIONS &nbsp; ✦</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function copySignature(btn) {
+      // Build the self-contained HTML string to paste into Gmail
+      const html = `<div dir="rtl" style="font-family:'Heebo',Arial,sans-serif;display:inline-block;border-radius:18px;padding:3px;background:linear-gradient(135deg,#00c6ff,#7b2ff7,#ff416c,#00c6ff);box-shadow:0 0 25px rgba(0,198,255,0.4),0 0 60px rgba(123,47,247,0.3);">
+  <div style="background:linear-gradient(145deg,#12122a 0%,#1a1a3e 50%,#0d1b2e 100%);border-radius:16px;padding:24px 28px;min-width:380px;max-width:480px;">
+    <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;margin-bottom:16px;">
+      <tr>
+        <td style="vertical-align:middle;width:66px;padding-left:14px;">
+          <div style="width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#00c6ff,#7b2ff7);display:flex;align-items:center;justify-content:center;text-align:center;font-size:26px;line-height:62px;color:#fff;">✦</div>
+        </td>
+        <td style="vertical-align:middle;">
+          <div style="font-size:19px;font-weight:900;color:#ffffff;line-height:1.2;">פתרונות דיגיטליים מתקדמים</div>
+          <a href="mailto:hhyym189@gmail.com" style="font-size:13px;color:#00c6ff;text-decoration:none;display:block;margin-top:4px;">hhyym189@gmail.com</a>
+        </td>
+      </tr>
+    </table>
+    <div style="height:1px;background:linear-gradient(90deg,transparent,#00c6ff,#7b2ff7,#ff416c,transparent);margin-bottom:16px;"></div>
+    <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
+      <tr>
+        <td style="padding:4px;width:50%;">
+          <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:20px;">🌐</span>
+            <span style="font-size:13px;font-weight:700;color:#e8e8f0;line-height:1.3;">בניית אתרים<br/>ודפי נחיתה</span>
+          </div>
+        </td>
+        <td style="padding:4px;width:50%;">
+          <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:20px;">📞</span>
+            <span style="font-size:13px;font-weight:700;color:#e8e8f0;line-height:1.3;">הקמת מערכת<br/>טלפונית</span>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px;width:50%;">
+          <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:20px;">⚡</span>
+            <span style="font-size:13px;font-weight:700;color:#e8e8f0;line-height:1.3;">אוטומציות</span>
+          </div>
+        </td>
+        <td style="padding:4px;width:50%;">
+          <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:20px;">🎨</span>
+            <span style="font-size:13px;font-weight:700;color:#e8e8f0;line-height:1.3;">גרפיקה</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+    <div style="margin-top:14px;text-align:center;font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:2px;">✦ &nbsp; DIGITAL SOLUTIONS &nbsp; ✦</div>
+  </div>
+</div>`;
+
+      // Copy as rich HTML to clipboard (Gmail will accept it)
+      const type = 'text/html';
+      const blob = new Blob([html], { type });
+      const data = [new ClipboardItem({ [type]: blob })];
+
+      navigator.clipboard.write(data).then(() => {
+        btn.textContent = '✅  הועתק! עכשיו פתח Gmail והדבק';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = '📋  העתק חתימה ללחיצה אחת';
+          btn.classList.remove('copied');
+        }, 3500);
+      }).catch(() => {
+        // fallback: select the preview
+        const range = document.createRange();
+        range.selectNode(document.getElementById('sig-preview'));
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand('copy');
+        window.getSelection().removeAllRanges();
+        btn.textContent = '✅  הועתק!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = '📋  העתק חתימה ללחיצה אחת';
+          btn.classList.remove('copied');
+        }, 3500);
+      });
+    }
+  </script>
+
+</body>
+</html>
