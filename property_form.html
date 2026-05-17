@@ -279,7 +279,7 @@
   // ====================================================
   //  הגדרות - עדכנו לאחר יצירת ה-Webhook ב-Make
   // ====================================================
-  const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/jmiia6bpy9ljlhyryd56xpm2i0ln61fv';
+  const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/4qeuily48y9tnhoe4ep62fumne7ceayp';
   // ====================================================
 
   const CITY_MAP = {
@@ -326,7 +326,7 @@
     btn.innerHTML = 'שולח... <span class="spinner"></span>';
 
     // Collect all field values
-    const data = { מקור: 'טופס אינטרנט', סטטוס: 'טופס מולא' };
+    const data = { מקור: 'טופס אינטרנט', סטטוס: 'טופס מולא', form_type: 'property' };
     new FormData(this).forEach((v, k) => { if (v) data[k] = v; });
     data['תאריך קבלה'] = new Date().toISOString();
 
