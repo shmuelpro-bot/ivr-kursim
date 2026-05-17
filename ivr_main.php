@@ -21,6 +21,8 @@ define('APT_TYPES', [
     4 => 'דירת אירוח',
     5 => 'צימר',
     6 => 'דירה במושב',
+    7 => 'דירה לחג הקרוב',
+    8 => 'דירה לבין הזמנים',
 ]);
 
 define('CITIES', [
@@ -307,6 +309,8 @@ switch ($step) {
                 'הקש 4 לדירת אירוח.',
                 'הקש 5 לצימר.',
                 'הקש 6 לדירה במושב.',
+                'הקש 7 לדירה לחג הקרוב.',
+                'הקש 8 לדירה לבין הזמנים.',
             ],
             'id_list_1' => stepUrl('list_beds', array_merge($p, ['at' => 1])),
             'id_list_2' => stepUrl('list_beds', array_merge($p, ['at' => 2])),
@@ -314,6 +318,8 @@ switch ($step) {
             'id_list_4' => stepUrl('list_beds', array_merge($p, ['at' => 4])),
             'id_list_5' => stepUrl('list_beds', array_merge($p, ['at' => 5])),
             'id_list_6' => stepUrl('list_beds', array_merge($p, ['at' => 6])),
+            'id_list_7' => stepUrl('list_beds', array_merge($p, ['at' => 7])),
+            'id_list_8' => stepUrl('list_beds', array_merge($p, ['at' => 8])),
         ]);
         break;
     }
@@ -529,6 +535,8 @@ switch ($step) {
                 'הקש 4 לדירת אירוח.',
                 'הקש 5 לצימר.',
                 'הקש 6 לדירה במושב.',
+                'הקש 7 לדירה לחג הקרוב.',
+                'הקש 8 לדירה לבין הזמנים.',
             ],
             'id_list_0' => stepUrl('search_beds', array_merge($p, ['fa' => 0])),
             'id_list_1' => stepUrl('search_beds', array_merge($p, ['fa' => 1])),
@@ -537,6 +545,8 @@ switch ($step) {
             'id_list_4' => stepUrl('search_beds', array_merge($p, ['fa' => 4])),
             'id_list_5' => stepUrl('search_beds', array_merge($p, ['fa' => 5])),
             'id_list_6' => stepUrl('search_beds', array_merge($p, ['fa' => 6])),
+            'id_list_7' => stepUrl('search_beds', array_merge($p, ['fa' => 7])),
+            'id_list_8' => stepUrl('search_beds', array_merge($p, ['fa' => 8])),
         ]);
         break;
     }
