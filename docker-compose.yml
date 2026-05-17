@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      CALL2ALL_TOKEN: ${CALL2ALL_TOKEN:-0772519703_78098632}
+      IVR_SELF_URL:   ${IVR_SELF_URL:-http://localhost:8080/ivr_main.php}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Shabbat@2024!}
+      CRON_SECRET:    ${CRON_SECRET:-cron_change_me}
+    volumes:
+      # Hot-reload: mount source so edits apply without rebuild
+      - .:/var/www/html
+    restart: unless-stopped

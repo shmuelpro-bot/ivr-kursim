@@ -1,5 +1,11 @@
 {
+  "name": "ivr/shabbat-apartments",
+  "description": "מערכת IVR – קו דירות לשבת",
+  "type": "project",
   "require": {
-    "php": ">=8.0"
+    "php": ">=8.1"
+  },
+  "config": {
+    "optimize-autoloader": true
   }
 }

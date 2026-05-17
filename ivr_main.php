@@ -1,811 +1,733 @@
 <?php
 /**
- * מערכת IVR - קו הקורסים והסדנאות
- * ימות המשיח - פורמט INI נכון
+ * ivr_main.php – מערכת IVR: קו דירות לשבת
+ * ימות המשיח – פורמט INI
  */
 
-define('API_KEY', '0772519703_78098632');
-define('BASE_URL', 'https://www.call2all.co.il/ym/api/');
-define('NEDARIM_MOSAD_ID', '7007382');
-define('NEDARIM_API_PASS', 'nb252');
-define('NEDARIM_API_URL', 'https://matara.pro/nedarimplus/online/api.aspx');
-define('PRICE_WEEK', 25);
-define('PRICE_OPENING_AD', 25);
-define('SELF_URL', 'https://ivr-kursim.onrender.com/ivr_main.php');
-define('ADMIN_PHONE', '0500000000'); // מספר טלפון מנהל - יש לעדכן
-define('ADMIN_PIN', '1234');         // קוד כניסה לפאנל ניהול - יש לעדכן
-
-define('CATEGORIES', [
-    1 => 'קורסים ושיעורי תורה',
-    2 => 'שיעורים פרטיים ולימוד לבר מצווה',
-    3 => 'סדנאות ופיתוח אישי',
-    4 => 'קייטנות וחוגים לילדים',
-    5 => 'קורסים מקצועיים',
-]);
-
-function callAPI($endpoint, $params = []) {
-    $params['token'] = API_KEY;
-    $url = BASE_URL . $endpoint . '?' . http_build_query($params);
-    $response = @file_get_contents($url);
-    return json_decode($response, true);
-}
-
-function sendSMS($phone, $message) {
-    callAPI('SendSms', ['phones' => $phone, 'message' => $message]);
-}
-
-function getActiveAds($category = null) {
-    $adsRaw = callAPI('GetVar', ['var' => 'ads_list']);
-    $ads = isset($adsRaw['value']) ? json_decode($adsRaw['value'], true) : [];
-    if (!is_array($ads)) $ads = [];
-    $now = time();
-    $active = [];
-    foreach ($ads as $ad) {
-        if ($ad['expires'] > $now) {
-            if ($category === null || $ad['category'] == $category) {
-                $active[] = $ad;
-            }
-        }
-    }
-    usort($active, function($a, $b) { return $b['created'] - $a['created']; });
-    return $active;
-}
-
-function getActiveOpeningAd() {
-    $adRaw = callAPI('GetVar', ['var' => 'opening_ad']);
-    $ad = isset($adRaw['value']) ? json_decode($adRaw['value'], true) : null;
-    if ($ad && $ad['expires'] > time()) return $ad;
-    return null;
-}
-
-function isUserRegistered($phone) {
-    $result = callAPI('GetVar', ['var' => 'user_' . $phone]);
-    return isset($result['value']) && $result['value'] !== '';
-}
-
-function registerUser($phone) {
-    $user = ['phone' => $phone, 'alerts' => [], 'registered' => time()];
-    callAPI('SetVar', ['var' => 'user_' . $phone, 'value' => json_encode($user)]);
-    addToUsersList($phone);
-}
-
-function getUser($phone) {
-    $result = callAPI('GetVar', ['var' => 'user_' . $phone]);
-    return isset($result['value']) ? json_decode($result['value'], true) : null;
-}
-
-function getTotalUsers() {
-    $result = callAPI('GetVar', ['var' => 'total_users']);
-    return isset($result['value']) ? intval($result['value']) : 0;
-}
-
-function incrementTotalUsers() {
-    $current = getTotalUsers();
-    callAPI('SetVar', ['var' => 'total_users', 'value' => $current + 1]);
-}
-
-function getUsersList() {
-    $result = callAPI('GetVar', ['var' => 'users_list']);
-    $list = isset($result['value']) ? json_decode($result['value'], true) : [];
-    return is_array($list) ? $list : [];
-}
-
-function addToUsersList($phone) {
-    $list = getUsersList();
-    if (!in_array($phone, $list)) {
-        $list[] = $phone;
-        callAPI('SetVar', ['var' => 'users_list', 'value' => json_encode($list)]);
-    }
-}
-
-function notifySubscribers($category) {
-    $phones = getUsersList();
-    foreach ($phones as $p) {
-        $user = getUser($p);
-        if (!$user) continue;
-        $alerts = $user['alerts'] ?? [];
-        if (isset($alerts[$category]) || isset($alerts[6])) {
-            $catName = CATEGORIES[$category] ?? '';
-            sendSMS($p, "פרסום חדש ב{$catName}! התקשר לקו הקורסים לפרטים.");
-        }
-    }
-}
-
-function getAllAds() {
-    $raw = callAPI('GetVar', ['var' => 'ads_list']);
-    $ads = isset($raw['value']) ? json_decode($raw['value'], true) : [];
-    return is_array($ads) ? $ads : [];
-}
-
-function deleteAd($adId) {
-    $ads = getAllAds();
-    $ads = array_values(array_filter($ads, fn($a) => $a['id'] !== $adId));
-    callAPI('SetVar', ['var' => 'ads_list', 'value' => json_encode($ads)]);
-}
-
-function stepUrl($step, $extra = []) {
-    $params = array_merge($extra, ['step' => $step]);
-    return SELF_URL . '?' . http_build_query($params);
-}
-
-function respond($ini) {
-    header('Content-Type: text/plain; charset=utf-8');
-    $out = '';
-    foreach ($ini as $key => $value) {
-        if (is_array($value)) {
-            foreach ($value as $v) {
-                $out .= $key . '=' . $v . "\n";
-            }
-        } else {
-            $out .= $key . '=' . $value . "\n";
-        }
-    }
-    echo $out;
-    exit;
-}
+require_once __DIR__ . '/lib.php';
 
 $step  = $_GET['step'] ?? 'main';
 $phone = $_GET['PhoneNumber'] ?? '';
 
 switch ($step) {
 
+    // ─────────────────────────────────────────────────────────────
+    // MAIN MENU
+    // ─────────────────────────────────────────────────────────────
     case 'main':
-        incrementTotalUsers();
-        $total = getTotalUsers();
-        $openAd = getActiveOpeningAd();
-        $messages = ['שלום וברכה! ברוכים הבאים לקו הקורסים והסדנאות.'];
-        if ($openAd) $messages[] = 't:' . $openAd['recording'];
-        $messages[] = 'סך האנשים שהשתמשו במערכת הם ' . $total . ' אנשים.';
-        $messages[] = 'לשמיעת הקורסים ושיעורים זמינים הקש 1.';
-        $messages[] = 'לפרסום קורס שיעור סדנה או קייטנה הקש 2.';
-        $messages[] = 'לכניסה לאזור האישי ורישום להתראות הקש 3.';
-        $messages[] = 'למידע על המערכת ותעריפים הקש 4.';
-        $messages[] = 'להשארת הודעה למנהל המערכת הקש 5.';
         respond([
-            'type' => 'menu',
-            'id_list_message' => $messages,
-            'id_list_1' => stepUrl('menu1'),
-            'id_list_2' => stepUrl('menu2_start'),
-            'id_list_3' => stepUrl('menu3_start'),
-            'id_list_4' => stepUrl('menu4_info'),
-            'id_list_5' => stepUrl('menu5_voicemail'),
-            'id_list_0' => stepUrl('admin_login'),
-        ]);
-        break;
-
-    case 'menu1':
-        respond([
-            'type' => 'menu',
+            'type'            => 'menu',
             'id_list_message' => [
-                'הקש 1 לקורסים ושיעורי תורה.',
-                'הקש 2 לשיעורים פרטיים כולל לימוד לבר מצווה.',
-                'הקש 3 לסדנאות ופיתוח אישי.',
-                'הקש 4 לקייטנות וחוגים לילדים.',
-                'הקש 5 לקורסים מקצועיים.',
-                'הקש 6 לכל הפרסומים ברצף.',
-                'הקש 9 לחזרה לתפריט הראשי.',
+                'שלום וברכה! ברוכים הבאים לקו דירות לשבת.',
+                'לחיפוש דירה הקש 1.',
+                'לפרסום דירה הקש 2.',
+                'לניהול הפרסום שלך הקש 3.',
+                'לסטטיסטיקות המערכת הקש 4.',
+                'לחזרה על הפקודות הקש 9.',
             ],
-            'id_list_1' => stepUrl('listen', ['cat' => 1]),
-            'id_list_2' => stepUrl('listen', ['cat' => 2]),
-            'id_list_3' => stepUrl('listen', ['cat' => 3]),
-            'id_list_4' => stepUrl('listen', ['cat' => 4]),
-            'id_list_5' => stepUrl('listen', ['cat' => 5]),
-            'id_list_6' => stepUrl('listen', ['cat' => 0]),
+            'id_list_1' => stepUrl('search_notice'),
+            'id_list_2' => stepUrl('list_notice'),
+            'id_list_3' => stepUrl('owner_check'),
+            'id_list_4' => stepUrl('stats'),
             'id_list_9' => stepUrl('main'),
         ]);
         break;
 
-    case 'listen':
-        $cat = intval($_GET['cat'] ?? 0);
-        $idx = intval($_GET['idx'] ?? 0);
-        $ads = $cat > 0 ? getActiveAds($cat) : getActiveAds();
-        $catName = $cat > 0 ? (CATEGORIES[$cat] ?? '') : 'כל הקטגוריות';
-        if (empty($ads)) {
-            respond([
-                'type' => 'menu',
-                'id_list_message' => ['אין כרגע פרסומים ב' . $catName . '. חוזרים לתפריט.'],
-                'goto' => stepUrl('menu1'),
-            ]);
-        }
-        if ($idx >= count($ads)) {
-            respond([
-                'type' => 'menu',
-                'id_list_message' => ['הגעת לסוף הפרסומים. חוזרים לתפריט.'],
-                'goto' => stepUrl('menu1'),
-            ]);
-        }
-        $ad = $ads[$idx];
-        $num = $idx + 1;
-        $total = count($ads);
+    // ─────────────────────────────────────────────────────────────
+    // PAYMENT NOTICES
+    // ─────────────────────────────────────────────────────────────
+    case 'search_notice':
         respond([
-            'type' => 'menu',
+            'type'            => 'menu',
             'id_list_message' => [
-                'פרסום מספר ' . $num . ' מתוך ' . $total . '.',
-                't:' . $ad['recording'],
-                'מספר ליצירת קשר ' . $ad['phone'] . '.',
-                'להאזנה חוזרת הקש כוכבית.',
-                'לפרסום הבא הקש 1.',
-                'להתקשרות ישירה למפרסם הקש 2.',
+                paymentMsg(),
+                'להמשיך לחיפוש הקש 1.',
                 'לחזרה לתפריט הקש 9.',
             ],
-            'id_list_1' => stepUrl('listen', ['cat' => $cat, 'idx' => $idx + 1]),
-            'id_list_2' => stepUrl('transfer', ['to' => $ad['phone'], 'cat' => $cat, 'idx' => $idx]),
-            'id_list_*' => stepUrl('listen', ['cat' => $cat, 'idx' => $idx]),
-            'id_list_9' => stepUrl('menu1'),
-        ]);
-        break;
-
-    case 'menu2_start':
-        respond([
-            'type' => 'menu',
-            'id_list_message' => [
-                'ברוכים הבאים למערכת הפרסום.',
-                'עלות פרסום 25 שקל לשבוע אחד.',
-                'אנא הקש את מספר הטלפון שלך ולחץ על סולמית.',
-            ],
-            'read_type' => 'phone',
-            'read_variable' => 'PUB_PHONE',
-            'goto' => stepUrl('menu2_category'),
-        ]);
-        break;
-
-    case 'menu2_category':
-        $pubPhone = $_GET['PUB_PHONE'] ?? $phone;
-        respond([
-            'type' => 'menu',
-            'id_list_message' => [
-                'בחר קטגוריה לפרסום.',
-                'הקש 1 לקורסים ושיעורי תורה.',
-                'הקש 2 לשיעורים פרטיים.',
-                'הקש 3 לסדנאות ופיתוח אישי.',
-                'הקש 4 לקייטנות וחוגים לילדים.',
-                'הקש 5 לקורסים מקצועיים.',
-            ],
-            'id_list_1' => stepUrl('menu2_region', ['cat' => 1, 'pub_phone' => $pubPhone]),
-            'id_list_2' => stepUrl('menu2_region', ['cat' => 2, 'pub_phone' => $pubPhone]),
-            'id_list_3' => stepUrl('menu2_region', ['cat' => 3, 'pub_phone' => $pubPhone]),
-            'id_list_4' => stepUrl('menu2_region', ['cat' => 4, 'pub_phone' => $pubPhone]),
-            'id_list_5' => stepUrl('menu2_region', ['cat' => 5, 'pub_phone' => $pubPhone]),
-        ]);
-        break;
-
-    case 'menu2_region':
-        $cat = $_GET['cat'] ?? 1;
-        $pubPhone = $_GET['pub_phone'] ?? $phone;
-        respond([
-            'type' => 'menu',
-            'id_list_message' => [
-                'בחר אזור.',
-                'הקש 1 לירושלים והסביבה.',
-                'הקש 2 למרכז.',
-                'הקש 3 לצפון.',
-                'הקש 4 לדרום.',
-            ],
-            'id_list_1' => stepUrl('menu2_duration', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => 1]),
-            'id_list_2' => stepUrl('menu2_duration', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => 2]),
-            'id_list_3' => stepUrl('menu2_duration', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => 3]),
-            'id_list_4' => stepUrl('menu2_duration', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => 4]),
-        ]);
-        break;
-
-    case 'menu2_duration':
-        $cat = $_GET['cat'] ?? 1;
-        $pubPhone = $_GET['pub_phone'] ?? $phone;
-        $region = $_GET['region'] ?? 1;
-        respond([
-            'type' => 'menu',
-            'id_list_message' => [
-                'לכמה ימים תרצה שהפרסום שלך יישמע?',
-                'הקש 1 ליום אחד.',
-                'הקש 2 ליומיים.',
-                'הקש 3 לשלושה ימים.',
-                'הקש 4 לארבעה ימים.',
-                'הקש 5 לחמישה ימים.',
-                'הקש 6 לששה ימים.',
-                'הקש 7 לשבוע שלם.',
-            ],
-            'id_list_1' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 1]),
-            'id_list_2' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 2]),
-            'id_list_3' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 3]),
-            'id_list_4' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 4]),
-            'id_list_5' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 5]),
-            'id_list_6' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 6]),
-            'id_list_7' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => 7]),
-        ]);
-        break;
-
-    case 'menu2_record':
-        $cat = $_GET['cat'] ?? 1;
-        $pubPhone = $_GET['pub_phone'] ?? $phone;
-        $region = $_GET['region'] ?? 1;
-        $days = $_GET['days'] ?? 7;
-        $recFile = 'ad_' . time() . '_' . rand(1000, 9999);
-        respond([
-            'type' => 'menu',
-            'id_list_message' => ['לאחר הצפצוף הקלט את הפרסומת שלך עד דקה וחצי. לסיום לחץ סולמית.'],
-            'record_type' => 'record',
-            'record_file' => $recFile,
-            'record_max_time' => '90',
-            'goto' => stepUrl('menu2_review', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => $days, 'rec' => $recFile]),
-        ]);
-        break;
-
-    case 'menu2_review':
-        $cat = $_GET['cat'] ?? 1;
-        $pubPhone = $_GET['pub_phone'] ?? $phone;
-        $region = $_GET['region'] ?? 1;
-        $days = $_GET['days'] ?? 7;
-        $rec = $_GET['rec'] ?? '';
-        respond([
-            'type' => 'menu',
-            'id_list_message' => [
-                'להאזנה להקלטה הקש 1.',
-                'להקליט מחדש הקש 2.',
-                'לאישור ומעבר לתשלום הקש 3.',
-            ],
-            'id_list_1' => stepUrl('play_rec', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => $days, 'rec' => $rec]),
-            'id_list_2' => stepUrl('menu2_record', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => $days]),
-            'id_list_3' => stepUrl('menu2_payment', ['cat' => $cat, 'pub_phone' => $pubPhone, 'region' => $region, 'days' => $days, 'rec' => $rec]),
-        ]);
-        break;
-
-    case 'play_rec':
-        $rec = $_GET['rec'] ?? '';
-        respond([
-            'type' => 'menu',
-            'id_list_message' => ['t:' . $rec],
-            'goto' => stepUrl('menu2_review', $_GET),
-        ]);
-        break;
-
-    case 'menu2_payment':
-        $pubPhone = $_GET['pub_phone'] ?? $phone;
-        $days = intval($_GET['days'] ?? 7);
-        $amount = round((PRICE_WEEK / 7) * $days);
-        $params = [
-            'MosadId' => NEDARIM_MOSAD_ID,
-            'ApiPassword' => NEDARIM_API_PASS,
-            'Action' => 'ChargeByPhone',
-            'Phone' => $pubPhone,
-            'Amount' => $amount,
-            'Designation' => 'פרסום קורס ' . $days . ' ימים',
-            'Currency' => '1',
-        ];
-        $url = NEDARIM_API_URL . '?' . http_build_query($params);
-        $response = @file_get_contents($url);
-        $xml = @simplexml_load_string($response);
-        $success = ($xml && (string)$xml->Status === '000');
-        if ($success) {
-            respond([
-                'type' => 'menu',
-                'id_list_message' => ['התשלום התקבל בהצלחה!'],
-                'goto' => stepUrl('menu2_success', $_GET),
-            ]);
-        } else {
-            $linkParams = array_merge($params, ['Action' => 'GetPaymentLink']);
-            $linkUrl = NEDARIM_API_URL . '?' . http_build_query($linkParams);
-            $linkResponse = @file_get_contents($linkUrl);
-            $linkXml = @simplexml_load_string($linkResponse);
-            $link = $linkXml ? (string)$linkXml->URL : '';
-            if ($link) sendSMS($pubPhone, "לתשלום פרסום הקורס ({$amount} ₪) לחץ: {$link}");
-            respond([
-                'type' => 'menu',
-                'id_list_message' => [
-                    'לא נמצא כרטיס אשראי רשום.',
-                    'נשלח אליך קישור תשלום ב SMS.',
-                    'לאחר התשלום התקשר שוב.',
-                ],
-                'goto' => stepUrl('main'),
-            ]);
-        }
-        break;
-
-    case 'menu2_success':
-        $pubPhone = $_GET['pub_phone'] ?? $phone;
-        $cat = intval($_GET['cat'] ?? 1);
-        $region = intval($_GET['region'] ?? 1);
-        $days = intval($_GET['days'] ?? 7);
-        $rec = $_GET['rec'] ?? '';
-        $adsRaw = callAPI('GetVar', ['var' => 'ads_list']);
-        $allAds = isset($adsRaw['value']) ? json_decode($adsRaw['value'], true) : [];
-        if (!is_array($allAds)) $allAds = [];
-        $adId = time() . '_' . rand(1000, 9999);
-        $allAds[] = [
-            'id' => $adId, 'phone' => $pubPhone, 'category' => $cat,
-            'region' => $region, 'recording' => $rec, 'days' => $days,
-            'created' => time(), 'expires' => time() + ($days * 86400),
-        ];
-        callAPI('SetVar', ['var' => 'ads_list', 'value' => json_encode($allAds)]);
-        $expDate = date('d/m/Y', time() + ($days * 86400));
-        sendSMS($pubPhone, "הפרסום שלך התקבל! אסמכתא: {$adId}. תוקף עד: {$expDate}.");
-        notifySubscribers($cat);
-        respond([
-            'type' => 'menu',
-            'id_list_message' => [
-                'תודה! הפרסומת שלך פורסמה בהצלחה למשך ' . $days . ' ימים.',
-                'נשלח אליך אישור ב SMS.',
-            ],
-            'goto' => stepUrl('main'),
-        ]);
-        break;
-
-    case 'menu3_start':
-        respond([
-            'type' => 'menu',
-            'id_list_message' => [
-                'ברוכים הבאים לאזור האישי.',
-                'אנא הקש את מספר הטלפון שלך ולחץ סולמית.',
-            ],
-            'read_type' => 'phone',
-            'read_variable' => 'USER_PHONE',
-            'goto' => stepUrl('menu3_check'),
-        ]);
-        break;
-
-    case 'menu3_check':
-        $userPhone = $_GET['USER_PHONE'] ?? $phone;
-        if (!isUserRegistered($userPhone)) {
-            respond([
-                'type' => 'menu',
-                'id_list_message' => [
-                    'מספר זה אינו רשום במערכת.',
-                    'להרשמה חינם הקש 1.',
-                    'חזרה לתפריט הראשי הקש 9.',
-                ],
-                'id_list_1' => stepUrl('menu3_register', ['user_phone' => $userPhone]),
-                'id_list_9' => stepUrl('main'),
-            ]);
-        } else {
-            respond(['type' => 'menu', 'goto' => stepUrl('menu3_logged_in', ['user_phone' => $userPhone])]);
-        }
-        break;
-
-    case 'menu3_register':
-        $userPhone = $_GET['user_phone'] ?? $phone;
-        registerUser($userPhone);
-        respond([
-            'type' => 'menu',
-            'id_list_message' => ['נרשמת בהצלחה! ברוך הבא.'],
-            'goto' => stepUrl('menu3_logged_in', ['user_phone' => $userPhone]),
-        ]);
-        break;
-
-    case 'menu3_logged_in':
-        $userPhone = $_GET['user_phone'] ?? $phone;
-        respond([
-            'type' => 'menu',
-            'id_list_message' => [
-                'לרישום להתראות על קורסים חדשים הקש 1.',
-                'לביטול התראות הקש 2.',
-                'לחזרה לתפריט הראשי הקש 9.',
-            ],
-            'id_list_1' => stepUrl('menu3_alerts', ['user_phone' => $userPhone]),
-            'id_list_2' => stepUrl('menu3_cancel', ['user_phone' => $userPhone]),
+            'id_list_1' => stepUrl('search_rental_type'),
             'id_list_9' => stepUrl('main'),
         ]);
         break;
 
-    case 'menu3_alerts':
-        $userPhone = $_GET['user_phone'] ?? $phone;
-        respond([
-            'type' => 'menu',
-            'id_list_message' => [
-                'בחר קטגוריה לקבלת התראות.',
-                'הקש 1 לקורסים ושיעורי תורה.',
-                'הקש 2 לשיעורים פרטיים.',
-                'הקש 3 לסדנאות ופיתוח אישי.',
-                'הקש 4 לקייטנות וחוגים לילדים.',
-                'הקש 5 לקורסים מקצועיים.',
-                'הקש 6 לכל הקטגוריות.',
-            ],
-            'id_list_1' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 1]),
-            'id_list_2' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 2]),
-            'id_list_3' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 3]),
-            'id_list_4' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 4]),
-            'id_list_5' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 5]),
-            'id_list_6' => stepUrl('menu3_save_alert', ['user_phone' => $userPhone, 'alert_cat' => 6]),
-        ]);
-        break;
-
-    case 'menu3_save_alert':
-        $userPhone = $_GET['user_phone'] ?? $phone;
-        $alertCat = intval($_GET['alert_cat'] ?? 6);
-        $user = getUser($userPhone);
-        if ($user) {
-            if ($alertCat == 6) {
-                foreach (array_keys(CATEGORIES) as $c) $user['alerts'][$c] = 1;
-            } else {
-                $user['alerts'][$alertCat] = 1;
-            }
-            callAPI('SetVar', ['var' => 'user_' . $userPhone, 'value' => json_encode($user)]);
-        }
-        $catName = $alertCat == 6 ? 'כל הקטגוריות' : (CATEGORIES[$alertCat] ?? '');
-        respond([
-            'type' => 'menu',
-            'id_list_message' => ['ההרשמה בוצעה בהצלחה! תקבל התראה כשיפורסם פריט חדש ב' . $catName . '.'],
-            'goto' => stepUrl('main'),
-        ]);
-        break;
-
-    case 'menu3_cancel':
-        $userPhone = $_GET['user_phone'] ?? $phone;
-        $user = getUser($userPhone);
-        if ($user) {
-            $user['alerts'] = [];
-            callAPI('SetVar', ['var' => 'user_' . $userPhone, 'value' => json_encode($user)]);
-        }
-        respond([
-            'type' => 'menu',
-            'id_list_message' => ['כל ההתראות שלך בוטלו בהצלחה.'],
-            'goto' => stepUrl('main'),
-        ]);
-        break;
-
-    case 'menu4_info':
-        respond([
-            'type' => 'menu',
-            'id_list_message' => [
-                'מידע על המערכת.',
-                'פרסום קורס או שיעור 25 שקל לשבוע.',
-                'פרסומת בפתיח הקו 25 שקל ל 24 שעות.',
-                'הרשמה לאזור האישי חינם.',
-                'לפרסום פרסומת בפתיח הקו הקש 1.',
-                'לחזרה לתפריט הראשי הקש 9.',
-            ],
-            'id_list_1' => stepUrl('menu4_opening_ad'),
-            'id_list_9' => stepUrl('main'),
-        ]);
-        break;
-
-    case 'menu4_opening_ad':
-        respond([
-            'type' => 'menu',
-            'id_list_message' => [
-                'פרסומת בפתיח הקו 25 שקל ל 24 שעות.',
-                'אנא הקש את מספר הטלפון שלך ולחץ סולמית.',
-            ],
-            'read_type' => 'phone',
-            'read_variable' => 'OPEN_PHONE',
-            'goto' => stepUrl('menu4_record_opening'),
-        ]);
-        break;
-
-    case 'menu4_record_opening':
-        $openPhone = $_GET['OPEN_PHONE'] ?? $phone;
-        $recFile = 'opening_' . time();
-        respond([
-            'type' => 'menu',
-            'id_list_message' => ['לאחר הצפצוף הקלט את הפרסומת עד 10 שניות. לסיום לחץ סולמית.'],
-            'record_type' => 'record',
-            'record_file' => $recFile,
-            'record_max_time' => '10',
-            'goto' => stepUrl('menu4_pay_opening', ['open_phone' => $openPhone, 'rec' => $recFile]),
-        ]);
-        break;
-
-    case 'menu4_pay_opening':
-        $openPhone = $_GET['open_phone'] ?? $phone;
-        $rec = $_GET['rec'] ?? '';
-        $params = [
-            'MosadId' => NEDARIM_MOSAD_ID,
-            'ApiPassword' => NEDARIM_API_PASS,
-            'Action' => 'ChargeByPhone',
-            'Phone' => $openPhone,
-            'Amount' => PRICE_OPENING_AD,
-            'Designation' => 'פרסומת פתיח 24 שעות',
-            'Currency' => '1',
-        ];
-        $url = NEDARIM_API_URL . '?' . http_build_query($params);
-        $response = @file_get_contents($url);
-        $xml = @simplexml_load_string($response);
-        $success = ($xml && (string)$xml->Status === '000');
-        if ($success) {
-            $ad = ['phone' => $openPhone, 'recording' => $rec, 'created' => time(), 'expires' => time() + 86400];
-            callAPI('SetVar', ['var' => 'opening_ad', 'value' => json_encode($ad)]);
-            sendSMS($openPhone, "פרסומת הפתיח שלך פעילה! תוקף: 24 שעות.");
+    case 'list_notice':
+        if (isShabbat()) {
             respond([
-                'type' => 'menu',
-                'id_list_message' => ['הפרסומת שלך תשודר מעכשיו למשך 24 שעות. תודה!'],
-                'goto' => stepUrl('main'),
-            ]);
-        } else {
-            $linkParams = array_merge($params, ['Action' => 'GetPaymentLink']);
-            $linkUrl = NEDARIM_API_URL . '?' . http_build_query($linkParams);
-            $linkResponse = @file_get_contents($linkUrl);
-            $linkXml = @simplexml_load_string($linkResponse);
-            $link = $linkXml ? (string)$linkXml->URL : '';
-            if ($link) sendSMS($openPhone, "לתשלום פרסומת הפתיח (" . PRICE_OPENING_AD . " ₪) לחץ: {$link}");
-            respond([
-                'type' => 'menu',
+                'type'            => 'menu',
                 'id_list_message' => [
-                    'לא נמצא כרטיס אשראי רשום.',
-                    'נשלח אליך קישור תשלום ב SMS.',
-                    'לאחר התשלום התקשר שוב.',
+                    'מערכת הפרסום סגורה בשבת.',
+                    'ניתן לפרסם דירות בימות החול בלבד.',
                 ],
                 'goto' => stepUrl('main'),
             ]);
         }
-        break;
-
-    case 'menu5_voicemail':
-        $recFile = 'admin_msg_' . time() . '_' . rand(1000, 9999);
         respond([
-            'type' => 'menu',
-            'id_list_message' => ['אנא השאר הודעה לאחר הצפצוף. לסיום לחץ סולמית.'],
-            'record_type' => 'record',
-            'record_file' => $recFile,
-            'record_max_time' => '120',
-            'goto' => stepUrl('menu5_notify', ['rec' => $recFile, 'caller' => $phone]),
-        ]);
-        break;
-
-    case 'menu5_notify':
-        $rec = $_GET['rec'] ?? '';
-        $caller = $_GET['caller'] ?? '';
-        $callerInfo = $caller ? " ממתקשר: {$caller}" : '';
-        sendSMS(ADMIN_PHONE, "הודעה חדשה למנהל{$callerInfo}. קובץ: {$rec}");
-        respond([
-            'type' => 'menu',
-            'id_list_message' => ['תודה! ההודעה שלך נשלחה למנהל המערכת.'],
-            'goto' => stepUrl('main'),
-        ]);
-        break;
-
-    case 'transfer':
-        $to = $_GET['to'] ?? '';
-        respond([
-            'type' => 'menu',
-            'id_list_message' => ['מעביר אותך למפרסם. שיחה טובה!'],
-            'transfer' => $to,
-        ]);
-        break;
-
-    // ===== פאנל ניהול =====
-
-    case 'admin_login':
-        respond([
-            'type' => 'menu',
-            'id_list_message' => ['כניסה לפאנל ניהול. הקש את קוד הניהול ולחץ סולמית.'],
-            'read_type' => 'phone',
-            'read_variable' => 'ADMIN_CODE',
-            'goto' => stepUrl('admin_verify'),
-        ]);
-        break;
-
-    case 'admin_verify':
-        $code = $_GET['ADMIN_CODE'] ?? '';
-        if ($code !== ADMIN_PIN) {
-            respond([
-                'type' => 'menu',
-                'id_list_message' => ['קוד שגוי. חוזרים לתפריט הראשי.'],
-                'goto' => stepUrl('main'),
-            ]);
-        }
-        respond(['type' => 'menu', 'goto' => stepUrl('admin_menu')]);
-        break;
-
-    case 'admin_menu':
-        $allAds = getAllAds();
-        $now = time();
-        $activeAds = array_values(array_filter($allAds, fn($a) => $a['expires'] > $now));
-        $total = count($activeAds);
-        respond([
-            'type' => 'menu',
+            'type'            => 'menu',
             'id_list_message' => [
-                'פאנל ניהול.',
-                'יש כרגע ' . $total . ' מודעות פעילות.',
-                'להאזנה ומחיקת מודעות הקש 1.',
-                'לניהול מודעת פתיח הקש 2.',
-                'לחזרה לתפריט הראשי הקש 9.',
+                paymentMsg(),
+                'להמשיך לפרסום הקש 1.',
+                'לחזרה לתפריט הקש 9.',
             ],
-            'id_list_1' => stepUrl('admin_ads', ['idx' => 0]),
-            'id_list_2' => stepUrl('admin_opening'),
+            'id_list_1' => stepUrl('list_rental_type'),
             'id_list_9' => stepUrl('main'),
         ]);
         break;
 
-    case 'admin_ads':
-        $idx = intval($_GET['idx'] ?? 0);
-        $allAds = getAllAds();
-        $now = time();
-        $activeAds = array_values(array_filter($allAds, fn($a) => $a['expires'] > $now));
-        if (empty($activeAds)) {
-            respond([
-                'type' => 'menu',
-                'id_list_message' => ['אין מודעות פעילות כרגע.'],
-                'goto' => stepUrl('admin_menu'),
-            ]);
-        }
-        if ($idx >= count($activeAds)) {
-            respond([
-                'type' => 'menu',
-                'id_list_message' => ['הגעת לסוף המודעות.'],
-                'goto' => stepUrl('admin_menu'),
-            ]);
-        }
-        $ad = $activeAds[$idx];
-        $num = $idx + 1;
-        $total = count($activeAds);
-        $catName = CATEGORIES[$ad['category']] ?? 'לא ידוע';
-        $expDate = date('d/m/Y', $ad['expires']);
+    // ================================================================
+    //  LISTING FLOW
+    // ================================================================
+
+    case 'list_rental_type':
         respond([
-            'type' => 'menu',
+            'type'            => 'menu',
             'id_list_message' => [
-                'מודעה ' . $num . ' מתוך ' . $total . '.',
-                'קטגוריה: ' . $catName . '.',
-                'טלפון מפרסם: ' . $ad['phone'] . '.',
-                'תוקף: ' . $expDate . '.',
-                't:' . $ad['recording'],
-                'למודעה הבאה הקש 1.',
-                'למחיקת מודעה זו הקש 5.',
-                'חזרה לתפריט ניהול הקש 9.',
+                'שאלה 1 – זמן השכרה.',
+                'הקש 1 לשבת בלבד.',
+                'הקש 2 לשבת החל מיום חמישי.',
+                'הקש 3 לכל השבוע.',
             ],
-            'id_list_1' => stepUrl('admin_ads', ['idx' => $idx + 1]),
-            'id_list_5' => stepUrl('admin_delete', ['ad_id' => $ad['id'], 'idx' => $idx]),
-            'id_list_9' => stepUrl('admin_menu'),
+            'id_list_1' => stepUrl('list_city', ['rt' => 1, 'pg' => 1]),
+            'id_list_2' => stepUrl('list_city', ['rt' => 2, 'pg' => 1]),
+            'id_list_3' => stepUrl('list_city', ['rt' => 3, 'pg' => 1]),
         ]);
         break;
 
-    case 'admin_delete':
-        $adId = $_GET['ad_id'] ?? '';
-        $idx = intval($_GET['idx'] ?? 0);
+    case 'list_city': {
+        $rt         = $_GET['rt'] ?? 1;
+        $page       = max(1, intval($_GET['pg'] ?? 1));
+        $totalPages = totalCityPages();
+        $cities     = citiesForPage($page);
+
+        $msgs = ['שאלה 2 – בחר עיר.' . ($totalPages > 1 ? ' עמוד ' . $page . ' מתוך ' . $totalPages . '.' : '')];
+        $res  = ['type' => 'menu'];
+
+        foreach ($cities as $key => $city) {
+            $msgs[] = 'הקש ' . $key . ' ל' . $city['name'] . '.';
+            $res['id_list_' . $key] = stepUrl('list_neighborhood', ['rt' => $rt, 'ci' => $city['id']]);
+        }
+
+        if ($page < $totalPages) {
+            $msgs[]          = 'לערים נוספות הקש כוכבית.';
+            $res['id_list_*'] = stepUrl('list_city', ['rt' => $rt, 'pg' => $page + 1]);
+        }
+        if ($page > 1) {
+            $msgs[]          = 'לעמוד הקודם הקש סולמית.';
+            $res['id_list_#'] = stepUrl('list_city', ['rt' => $rt, 'pg' => $page - 1]);
+        }
+
+        $res['id_list_message'] = $msgs;
+        respond($res);
+        break;
+    }
+
+    case 'list_neighborhood': {
+        $rt  = $_GET['rt'] ?? 1;
+        $ci  = intval($_GET['ci'] ?? 1);
+        $nhs = NEIGHBORHOODS[$ci] ?? [];
+        if (empty($nhs)) {
+            respond(['type' => 'menu', 'goto' => stepUrl('list_street_ask', ['rt' => $rt, 'ci' => $ci, 'nh' => 0])]);
+        }
+        $msgs = ['שאלה 3 – בחר שכונה.'];
+        $res  = ['type' => 'menu'];
+        foreach ($nhs as $nid => $nname) {
+            $msgs[] = 'הקש ' . $nid . ' ל' . $nname . '.';
+            $res['id_list_' . $nid] = stepUrl('list_street_ask', ['rt' => $rt, 'ci' => $ci, 'nh' => $nid]);
+        }
+        $res['id_list_message'] = $msgs;
+        respond($res);
+        break;
+    }
+
+    case 'list_street_ask': {
+        $p = ['rt' => $_GET['rt'] ?? 1, 'ci' => $_GET['ci'] ?? 1, 'nh' => $_GET['nh'] ?? 0];
         respond([
-            'type' => 'menu',
+            'type'            => 'menu',
             'id_list_message' => [
-                'האם למחוק מודעה זו?',
-                'לאישור מחיקה הקש 1.',
+                'שאלה 4 – האם תרצה להוסיף שם רחוב?',
+                'הקש 1 להקלטת שם הרחוב.',
+                'הקש 2 לדילוג.',
+            ],
+            'id_list_1' => stepUrl('list_street_record', $p),
+            'id_list_2' => stepUrl('list_apt_type', array_merge($p, ['sr' => ''])),
+        ]);
+        break;
+    }
+
+    case 'list_street_record': {
+        $p      = ['rt' => $_GET['rt'] ?? 1, 'ci' => $_GET['ci'] ?? 1, 'nh' => $_GET['nh'] ?? 0];
+        $recFile = 'str_' . time() . '_' . rand(100, 999);
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => ['לאחר הצפצוף הקלט את שם הרחוב ולחץ סולמית.'],
+            'record_type'     => 'record',
+            'record_file'     => $recFile,
+            'record_max_time' => '8',
+            'goto'            => stepUrl('list_apt_type', array_merge($p, ['sr' => $recFile])),
+        ]);
+        break;
+    }
+
+    case 'list_apt_type': {
+        $p = ['rt' => $_GET['rt'] ?? 1, 'ci' => $_GET['ci'] ?? 1, 'nh' => $_GET['nh'] ?? 0, 'sr' => $_GET['sr'] ?? ''];
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => [
+                'שאלה 5 – סוג הדירה.',
+                'הקש 1 לדירה רגילה.',
+                'הקש 2 לדירה חדשה.',
+                'הקש 3 לדירה משופצת.',
+                'הקש 4 לדירת אירוח.',
+                'הקש 5 לצימר.',
+                'הקש 6 לדירה במושב.',
+                'הקש 7 לדירה לחג הקרוב.',
+                'הקש 8 לדירה לבין הזמנים.',
+            ],
+            'id_list_1' => stepUrl('list_beds', array_merge($p, ['at' => 1])),
+            'id_list_2' => stepUrl('list_beds', array_merge($p, ['at' => 2])),
+            'id_list_3' => stepUrl('list_beds', array_merge($p, ['at' => 3])),
+            'id_list_4' => stepUrl('list_beds', array_merge($p, ['at' => 4])),
+            'id_list_5' => stepUrl('list_beds', array_merge($p, ['at' => 5])),
+            'id_list_6' => stepUrl('list_beds', array_merge($p, ['at' => 6])),
+            'id_list_7' => stepUrl('list_beds', array_merge($p, ['at' => 7])),
+            'id_list_8' => stepUrl('list_beds', array_merge($p, ['at' => 8])),
+        ]);
+        break;
+    }
+
+    case 'list_beds': {
+        $p = [
+            'rt' => $_GET['rt'] ?? 1, 'ci' => $_GET['ci'] ?? 1,
+            'nh' => $_GET['nh'] ?? 0, 'sr' => $_GET['sr'] ?? '',
+            'at' => $_GET['at'] ?? 1,
+        ];
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => ['שאלה 6 – הקלד מספר מיטות כולל מזרנים ולחץ סולמית.'],
+            'read_type'       => 'dtmf',
+            'read_max_digits' => '2',
+            'read_variable'   => 'BEDS',
+            'goto'            => stepUrl('list_bedrooms', $p),
+        ]);
+        break;
+    }
+
+    case 'list_bedrooms': {
+        $p = [
+            'rt'   => $_GET['rt']   ?? 1, 'ci' => $_GET['ci'] ?? 1,
+            'nh'   => $_GET['nh']   ?? 0, 'sr' => $_GET['sr'] ?? '',
+            'at'   => $_GET['at']   ?? 1, 'BEDS' => $_GET['BEDS'] ?? 0,
+        ];
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => ['שאלה 7 – הקלד מספר חדרי שינה. לסטודיו הקש 0. ולחץ סולמית.'],
+            'read_type'       => 'dtmf',
+            'read_max_digits' => '2',
+            'read_variable'   => 'ROOMS',
+            'goto'            => stepUrl('list_price', $p),
+        ]);
+        break;
+    }
+
+    case 'list_price': {
+        $p = [
+            'rt'    => $_GET['rt']    ?? 1, 'ci'   => $_GET['ci']   ?? 1,
+            'nh'    => $_GET['nh']    ?? 0, 'sr'   => $_GET['sr']   ?? '',
+            'at'    => $_GET['at']    ?? 1, 'BEDS' => $_GET['BEDS'] ?? 0,
+            'ROOMS' => $_GET['ROOMS'] ?? 0,
+        ];
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => ['שאלה 8 – הקלד מחיר ללילה בשקלים ולחץ סולמית. לדילוג הקש 0 ולחץ סולמית.'],
+            'read_type'       => 'dtmf',
+            'read_max_digits' => '5',
+            'read_variable'   => 'PRICE',
+            'goto'            => stepUrl('list_confirm', $p),
+        ]);
+        break;
+    }
+
+    case 'list_confirm': {
+        $rt    = intval($_GET['rt']    ?? 1);
+        $ci    = intval($_GET['ci']    ?? 1);
+        $nh    = intval($_GET['nh']    ?? 0);
+        $at    = intval($_GET['at']    ?? 1);
+        $beds  = intval($_GET['BEDS']  ?? 0);
+        $rooms = intval($_GET['ROOMS'] ?? 0);
+        $price = intval($_GET['PRICE'] ?? 0);
+
+        $nhTxt    = $nh > 0  ? nhName($ci, $nh) : 'לא צוין';
+        $roomsTxt = $rooms === 0 ? 'סטודיו' : $rooms . ' חדרי שינה';
+        $priceTxt = $price > 0  ? $price . ' שקל ללילה' : 'מחיר לא צוין';
+
+        $p = ['rt' => $rt, 'ci' => $ci, 'nh' => $nh, 'sr' => $_GET['sr'] ?? '',
+              'at' => $at, 'BEDS' => $beds, 'ROOMS' => $rooms, 'PRICE' => $price];
+
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => [
+                'סיכום הדירה שלך.',
+                'עיר: ' . cityName($ci) . '.',
+                'שכונה: ' . $nhTxt . '.',
+                'סוג דירה: ' . aptTypeName($at) . '.',
+                'מספר מיטות: ' . $beds . '.',
+                $roomsTxt . '.',
+                $priceTxt . '.',
+                'זמן השכרה: ' . rentalName($rt) . '.',
+                'לאישור ושמירה הקש 1.',
                 'לביטול הקש 9.',
             ],
-            'id_list_1' => stepUrl('admin_delete_confirm', ['ad_id' => $adId, 'idx' => $idx]),
-            'id_list_9' => stepUrl('admin_ads', ['idx' => $idx]),
+            'id_list_1' => stepUrl('list_save', $p),
+            'id_list_9' => stepUrl('main'),
         ]);
         break;
+    }
 
-    case 'admin_delete_confirm':
-        $adId = $_GET['ad_id'] ?? '';
-        $idx = intval($_GET['idx'] ?? 0);
-        deleteAd($adId);
+    case 'list_save': {
+        $rt    = intval($_GET['rt']    ?? 1);
+        $ci    = intval($_GET['ci']    ?? 1);
+        $nh    = intval($_GET['nh']    ?? 0);
+        $sr    = $_GET['sr']           ?? '';
+        $at    = intval($_GET['at']    ?? 1);
+        $beds  = intval($_GET['BEDS']  ?? 0);
+        $rooms = intval($_GET['ROOMS'] ?? 0);
+        $price = intval($_GET['PRICE'] ?? 0);
+
+        $apts = getApts();
+        $now  = time();
+        $id   = $now . '_' . rand(1000, 9999);
+
+        $apts[] = [
+            'id'           => $id,
+            'owner_phone'  => $phone,
+            'rental_type'  => $rt,
+            'city'         => $ci,
+            'neighborhood' => $nh,
+            'street_rec'   => $sr,
+            'apt_type'     => $at,
+            'beds'         => $beds,
+            'bedrooms'     => $rooms,
+            'price'        => $price,
+            'created'      => $now,
+            'expires'      => nextShabbatEnd(),
+        ];
+        saveApts($apts);
+
+        $loc = cityName($ci) . ($nh > 0 ? ', ' . nhName($ci, $nh) : '');
+        sendSMS($phone, "דירתך ב{$loc} פורסמה! מזהה: {$id}. הפרסום יסתיים בצאת השבת.");
+
         respond([
-            'type' => 'menu',
-            'id_list_message' => ['המודעה נמחקה בהצלחה.'],
-            'goto' => stepUrl('admin_ads', ['idx' => max(0, $idx - 1)]),
+            'type'            => 'menu',
+            'id_list_message' => ['הדירה פורסמה בהצלחה! הפרסום פעיל עד צאת השבת. נשלח אישור ב SMS.'],
+            'goto'            => stepUrl('main'),
+        ]);
+        break;
+    }
+
+    // ================================================================
+    //  SEARCH FLOW
+    // ================================================================
+
+    case 'search_rental_type':
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => [
+                'סנן לפי זמן השכרה.',
+                'הקש 0 לכל הדירות.',
+                'הקש 1 לשבת בלבד.',
+                'הקש 2 לשבת החל מיום חמישי.',
+                'הקש 3 לכל השבוע.',
+            ],
+            'id_list_0' => stepUrl('search_city', ['fr' => 0, 'pg' => 1]),
+            'id_list_1' => stepUrl('search_city', ['fr' => 1, 'pg' => 1]),
+            'id_list_2' => stepUrl('search_city', ['fr' => 2, 'pg' => 1]),
+            'id_list_3' => stepUrl('search_city', ['fr' => 3, 'pg' => 1]),
         ]);
         break;
 
-    case 'admin_opening':
-        $openAd = getActiveOpeningAd();
-        if ($openAd) {
-            $expDate = date('d/m H:i', $openAd['expires']);
+    case 'search_city': {
+        $fr         = $_GET['fr'] ?? 0;
+        $page       = max(1, intval($_GET['pg'] ?? 1));
+        $totalPages = totalCityPages();
+        $cities     = citiesForPage($page);
+
+        $msgs = ['סנן לפי עיר.' . ($totalPages > 1 ? ' עמוד ' . $page . ' מתוך ' . $totalPages . '.' : '') . ' הקש 0 לכל הערים.'];
+        $res  = ['type' => 'menu'];
+
+        $res['id_list_0'] = stepUrl('search_apt_type', ['fr' => $fr, 'fc' => 0, 'fn' => 0]);
+
+        foreach ($cities as $key => $city) {
+            $msgs[] = 'הקש ' . $key . ' ל' . $city['name'] . '.';
+            $res['id_list_' . $key] = stepUrl('search_neighborhood', ['fr' => $fr, 'fc' => $city['id']]);
+        }
+
+        if ($page < $totalPages) {
+            $msgs[]           = 'לערים נוספות הקש כוכבית.';
+            $res['id_list_*'] = stepUrl('search_city', ['fr' => $fr, 'pg' => $page + 1]);
+        }
+        if ($page > 1) {
+            $msgs[]           = 'לעמוד הקודם הקש סולמית.';
+            $res['id_list_#'] = stepUrl('search_city', ['fr' => $fr, 'pg' => $page - 1]);
+        }
+
+        $res['id_list_message'] = $msgs;
+        respond($res);
+        break;
+    }
+
+    case 'search_neighborhood': {
+        $fr  = $_GET['fr'] ?? 0;
+        $fc  = intval($_GET['fc'] ?? 0);
+        $nhs = $fc > 0 ? (NEIGHBORHOODS[$fc] ?? []) : [];
+        if (empty($nhs)) {
+            respond(['type' => 'menu', 'goto' => stepUrl('search_apt_type', ['fr' => $fr, 'fc' => $fc, 'fn' => 0])]);
+        }
+        $msgs = ['סנן לפי שכונה. הקש 0 לכל השכונות.'];
+        $res  = ['type' => 'menu'];
+        $res['id_list_0'] = stepUrl('search_apt_type', ['fr' => $fr, 'fc' => $fc, 'fn' => 0]);
+        foreach ($nhs as $nid => $nname) {
+            $msgs[] = 'הקש ' . $nid . ' ל' . $nname . '.';
+            $res['id_list_' . $nid] = stepUrl('search_apt_type', ['fr' => $fr, 'fc' => $fc, 'fn' => $nid]);
+        }
+        $res['id_list_message'] = $msgs;
+        respond($res);
+        break;
+    }
+
+    case 'search_apt_type': {
+        $p = ['fr' => $_GET['fr'] ?? 0, 'fc' => $_GET['fc'] ?? 0, 'fn' => $_GET['fn'] ?? 0];
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => [
+                'סנן לפי סוג דירה.',
+                'הקש 0 לכל הסוגים.',
+                'הקש 1 לדירה רגילה.',
+                'הקש 2 לדירה חדשה.',
+                'הקש 3 לדירה משופצת.',
+                'הקש 4 לדירת אירוח.',
+                'הקש 5 לצימר.',
+                'הקש 6 לדירה במושב.',
+                'הקש 7 לדירה לחג הקרוב.',
+                'הקש 8 לדירה לבין הזמנים.',
+            ],
+            'id_list_0' => stepUrl('search_beds', array_merge($p, ['fa' => 0])),
+            'id_list_1' => stepUrl('search_beds', array_merge($p, ['fa' => 1])),
+            'id_list_2' => stepUrl('search_beds', array_merge($p, ['fa' => 2])),
+            'id_list_3' => stepUrl('search_beds', array_merge($p, ['fa' => 3])),
+            'id_list_4' => stepUrl('search_beds', array_merge($p, ['fa' => 4])),
+            'id_list_5' => stepUrl('search_beds', array_merge($p, ['fa' => 5])),
+            'id_list_6' => stepUrl('search_beds', array_merge($p, ['fa' => 6])),
+            'id_list_7' => stepUrl('search_beds', array_merge($p, ['fa' => 7])),
+            'id_list_8' => stepUrl('search_beds', array_merge($p, ['fa' => 8])),
+        ]);
+        break;
+    }
+
+    case 'search_beds': {
+        $p = ['fr' => $_GET['fr'] ?? 0, 'fc' => $_GET['fc'] ?? 0, 'fn' => $_GET['fn'] ?? 0, 'fa' => $_GET['fa'] ?? 0];
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => ['הקלד מספר מיטות מינימום ולחץ סולמית. לדילוג הקש 0 ולחץ סולמית.'],
+            'read_type'       => 'dtmf',
+            'read_max_digits' => '2',
+            'read_variable'   => 'FB',
+            'goto'            => stepUrl('search_bedrooms', $p),
+        ]);
+        break;
+    }
+
+    case 'search_bedrooms': {
+        $p = ['fr' => $_GET['fr'] ?? 0, 'fc' => $_GET['fc'] ?? 0, 'fn' => $_GET['fn'] ?? 0, 'fa' => $_GET['fa'] ?? 0, 'FB' => $_GET['FB'] ?? 0];
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => ['הקלד מספר חדרי שינה מינימום ולחץ סולמית. לדילוג הקש 0 ולחץ סולמית.'],
+            'read_type'       => 'dtmf',
+            'read_max_digits' => '2',
+            'read_variable'   => 'FBR',
+            'goto'            => stepUrl('search_price', $p),
+        ]);
+        break;
+    }
+
+    case 'search_price': {
+        $p = ['fr' => $_GET['fr'] ?? 0, 'fc' => $_GET['fc'] ?? 0, 'fn' => $_GET['fn'] ?? 0,
+              'fa' => $_GET['fa'] ?? 0, 'FB' => $_GET['FB'] ?? 0, 'FBR' => $_GET['FBR'] ?? 0];
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => ['הקלד מחיר מקסימום ללילה בשקלים ולחץ סולמית. לדילוג הקש 0 ולחץ סולמית.'],
+            'read_type'       => 'dtmf',
+            'read_max_digits' => '5',
+            'read_variable'   => 'FP',
+            'goto'            => stepUrl('search_results', array_merge($p, ['idx' => 0])),
+        ]);
+        break;
+    }
+
+    case 'search_results': {
+        $fr  = intval($_GET['fr']  ?? 0);
+        $fc  = intval($_GET['fc']  ?? 0);
+        $fn  = intval($_GET['fn']  ?? 0);
+        $fa  = intval($_GET['fa']  ?? 0);
+        $fb  = intval($_GET['FB']  ?? 0);
+        $fbr = intval($_GET['FBR'] ?? 0);
+        $fp  = intval($_GET['FP']  ?? 0);
+        $idx = intval($_GET['idx'] ?? 0);
+
+        $results = filterApts(getApts(), [
+            'rental_type'  => $fr, 'city'         => $fc,
+            'neighborhood' => $fn, 'apt_type'      => $fa,
+            'beds_min'     => $fb, 'bedrooms_min'  => $fbr, 'price_max' => $fp,
+        ]);
+        $total   = count($results);
+
+        $fP = ['fr' => $fr, 'fc' => $fc, 'fn' => $fn, 'fa' => $fa,
+               'FB' => $fb, 'FBR' => $fbr, 'FP' => $fp];
+
+        if ($total === 0) {
             respond([
-                'type' => 'menu',
-                'id_list_message' => [
-                    'מודעת פתיח פעילה עד: ' . $expDate . '.',
-                    'טלפון מפרסם: ' . $openAd['phone'] . '.',
-                    't:' . $openAd['recording'],
-                    'למחיקת מודעת הפתיח הקש 5.',
-                    'לחזרה הקש 9.',
-                ],
-                'id_list_5' => stepUrl('admin_delete_opening'),
-                'id_list_9' => stepUrl('admin_menu'),
-            ]);
-        } else {
-            respond([
-                'type' => 'menu',
-                'id_list_message' => ['אין מודעת פתיח פעילה כרגע.'],
-                'goto' => stepUrl('admin_menu'),
+                'type'            => 'menu',
+                'id_list_message' => ['לא נמצאו דירות התואמות את הסינון שלך.', 'לחיפוש חדש הקש 1.', 'לתפריט הראשי הקש 9.'],
+                'id_list_1' => stepUrl('search_notice'),
+                'id_list_9' => stepUrl('main'),
             ]);
         }
-        break;
 
-    case 'admin_delete_opening':
-        callAPI('SetVar', ['var' => 'opening_ad', 'value' => '']);
+        if ($idx >= $total) {
+            respond([
+                'type'            => 'menu',
+                'id_list_message' => ['הגעת לסוף הרשימה.', 'לחיפוש חדש הקש 1.', 'לתפריט הראשי הקש 9.'],
+                'id_list_1' => stepUrl('search_notice'),
+                'id_list_9' => stepUrl('main'),
+            ]);
+        }
+
+        $apt      = $results[$idx];
+        $loc      = locationStr($apt);
+        $priceTxt = $apt['price'] > 0 ? $apt['price'] . ' שקל ללילה' : 'מחיר לא צוין';
+        $roomsTxt = $apt['bedrooms'] == 0 ? 'סטודיו' : $apt['bedrooms'] . ' חדרי שינה';
+
+        $nextP = array_merge($fP, ['idx' => $idx + 1]);
+        $prevP = array_merge($fP, ['idx' => max(0, $idx - 1)]);
+        $curP  = array_merge($fP, ['idx' => $idx]);
+
+        $msgs = [
+            'דירה ' . ($idx + 1) . ' מתוך ' . $total . '.',
+            'מיקום: ' . $loc . '.',
+            'סוג: ' . aptTypeName($apt['apt_type']) . '.',
+            'מיטות: ' . $apt['beds'] . '.',
+            $roomsTxt . '.',
+            $priceTxt . '.',
+            'זמן השכרה: ' . rentalName($apt['rental_type']) . '.',
+        ];
+
+        if (!empty($apt['street_rec'])) {
+            $msgs[] = 'רחוב: ';
+            $msgs[] = 't:' . $apt['street_rec'];
+        }
+
+        $msgs[] = 'לדירה הבאה הקש 1.';
+        if ($idx > 0) $msgs[] = 'לדירה הקודמת הקש 2.';
+        $msgs[] = 'לפרטי קשר עם בעל הדירה הקש 3.';
+        $msgs[] = 'לתפריט הראשי הקש 9.';
+
+        $res = [
+            'type'            => 'menu',
+            'id_list_message' => $msgs,
+            'id_list_1'       => stepUrl('search_results', $nextP),
+            'id_list_3'       => stepUrl('search_contact', array_merge($curP, ['own' => $apt['owner_phone']])),
+            'id_list_9'       => stepUrl('main'),
+        ];
+        if ($idx > 0) $res['id_list_2'] = stepUrl('search_results', $prevP);
+
+        respond($res);
+        break;
+    }
+
+    case 'search_contact': {
+        $ownerPhone = $_GET['own'] ?? '';
+        $fP = ['fr'  => $_GET['fr']  ?? 0, 'fc'  => $_GET['fc']  ?? 0,
+               'fn'  => $_GET['fn']  ?? 0, 'fa'  => $_GET['fa']  ?? 0,
+               'FB'  => $_GET['FB']  ?? 0, 'FBR' => $_GET['FBR'] ?? 0,
+               'FP'  => $_GET['FP']  ?? 0, 'idx' => $_GET['idx'] ?? 0];
         respond([
-            'type' => 'menu',
-            'id_list_message' => ['מודעת הפתיח נמחקה.'],
-            'goto' => stepUrl('admin_menu'),
+            'type'            => 'menu',
+            'id_list_message' => [
+                paymentMsg(),
+                'מספר הטלפון של בעל הדירה הוא ' . $ownerPhone . '.',
+                'לחזרה לרשימה הקש 1.',
+                'לתפריט הראשי הקש 9.',
+            ],
+            'id_list_1' => stepUrl('search_results', $fP),
+            'id_list_9' => stepUrl('main'),
         ]);
         break;
+    }
 
+    // ================================================================
+    //  OWNER MANAGEMENT
+    // ================================================================
+
+    case 'owner_check': {
+        if (isShabbat()) {
+            respond([
+                'type'            => 'menu',
+                'id_list_message' => [
+                    'ניהול הפרסום אינו זמין בשבת.',
+                    'ניתן לעדכן את הפרסום בימות החול בלבד.',
+                ],
+                'goto' => stepUrl('main'),
+            ]);
+        }
+        $apts   = getApts();
+        $myApts = array_values(array_filter($apts, fn($a) => $a['owner_phone'] === $phone));
+
+        if (empty($myApts)) {
+            respond([
+                'type'            => 'menu',
+                'id_list_message' => ['לא נמצא פרסום פעיל במספר טלפון זה.', 'לפרסום דירה חדשה הקש 1.', 'לתפריט הראשי הקש 9.'],
+                'id_list_1' => stepUrl('list_notice'),
+                'id_list_9' => stepUrl('main'),
+            ]);
+        }
+
+        $apt      = $myApts[count($myApts) - 1];
+        $count    = count($myApts);
+        $priceTxt = $apt['price'] > 0 ? $apt['price'] . ' שקל ללילה' : 'מחיר לא צוין';
+        $roomsTxt = $apt['bedrooms'] == 0 ? 'סטודיו' : $apt['bedrooms'] . ' חדרי שינה';
+
+        $msgs = array_values(array_filter([
+            'ניהול הפרסום שלך.',
+            $count > 1 ? 'יש לך ' . $count . ' פרסומים פעילים. מציג את האחרון.' : '',
+            'מיקום: ' . locationStr($apt) . '.',
+            'סוג: ' . aptTypeName($apt['apt_type']) . '.',
+            'מיטות: ' . $apt['beds'] . '.', $roomsTxt . '.', $priceTxt . '.',
+            'זמן השכרה: ' . rentalName($apt['rental_type']) . '.',
+            'לעדכון מחיר הקש 1.',
+            'למחיקת הפרסום הקש 2.',
+            'לתפריט הראשי הקש 9.',
+        ]));
+
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => $msgs,
+            'id_list_1'       => stepUrl('owner_update_price', ['aid' => $apt['id']]),
+            'id_list_2'       => stepUrl('owner_delete_confirm', ['aid' => $apt['id']]),
+            'id_list_9'       => stepUrl('main'),
+        ]);
+        break;
+    }
+
+    case 'owner_update_price': {
+        $aid = $_GET['aid'] ?? '';
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => ['הקלד מחיר חדש ללילה בשקלים ולחץ סולמית. לדילוג הקש 0 ולחץ סולמית.'],
+            'read_type'       => 'dtmf',
+            'read_max_digits' => '5',
+            'read_variable'   => 'NEWPRICE',
+            'goto'            => stepUrl('owner_update_price_save', ['aid' => $aid]),
+        ]);
+        break;
+    }
+
+    case 'owner_update_price_save': {
+        $aid      = $_GET['aid']           ?? '';
+        $newPrice = intval($_GET['NEWPRICE'] ?? 0);
+        $apts     = getApts();
+        foreach ($apts as &$a) {
+            if ($a['id'] === $aid && $a['owner_phone'] === $phone) {
+                $a['price'] = $newPrice;
+                break;
+            }
+        }
+        unset($a);
+        saveApts($apts);
+        $priceTxt = $newPrice > 0 ? $newPrice . ' שקל ללילה' : 'ללא מחיר מצוין';
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => ['המחיר עודכן בהצלחה ל' . $priceTxt . '.'],
+            'goto'            => stepUrl('main'),
+        ]);
+        break;
+    }
+
+    case 'owner_delete_confirm': {
+        $aid = $_GET['aid'] ?? '';
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => ['האם אתה בטוח שברצונך למחוק את הפרסום?', 'לאישור מחיקה הקש 1.', 'לביטול הקש 9.'],
+            'id_list_1' => stepUrl('owner_delete', ['aid' => $aid]),
+            'id_list_9' => stepUrl('owner_check'),
+        ]);
+        break;
+    }
+
+    case 'owner_delete': {
+        $aid  = $_GET['aid'] ?? '';
+        $apts = getApts();
+        $apts = array_values(array_filter($apts, fn($a) => !($a['id'] === $aid && $a['owner_phone'] === $phone)));
+        saveApts($apts);
+        sendSMS($phone, "הפרסום שלך הוסר מקו דירות לשבת.");
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => ['הפרסום הוסר בהצלחה. נשלח אישור ב SMS.'],
+            'goto'            => stepUrl('main'),
+        ]);
+        break;
+    }
+
+    // ================================================================
+    //  STATISTICS
+    // ================================================================
+
+    case 'stats': {
+        $apts  = getApts();
+        $total = count($apts);
+
+        if ($total === 0) {
+            respond([
+                'type'            => 'menu',
+                'id_list_message' => ['אין כרגע דירות פעילות במערכת.', 'לתפריט הראשי הקש 9.'],
+                'id_list_9' => stepUrl('main'),
+            ]);
+        }
+
+        $cityCounts = $typeCounts = [];
+        $prices     = [];
+        foreach ($apts as $a) {
+            $cn = cityName($a['city']);
+            $cityCounts[$cn] = ($cityCounts[$cn] ?? 0) + 1;
+            $tn = aptTypeName($a['apt_type']);
+            $typeCounts[$tn] = ($typeCounts[$tn] ?? 0) + 1;
+            if ($a['price'] > 0) $prices[] = $a['price'];
+        }
+        arsort($cityCounts);
+        arsort($typeCounts);
+
+        $msgs = ['סטטיסטיקות המערכת.', 'סך הכל ' . $total . ' דירות פעילות.'];
+
+        foreach (array_slice($cityCounts, 0, 3, true) as $city => $cnt) {
+            $msgs[] = $city . ': ' . $cnt . ($cnt === 1 ? ' דירה' : ' דירות') . '.';
+        }
+
+        if (!empty($typeCounts)) {
+            $msgs[] = 'הסוג הנפוץ ביותר: ' . array_key_first($typeCounts) . '.';
+        }
+
+        if (!empty($prices)) {
+            $msgs[] = 'מחיר ממוצע: ' . round(array_sum($prices) / count($prices)) . ' שקל ללילה.';
+            $msgs[] = 'טווח מחירים: ' . min($prices) . ' עד ' . max($prices) . ' שקל.';
+        }
+
+        $msgs[] = 'לתפריט הראשי הקש 9.';
+
+        respond([
+            'type'            => 'menu',
+            'id_list_message' => $msgs,
+            'id_list_9'       => stepUrl('main'),
+        ]);
+        break;
+    }
+
+    // ─────────────────────────────────────────────────────────────
     default:
         respond(['type' => 'menu', 'goto' => stepUrl('main')]);
         break;

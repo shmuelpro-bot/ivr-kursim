@@ -1,0 +1,13 @@
+# Environment – never commit real credentials
+.env
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
