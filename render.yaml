@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: ivr-kursim
+    runtime: docker
+    branch: main
+    autoDeploy: true
+    envVars:
+      - key: CALL2ALL_TOKEN
+        sync: false          # יש להזין ידנית בממשק render
+      - key: IVR_SELF_URL
+        value: https://ivr-kursim.onrender.com/ivr_main.php
+      - key: ADMIN_PASSWORD
+        sync: false          # יש להזין ידנית בממשק render
+      - key: CRON_SECRET
+        generateValue: true  # render יצור ערך אקראי אוטומטית
+
+  - type: cron
+    name: ivr-kursim-weekly-cleanup
+    runtime: docker
+    branch: main
+    schedule: "0 19 * * 6"   # שבת 21:00 שעון ישראל (UTC+2/UTC+3)
+    dockerCommand: >
+      php /var/www/html/cron.php
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: ivr-kursim
+          type: web
+          envVarKey: CRON_SECRET
