@@ -63,6 +63,20 @@ if (isset($_SESSION['admin'])) {
         exit;
     }
 
+    // Broadcast SMS to all active owners
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['broadcast_sms'])) {
+        $message = trim($_POST['sms_message'] ?? '');
+        if ($message) {
+            $phones = array_unique(array_column(getActiveApts(), 'owner_phone'));
+            foreach ($phones as $p) {
+                sendSMS($p, $message);
+            }
+            $_SESSION['flash'] = 'SMS נשלח בהצלחה ל-' . count($phones) . ' בעלי דירות.';
+        }
+        header('Location: admin.php');
+        exit;
+    }
+
     if (isset($_SESSION['flash'])) {
         $flash = $_SESSION['flash'];
         unset($_SESSION['flash']);
@@ -156,6 +170,11 @@ if ($filterType) $displayApts = array_values(array_filter($displayApts, fn($a) =
 <nav class="navbar navbar-dark bg-dark px-3 py-2 mb-4">
   <span class="navbar-brand">🏠 ניהול קו דירות לשבת</span>
   <div class="d-flex align-items-center gap-2">
+    <?php if (isShabbat()): ?>
+      <span class="badge bg-warning text-dark px-3 py-2">🕯️ שבת – מערכת בקריאה בלבד</span>
+    <?php else: ?>
+      <span class="badge bg-success px-3 py-2">✅ חול – מערכת פעילה</span>
+    <?php endif; ?>
     <form method="post" class="d-inline">
       <button name="cleanup" class="btn btn-sm btn-warning">ניקוי ידני</button>
     </form>
@@ -246,6 +265,27 @@ if ($filterType) $displayApts = array_values(array_filter($displayApts, fn($a) =
         <?php endforeach; ?>
       </div>
     </div>
+  </div>
+
+  <!-- ── Broadcast SMS ── -->
+  <div class="card mb-4 p-3">
+    <h6 class="fw-bold mb-3">📢 שליחת SMS לכל בעלי הדירות הפעילים</h6>
+    <?php if (empty($active)): ?>
+      <p class="text-muted mb-0">אין דירות פעילות כרגע.</p>
+    <?php else: ?>
+    <?php $uniqueOwners = count(array_unique(array_column($active, 'owner_phone'))); ?>
+    <form method="post" onsubmit="return confirm('לשלוח SMS ל-<?= $uniqueOwners ?> בעלי דירות?')">
+      <div class="mb-2">
+        <textarea name="sms_message" id="sms-text" class="form-control" rows="3"
+          maxlength="160" placeholder="הקלד את תוכן ה-SMS (עד 160 תווים)..." required></textarea>
+        <div class="d-flex justify-content-between mt-1">
+          <small class="text-muted">יישלח אל <?= $uniqueOwners ?> מספרים</small>
+          <small id="sms-counter" class="text-muted">0 / 160</small>
+        </div>
+      </div>
+      <button name="broadcast_sms" class="btn btn-primary btn-sm">שלח SMS</button>
+    </form>
+    <?php endif; ?>
   </div>
 
   <!-- ── Filter bar ── -->
@@ -367,6 +407,15 @@ if ($filterType) $displayApts = array_values(array_filter($displayApts, fn($a) =
       row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
     });
   });
+
+  const smsText = document.getElementById('sms-text');
+  const smsCounter = document.getElementById('sms-counter');
+  if (smsText && smsCounter) {
+    smsText.addEventListener('input', () => {
+      smsCounter.textContent = smsText.value.length + ' / 160';
+      smsCounter.className = smsText.value.length > 140 ? 'text-warning' : 'text-muted';
+    });
+  }
 </script>
 
 <?php endif; ?>

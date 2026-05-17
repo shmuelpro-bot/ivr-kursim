@@ -566,6 +566,16 @@ switch ($step) {
     // ================================================================
 
     case 'owner_check': {
+        if (isShabbat()) {
+            respond([
+                'type'            => 'menu',
+                'id_list_message' => [
+                    'ניהול הפרסום אינו זמין בשבת.',
+                    'ניתן לעדכן את הפרסום בימות החול בלבד.',
+                ],
+                'goto' => stepUrl('main'),
+            ]);
+        }
         $apts   = getApts();
         $myApts = array_values(array_filter($apts, fn($a) => $a['owner_phone'] === $phone));
 
