@@ -3,96 +3,16 @@
  * לוח ניהול – מערכת IVR דירות לשבת
  */
 
-define('ADMIN_PASS', getenv('ADMIN_PASSWORD') ?: 'Shabbat@2024!');
-define('API_KEY',    '0772519703_78098632');
-define('BASE_URL',   'https://www.call2all.co.il/ym/api/');
-
-define('RENTAL_TYPES', [
-    1 => 'שבת בלבד',
-    2 => 'שבת מחמישי',
-    3 => 'כל השבוע',
-]);
-
-define('APT_TYPES', [
-    1 => 'דירה רגילה',
-    2 => 'דירה חדשה',
-    3 => 'דירה משופצת',
-    4 => 'דירת אירוח',
-    5 => 'צימר',
-    6 => 'דירה במושב',
-    7 => 'דירה לחג הקרוב',
-    8 => 'דירה לבין הזמנים',
-]);
-
-define('CITIES', [
-    1 => 'ירושלים',
-    2 => 'בני ברק',
-    3 => 'אלעד',
-    4 => 'מודיעין עילית',
-    5 => 'ביתר עילית',
-    6 => 'בית שמש',
-    7 => 'צפת',
-    8 => 'אשדוד',
-    9 => 'נתניה',
-]);
-
-define('NEIGHBORHOODS', [
-    1 => [1=>'מאה שערים', 2=>'גאולה', 3=>'קרית מטרסדורף', 4=>'רמות', 5=>'הר נוף', 6=>'בית וגן', 7=>'קרית יובל', 8=>'פסגת זאב'],
-    2 => [1=>'מרכז', 2=>'קרית הרצוג', 3=>'קרית ויזניץ', 4=>'זכרון מאיר', 5=>'פארק נווה גן'],
-    3 => [1=>'מרכז', 2=>'שכונה א', 3=>'שכונה ב'],
-    4 => [1=>'קרית ספר', 2=>'מתתיהו', 3=>'חשמונאים'],
-    5 => [1=>'מרכז', 2=>'שכונה א', 3=>'שכונה ב'],
-    6 => [1=>'רמת בית שמש א', 2=>'רמת בית שמש ב', 3=>'רמת בית שמש ג', 4=>'מרכז העיר'],
-    7 => [1=>'מרכז', 2=>'קרית חב"ד', 3=>'שכונת צאנז'],
-    8 => [1=>'מרכז', 2=>'שכונה יא', 3=>'שכונה יב', 4=>'שכונה ז'],
-    9 => [1=>'מרכז', 2=>'קרית נורדאו', 3=>'עיר ימים'],
-]);
-
-// ──────────────────────────────────────────────
-// Helpers
-// ──────────────────────────────────────────────
-
-function callAPI(string $ep, array $p = []): ?array {
-    $p['token'] = API_KEY;
-    $r = @file_get_contents(BASE_URL . $ep . '?' . http_build_query($p));
-    return ($r !== false) ? json_decode($r, true) : null;
-}
-
-function getApts(): array {
-    $raw  = callAPI('GetVar', ['var' => 'apts_list']);
-    $apts = (isset($raw['value']) && $raw['value'] !== '') ? json_decode($raw['value'], true) : [];
-    if (!is_array($apts)) $apts = [];
-    return array_values($apts); // admin shows ALL, including expired
-}
+require_once __DIR__ . '/lib.php';
 
 function getActiveApts(): array {
     $now = time();
-    return array_values(array_filter(getApts(), fn($a) => ($a['expires'] ?? 0) > $now));
-}
-
-function saveApts(array $apts): void {
-    callAPI('SetVar', ['var' => 'apts_list', 'value' => json_encode(array_values($apts))]);
-}
-
-function cityName(int $id): string     { return CITIES[$id]                     ?? 'לא ידוע'; }
-function aptTypeName(int $id): string  { return APT_TYPES[$id]                  ?? 'לא ידוע'; }
-function rentalName(int $id): string   { return RENTAL_TYPES[$id]               ?? 'לא ידוע'; }
-function nhName(int $c, int $n): string { return NEIGHBORHOODS[$c][$n] ?? ''; }
-
-function locationStr(array $a): string {
-    $s = cityName($a['city']);
-    if (!empty($a['neighborhood'])) {
-        $nh = nhName($a['city'], $a['neighborhood']);
-        if ($nh) $s .= ' / ' . $nh;
-    }
-    return $s;
+    return array_values(array_filter(getAllApts(), fn($a) => ($a['expires'] ?? 0) > $now));
 }
 
 function isExpired(array $a): bool { return ($a['expires'] ?? 0) <= time(); }
 
-// ──────────────────────────────────────────────
-// Session & Auth
-// ──────────────────────────────────────────────
+// ── Session & Auth ─────────────────────────────────────────────
 
 session_start();
 
@@ -112,26 +32,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SESSION['admin'])) {
     $loginError = 'סיסמה שגויה. נסה שוב.';
 }
 
-// ──────────────────────────────────────────────
-// Actions (require login)
-// ──────────────────────────────────────────────
+// ── Actions (require login) ────────────────────────────────────
 
 $flash = '';
 
 if (isset($_SESSION['admin'])) {
 
-    // Delete single listing
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['delete_id'])) {
-        $did  = $_POST['delete_id'];
-        $all  = getApts();
-        $all  = array_values(array_filter($all, fn($a) => $a['id'] !== $did));
+        $did = $_POST['delete_id'];
+        $all = array_values(array_filter(getAllApts(), fn($a) => $a['id'] !== $did));
         saveApts($all);
         $_SESSION['flash'] = 'הדירה נמחקה בהצלחה.';
         header('Location: admin.php');
         exit;
     }
 
-    // Cleanup expired
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cleanup'])) {
         $active = getActiveApts();
         saveApts($active);
@@ -140,7 +55,6 @@ if (isset($_SESSION['admin'])) {
         exit;
     }
 
-    // Delete all expired
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_all_expired'])) {
         $active = getActiveApts();
         saveApts($active);
@@ -155,12 +69,10 @@ if (isset($_SESSION['admin'])) {
     }
 }
 
-// ──────────────────────────────────────────────
-// Data for dashboard
-// ──────────────────────────────────────────────
+// ── Data for dashboard ─────────────────────────────────────────
 
 $loggedIn = isset($_SESSION['admin']);
-$allApts  = $loggedIn ? getApts() : [];
+$allApts  = $loggedIn ? getAllApts() : [];
 $active   = array_values(array_filter($allApts, fn($a) => !isExpired($a)));
 $expired  = array_values(array_filter($allApts, fn($a) =>  isExpired($a)));
 $total    = count($active);
@@ -169,9 +81,9 @@ $cityCounts = $typeCounts = $rentCounts = [];
 $prices = [];
 
 foreach ($active as $a) {
-    $cityCounts[$a['city']]       = ($cityCounts[$a['city']]       ?? 0) + 1;
-    $typeCounts[$a['apt_type']]   = ($typeCounts[$a['apt_type']]   ?? 0) + 1;
-    $rentCounts[$a['rental_type']]= ($rentCounts[$a['rental_type']]?? 0) + 1;
+    $cityCounts[$a['city']]        = ($cityCounts[$a['city']]        ?? 0) + 1;
+    $typeCounts[$a['apt_type']]    = ($typeCounts[$a['apt_type']]    ?? 0) + 1;
+    $rentCounts[$a['rental_type']] = ($rentCounts[$a['rental_type']] ?? 0) + 1;
     if ($a['price'] > 0) $prices[] = $a['price'];
 }
 
@@ -183,8 +95,8 @@ $minPrice = !empty($prices) ? min($prices) : 0;
 $maxPrice = !empty($prices) ? max($prices) : 0;
 
 // Filter
-$filterCity = isset($_GET['city']) ? intval($_GET['city']) : 0;
-$filterType = isset($_GET['type']) ? intval($_GET['type']) : 0;
+$filterCity  = isset($_GET['city']) ? intval($_GET['city']) : 0;
+$filterType  = isset($_GET['type']) ? intval($_GET['type']) : 0;
 $showExpired = isset($_GET['show_expired']);
 
 $displayApts = $showExpired ? $allApts : $active;
@@ -296,7 +208,7 @@ if ($filterType) $displayApts = array_values(array_filter($displayApts, fn($a) =
     </div>
   </div>
 
-  <!-- ── Charts row ── -->
+  <!-- ── Charts ── -->
   <div class="row g-3 mb-4">
     <div class="col-md-5">
       <div class="card p-3 h-100">
@@ -306,7 +218,7 @@ if ($filterType) $displayApts = array_values(array_filter($displayApts, fn($a) =
         <?php else: $maxC = max($cityCounts); foreach ($cityCounts as $cid => $cnt): ?>
           <div class="d-flex align-items-center gap-2 mb-2">
             <div style="width:110px;font-size:.85rem"><?= htmlspecialchars(cityName($cid)) ?></div>
-            <div class="bar flex-grow-1" style="width:<?= round($cnt/$maxC*100) ?>%"></div>
+            <div class="bar flex-grow-1" style="width:<?= round($cnt / $maxC * 100) ?>%"></div>
             <span class="badge bg-primary badge-sm"><?= $cnt ?></span>
           </div>
         <?php endforeach; endif; ?>
@@ -400,17 +312,17 @@ if ($filterType) $displayApts = array_values(array_filter($displayApts, fn($a) =
             <tr><td colspan="10" class="text-center text-muted py-5">אין דירות להצגה</td></tr>
           <?php endif; ?>
           <?php foreach ($displayApts as $i => $a):
-            $exp       = isExpired($a);
-            $rowClass  = $exp ? 'expired-row' : '';
-            $expTime   = date('d/m/Y H:i', $a['expires']);
-            $pubTime   = date('d/m/Y', $a['created'] ?? 0);
-            $urgent    = !$exp && ($a['expires'] - time() < 3600);
+            $exp      = isExpired($a);
+            $rowClass = $exp ? 'expired-row' : '';
+            $expTime  = date('d/m/Y H:i', $a['expires']);
+            $pubTime  = date('d/m/Y', $a['created'] ?? 0);
+            $urgent   = !$exp && ($a['expires'] - time() < 3600);
           ?>
           <tr class="<?= $rowClass ?>">
             <td class="text-muted small"><?= $i + 1 ?></td>
             <td><strong><?= htmlspecialchars(locationStr($a)) ?></strong></td>
             <td>
-              <span class="badge bg-<?= in_array($a['apt_type'], [7,8]) ? 'warning text-dark' : 'secondary' ?> badge-sm">
+              <span class="badge bg-<?= in_array($a['apt_type'], [7, 8]) ? 'warning text-dark' : 'secondary' ?> badge-sm">
                 <?= htmlspecialchars(aptTypeName($a['apt_type'])) ?>
               </span>
             </td>
@@ -445,7 +357,7 @@ if ($filterType) $displayApts = array_values(array_filter($displayApts, fn($a) =
     </div>
   </div>
 
-</div><!-- /container -->
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
