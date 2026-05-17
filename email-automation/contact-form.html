@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מאגרים - צור קשר</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      direction: rtl;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ---- HEADER ---- */
+    header {
+      width: 100%;
+      background: linear-gradient(135deg, #0f2460 0%, #1a3a8f 60%, #0f2460 100%);
+      padding: 28px 20px 32px;
+      text-align: center;
+    }
+
+    .logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-icon {
+      width: 68px; height: 68px;
+      background: rgba(0,114,255,0.18);
+      border: 1.5px solid rgba(0,198,255,0.45);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px; font-weight: 900; color: #fff;
+    }
+
+    .logo-divider {
+      width: 5px; height: 64px;
+      background: linear-gradient(to bottom, #00c6ff, #0072ff);
+      border-radius: 3px;
+    }
+
+    .logo-text h1 {
+      font-size: 36px; font-weight: 900; color: #fff; letter-spacing: -1px; line-height: 1.1;
+    }
+
+    .logo-text p {
+      font-size: 13px; color: #7eb8f7; margin-top: 4px;
+    }
+
+    header .accent-line {
+      width: 70px; height: 3px;
+      background: linear-gradient(to left, #00c6ff, #0072ff);
+      border-radius: 2px;
+      margin: 18px auto 0;
+    }
+
+    /* ---- MAIN CARD ---- */
+    main {
+      width: 100%;
+      max-width: 660px;
+      padding: 24px 16px 48px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(15,36,96,0.12);
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: linear-gradient(90deg, #f5f8ff 0%, #e8eeff 100%);
+      border-bottom: 2px solid #e0e8ff;
+      padding: 22px 32px;
+    }
+
+    .card-header h2 {
+      font-size: 20px; font-weight: 800; color: #0f2460; margin-bottom: 4px;
+    }
+
+    .card-header p {
+      font-size: 14px; color: #555; line-height: 1.6;
+    }
+
+    .card-body {
+      padding: 32px 32px 28px;
+    }
+
+    /* ---- FORM ELEMENTS ---- */
+    .field-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .field.full { margin-bottom: 18px; }
+
+    label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    label .req { color: #0072ff; margin-right: 2px; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #d0daf0;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      direction: rtl;
+      color: #1a1a2e;
+      background: #f9fbff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: #0072ff;
+      box-shadow: 0 0 0 3px rgba(0,114,255,0.1);
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    /* ---- SERVICES CHECKBOXES ---- */
+    .section-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .service-check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      background: #f5f8ff;
+      border: 1.5px solid #d0daf0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      user-select: none;
+    }
+
+    .service-check:hover {
+      border-color: #0072ff;
+      background: #eef3ff;
+    }
+
+    .service-check input[type="checkbox"] {
+      width: 18px; height: 18px;
+      accent-color: #0072ff;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .service-check .svc-icon { font-size: 18px; }
+    .service-check .svc-name { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+
+    /* ---- BUDGET SELECT ---- */
+    select option { direction: rtl; }
+
+    /* ---- SUBMIT BUTTON ---- */
+    .submit-btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #0072ff, #00c6ff);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 800;
+      font-family: inherit;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 18px rgba(0,114,255,0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+      margin-top: 8px;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0,114,255,0.45);
+    }
+
+    .submit-btn:active { transform: translateY(0); }
+
+    /* ---- SUCCESS MESSAGE ---- */
+    #success-msg {
+      display: none;
+      text-align: center;
+      padding: 48px 24px;
+    }
+
+    #success-msg .check-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+
+    #success-msg h3 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f2460;
+      margin-bottom: 8px;
+    }
+
+    #success-msg p {
+      font-size: 15px;
+      color: #555;
+      line-height: 1.7;
+    }
+
+    /* ---- FOOTER ---- */
+    footer {
+      width: 100%;
+      max-width: 660px;
+      text-align: center;
+      padding: 16px;
+      font-size: 12px;
+      color: #8899bb;
+    }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 520px) {
+      .field-group { grid-template-columns: 1fr; }
+      .services-grid { grid-template-columns: 1fr; }
+      .card-body { padding: 22px 18px; }
+      .card-header { padding: 18px 18px; }
+      .logo-text h1 { font-size: 28px; }
+      .logo-icon { width: 54px; height: 54px; font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-wrap">
+      <div class="logo-icon">מ</div>
+      <div class="logo-divider"></div>
+      <div class="logo-text">
+        <h1>מאגרים</h1>
+        <p>פתרונות דיגיטל מתקדמים</p>
+      </div>
+    </div>
+    <div class="accent-line"></div>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="card-header">
+        <h2>📝 ספר לנו על הצורך שלך</h2>
+        <p>מלא את הפרטים הבאים ואנחנו נחזור אליך עם הצעה מותאמת אישית תוך 24 שעות.</p>
+      </div>
+
+      <div class="card-body">
+        <form id="contact-form" novalidate>
+
+          <!-- Name + Email -->
+          <div class="field-group">
+            <div class="field">
+              <label for="name">שם מלא <span class="req">*</span></label>
+              <input type="text" id="name" name="name" placeholder="ישראל ישראלי" required>
+            </div>
+            <div class="field">
+              <label for="email">כתובת מייל <span class="req">*</span></label>
+              <input type="email" id="email" name="email" placeholder="email@example.com" required>
+            </div>
+          </div>
+
+          <!-- Phone + Company -->
+          <div class="field-group">
+            <div class="field">
+              <label for="phone">טלפון</label>
+              <input type="tel" id="phone" name="phone" placeholder="050-0000000">
+            </div>
+            <div class="field">
+              <label for="company">שם עסק / חברה</label>
+              <input type="text" id="company" name="company" placeholder="שם העסק שלך">
+            </div>
+          </div>
+
+          <!-- Services -->
+          <div class="field full">
+            <span class="section-label">אילו שירותים מעניינים אותך? <span class="req">*</span></span>
+            <div class="services-grid">
+              <label class="service-check">
+                <input type="checkbox" name="services" value="אתר אינטרנט">
+                <span class="svc-icon">🌐</span>
+                <span class="svc-name">בניית אתר אינטרנט</span>
+              </label>
+              <label class="service-check">
+                <input type="checkbox" name="services" value="דף נחיתה">
+                <span class="svc-icon">🚀</span>
+                <span class="svc-name">דף נחיתה</span>
+              </label>
+              <label class="service-check">
+                <input type="checkbox" name="services" value="אוטומציות">
+                <span class="svc-icon">⚡</span>
+                <span class="svc-name">אוטומציות עסקיות</span>
+              </label>
+              <label class="service-check">
+                <input type="checkbox" name="services" value="מערכת טלפונית">
+                <span class="svc-icon">📞</span>
+                <span class="svc-name">מערכת טלפונית (IVR)</span>
+              </label>
+              <label class="service-check">
+                <input type="checkbox" name="services" value="גרפיקה ועיצוב">
+                <span class="svc-icon">🎨</span>
+                <span class="svc-name">גרפיקה ועיצוב</span>
+              </label>
+              <label class="service-check">
+                <input type="checkbox" name="services" value="תרשימים ומצגות">
+                <span class="svc-icon">📊</span>
+                <span class="svc-name">תרשימים ומצגות</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Budget -->
+          <div class="field full">
+            <label for="budget">תקציב משוער</label>
+            <select id="budget" name="budget">
+              <option value="" disabled selected>בחר טווח תקציב</option>
+              <option value="עד 500 ₪">עד 500 ₪</option>
+              <option value="500–1,500 ₪">500 – 1,500 ₪</option>
+              <option value="1,500–5,000 ₪">1,500 – 5,000 ₪</option>
+              <option value="5,000–15,000 ₪">5,000 – 15,000 ₪</option>
+              <option value="מעל 15,000 ₪">מעל 15,000 ₪</option>
+              <option value="לא בטוח">לא בטוח עדיין</option>
+            </select>
+          </div>
+
+          <!-- Message -->
+          <div class="field full">
+            <label for="message">תיאור הצורך שלך <span class="req">*</span></label>
+            <textarea id="message" name="message" placeholder="ספר לנו בקצרה מה אתה צריך, מה המטרה ומה לוח הזמנים..." required></textarea>
+          </div>
+
+          <button type="submit" class="submit-btn">📤 שלח פנייה</button>
+        </form>
+
+        <!-- Success state -->
+        <div id="success-msg">
+          <div class="check-icon">✅</div>
+          <h3>הפנייה נשלחה בהצלחה!</h3>
+          <p>תודה רבה! קיבלנו את הפנייה שלך.<br>נחזור אליך תוך 24 שעות עם הצעה מותאמת אישית.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      © 2026 מאגרים | פתרונות דיגיטל מתקדמים &nbsp;·&nbsp;
+      <a href="mailto:hhyym189@gmail.com" style="color:#0072ff;text-decoration:none;">hhyym189@gmail.com</a>
+    </footer>
+  </main>
+
+  <script>
+    const WEBHOOK_URL = 'https://hook.eu2.make.com/4qeuily48y9tnhoe4ep62fumne7ceayp';
+
+    document.getElementById('contact-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const form = e.target;
+      const name    = form.name.value.trim();
+      const email   = form.email.value.trim();
+      const message = form.message.value.trim();
+
+      const services = [...form.querySelectorAll('input[name="services"]:checked')]
+        .map(cb => cb.value);
+
+      if (!name || !email || !message || services.length === 0) {
+        alert('אנא מלא את כל השדות המסומנים בכוכבית ובחר לפחות שירות אחד.');
+        return;
+      }
+
+      const btn = form.querySelector('.submit-btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ שולח...';
+
+      const payload = {
+        name,
+        email,
+        phone:    form.phone.value.trim(),
+        company:  form.company.value.trim(),
+        services: services.join(', '),
+        budget:   form.budget.value,
+        message
+      };
+
+      try {
+        await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (_) {
+        /* silent fail — show success anyway so UX is not blocked */
+      }
+
+      form.style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+    });
+  </script>
+
+</body>
+</html>
