@@ -1,15 +1,17 @@
 <?php
 /**
- * lib.php – קוד משותף: מערכת IVR דירות לשבת
- * יש להכניס קובץ זה לפני כל קוד אחר.
+ * lib.php – קוד משותף: מערכת IVR דירות לשבת (Twilio)
  */
 
-// ── Configuration (env vars override defaults) ─────────────────
-define('API_KEY',    getenv('CALL2ALL_TOKEN')  ?: '0772519703_78098632');
-define('BASE_URL',   'https://www.call2all.co.il/ym/api/');
-define('SELF_URL',   getenv('IVR_SELF_URL')    ?: 'https://ivr-kursim.onrender.com/ivr_main.php');
-define('ADMIN_PASS', getenv('ADMIN_PASSWORD')  ?: 'Shabbat@2024!');
-define('CRON_SECRET',getenv('CRON_SECRET')     ?: 'cron_change_me');
+// ── Configuration ──────────────────────────────────────────────
+define('TWILIO_SID',   getenv('TWILIO_ACCOUNT_SID')        ?: '');
+define('TWILIO_TOKEN', getenv('TWILIO_AUTH_TOKEN')          ?: '');
+define('TWILIO_FROM',  getenv('TWILIO_PHONE_NUMBER')        ?: '');
+define('SELF_URL',     getenv('IVR_SELF_URL')               ?: 'https://ivr-kursim-shabat.onrender.com/ivr_main.php');
+define('ADMIN_PASS',   getenv('ADMIN_PASSWORD')             ?: 'Shabbat@2024!');
+define('CRON_SECRET',  getenv('CRON_SECRET')                ?: 'cron_change_me');
+define('REDIS_URL',    rtrim(getenv('UPSTASH_REDIS_REST_URL')   ?: '', '/'));
+define('REDIS_TOKEN',  getenv('UPSTASH_REDIS_REST_TOKEN')   ?: '');
 
 // ── Lookup tables ──────────────────────────────────────────────
 
@@ -30,7 +32,6 @@ define('APT_TYPES', [
     8 => 'דירה לבין הזמנים',
 ]);
 
-// 18 ערים, 9 בכל עמוד IVR
 define('CITIES', [
     1  => 'ירושלים',
     2  => 'בני ברק',
@@ -75,36 +76,104 @@ define('NEIGHBORHOODS', [
     18 => [1=>'מרכז', 2=>'שכונה ב'],
 ]);
 
-// ── API ────────────────────────────────────────────────────────
+// ── Upstash Redis ──────────────────────────────────────────────
 
-function callAPI(string $ep, array $p = []): ?array {
-    $p['token'] = API_KEY;
-    $r = @file_get_contents(BASE_URL . $ep . '?' . http_build_query($p));
-    return ($r !== false) ? json_decode($r, true) : null;
+function redisExec(array $cmd): mixed {
+    if (!REDIS_URL || !REDIS_TOKEN) return null;
+    $ctx = stream_context_create(['http' => [
+        'method'  => 'POST',
+        'header'  => "Authorization: Bearer " . REDIS_TOKEN . "\r\nContent-Type: application/json",
+        'content' => json_encode([$cmd]),
+    ]]);
+    $r = @file_get_contents(REDIS_URL . '/pipeline', false, $ctx);
+    if (!$r) return null;
+    $d = json_decode($r, true);
+    return $d[0]['result'] ?? null;
 }
+
+function getAllApts(): array {
+    $raw  = redisExec(['GET', 'apts_list']);
+    $apts = ($raw !== null && $raw !== '') ? json_decode($raw, true) : [];
+    return is_array($apts) ? $apts : [];
+}
+
+function getApts(): array {
+    $now = time();
+    return array_values(array_filter(getAllApts(), fn($a) => ($a['expires'] ?? 0) > $now));
+}
+
+function saveApts(array $apts): void {
+    redisExec(['SET', 'apts_list', json_encode(array_values($apts))]);
+}
+
+function filterApts(array $apts, array $f): array {
+    return array_values(array_filter($apts, function (array $a) use ($f): bool {
+        if (!empty($f['rental_type'])  && $f['rental_type']  != $a['rental_type'])                 return false;
+        if (!empty($f['city'])         && $f['city']         != $a['city'])                         return false;
+        if (!empty($f['neighborhood']) && $f['neighborhood'] != $a['neighborhood'])                 return false;
+        if (!empty($f['apt_type'])     && $f['apt_type']     != $a['apt_type'])                     return false;
+        if (!empty($f['beds_min'])     && $a['beds']         <  (int)$f['beds_min'])                return false;
+        if (!empty($f['bedrooms_min']) && $a['bedrooms']     <  (int)$f['bedrooms_min'])            return false;
+        if (!empty($f['price_max'])    && $a['price'] > 0    && $a['price'] > (int)$f['price_max']) return false;
+        return true;
+    }));
+}
+
+// ── Twilio SMS ─────────────────────────────────────────────────
 
 function sendSMS(string $phone, string $msg): void {
-    callAPI('SendSms', ['phones' => $phone, 'message' => $msg]);
+    if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_FROM) return;
+    $url = 'https://api.twilio.com/2010-04-01/Accounts/' . TWILIO_SID . '/Messages.json';
+    $ctx = stream_context_create(['http' => [
+        'method'  => 'POST',
+        'header'  => "Authorization: Basic " . base64_encode(TWILIO_SID . ':' . TWILIO_TOKEN)
+                   . "\r\nContent-Type: application/x-www-form-urlencoded",
+        'content' => http_build_query(['From' => TWILIO_FROM, 'To' => $phone, 'Body' => $msg]),
+    ]]);
+    @file_get_contents($url, false, $ctx);
 }
 
-// ── IVR helpers ────────────────────────────────────────────────
+// ── TwiML helpers ──────────────────────────────────────────────
 
 function stepUrl(string $step, array $extra = []): string {
     return SELF_URL . '?' . http_build_query(array_merge(['step' => $step], $extra));
 }
 
-function respond(array $ini): void {
-    header('Content-Type: text/plain; charset=utf-8');
-    $out = '';
-    foreach ($ini as $key => $value) {
-        if (is_array($value)) {
-            foreach ($value as $v) $out .= $key . '=' . $v . "\n";
-        } else {
-            $out .= $key . '=' . $value . "\n";
-        }
-    }
-    echo $out;
+function respond(string $twiml): void {
+    header('Content-Type: text/xml; charset=utf-8');
+    echo '<?xml version="1.0" encoding="UTF-8"?><Response>' . $twiml . '</Response>';
     exit;
+}
+
+function xe(string $s): string {
+    return htmlspecialchars($s, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+}
+
+function say(string ...$lines): string {
+    return implode('', array_map(
+        fn($l) => '<Say language="he-IL">' . xe($l) . '</Say>',
+        $lines
+    ));
+}
+
+function redir(string $url): string {
+    return '<Redirect method="GET">' . xe($url) . '</Redirect>';
+}
+
+// Single-digit menu
+function menu(string $action, array $lines): string {
+    $says = implode('', array_map(fn($l) => '<Say language="he-IL">' . xe($l) . '</Say>', $lines));
+    return '<Gather numDigits="1" action="' . xe($action) . '" method="GET" timeout="10">'
+         . $says . '</Gather>'
+         . '<Redirect method="GET">' . xe($action) . '</Redirect>';
+}
+
+// Multi-digit numeric input, finish with #
+function numInput(string $action, string $prompt): string {
+    return '<Gather finishOnKey="#" action="' . xe($action) . '" method="GET" timeout="15">'
+         . '<Say language="he-IL">' . xe($prompt) . '</Say>'
+         . '</Gather>'
+         . '<Redirect method="GET">' . xe($action) . '</Redirect>';
 }
 
 // ── Shabbat ────────────────────────────────────────────────────
@@ -130,36 +199,6 @@ function nextShabbatEnd(): int {
     return $end->getTimestamp();
 }
 
-// ── Data store ─────────────────────────────────────────────────
-
-function getAllApts(): array {
-    $raw  = callAPI('GetVar', ['var' => 'apts_list']);
-    $apts = (isset($raw['value']) && $raw['value'] !== '') ? json_decode($raw['value'], true) : [];
-    return is_array($apts) ? $apts : [];
-}
-
-function getApts(): array {
-    $now = time();
-    return array_values(array_filter(getAllApts(), fn($a) => ($a['expires'] ?? 0) > $now));
-}
-
-function saveApts(array $apts): void {
-    callAPI('SetVar', ['var' => 'apts_list', 'value' => json_encode(array_values($apts))]);
-}
-
-function filterApts(array $apts, array $f): array {
-    return array_values(array_filter($apts, function (array $a) use ($f): bool {
-        if (!empty($f['rental_type'])  && $f['rental_type']  != $a['rental_type'])                    return false;
-        if (!empty($f['city'])         && $f['city']         != $a['city'])                            return false;
-        if (!empty($f['neighborhood']) && $f['neighborhood'] != $a['neighborhood'])                    return false;
-        if (!empty($f['apt_type'])     && $f['apt_type']     != $a['apt_type'])                        return false;
-        if (!empty($f['beds_min'])     && $a['beds']         <  (int)$f['beds_min'])                   return false;
-        if (!empty($f['bedrooms_min']) && $a['bedrooms']     <  (int)$f['bedrooms_min'])               return false;
-        if (!empty($f['price_max'])    && $a['price'] > 0    && $a['price'] > (int)$f['price_max'])    return false;
-        return true;
-    }));
-}
-
 // ── Lookups ────────────────────────────────────────────────────
 
 function cityName(int $id): string      { return CITIES[$id]           ?? ''; }
@@ -173,16 +212,10 @@ function locationStr(array $a): string {
     return $s . ($nh ? ' / ' . $nh : '');
 }
 
-// ── City pagination (9 cities per IVR page, keys 1–9) ──────────
-
 function totalCityPages(): int {
     return (int)ceil(count(CITIES) / CITIES_PER_PAGE);
 }
 
-/**
- * Returns array keyed 1–9 with ['id'=>cityId, 'name'=>cityName]
- * for the given 1-based page number.
- */
 function citiesForPage(int $page): array {
     $offset = ($page - 1) * CITIES_PER_PAGE;
     $slice  = array_slice(CITIES, $offset, CITIES_PER_PAGE, true);
@@ -193,8 +226,6 @@ function citiesForPage(int $page): array {
     }
     return $result;
 }
-
-// ── Payment message ────────────────────────────────────────────
 
 function paymentMsg(): string {
     return 'שימו לב! בסגירת עסקה יש לשלם 31 שקל מכל צד. '
