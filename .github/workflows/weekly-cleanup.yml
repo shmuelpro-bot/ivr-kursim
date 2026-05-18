@@ -1,0 +1,17 @@
+name: ניקוי שבועי – מוצאי שבת
+
+on:
+  schedule:
+    # כל שבת 19:00 UTC = 21:00 שעון ישראל (קיץ) / 21:00 חורף
+    - cron: "0 19 * * 6"
+  workflow_dispatch: # הפעלה ידנית מ-GitHub אם צריך
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: קריאה ל-cron endpoint
+        run: |
+          curl -f -s \
+            "https://ivr-kursim.onrender.com/cron.php?secret=${{ secrets.CRON_SECRET }}" \
+            | cat
