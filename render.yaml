@@ -4,6 +4,9 @@ services:
     runtime: docker
     branch: main
     autoDeploy: true
+    domains:
+      - maagarim-dirot.co.il
+      - www.maagarim-dirot.co.il
     envVars:
       # ── Twilio (IVR + SMS OTP) ──────────────────────────────────
       # קבל ב: https://console.twilio.com
@@ -23,7 +26,7 @@ services:
 
       # ── System ──────────────────────────────────────────────────
       - key: IVR_SELF_URL
-        value: https://ivr-kursim.onrender.com/ivr_main.php
+        value: https://maagarim-dirot.co.il/ivr_main.php
       - key: ADMIN_PASSWORD
         sync: false          # סיסמת לוח הניהול (admin.php)
       - key: CRON_SECRET
