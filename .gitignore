@@ -1,6 +1,9 @@
 # Environment – never commit real credentials
 .env
 
+# Data directory (file-based storage fallback – contains user data)
+/data/*.json
+
 # Logs
 *.log
 

@@ -5,14 +5,29 @@ services:
     branch: main
     autoDeploy: true
     envVars:
-      - key: CALL2ALL_TOKEN
-        sync: false          # יש להזין ידנית בממשק render
+      # ── Twilio (IVR + SMS OTP) ──────────────────────────────────
+      # קבל ב: https://console.twilio.com
+      - key: TWILIO_ACCOUNT_SID
+        sync: false          # הזן ידנית: ACxxxxxxxxxxxxxxxxx
+      - key: TWILIO_AUTH_TOKEN
+        sync: false          # הזן ידנית: auth token מ-Twilio
+      - key: TWILIO_PHONE_NUMBER
+        sync: false          # הזן ידנית: +972xxxxxxxxx (מספר Twilio)
+
+      # ── Upstash Redis (אחסון נתונים) ────────────────────────────
+      # קבל ב: https://console.upstash.com → צור Database → REST API
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false          # הזן ידנית: https://xxxxxxxx.upstash.io
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false          # הזן ידנית: AXxxxxxxxxxxxx
+
+      # ── System ──────────────────────────────────────────────────
       - key: IVR_SELF_URL
         value: https://ivr-kursim.onrender.com/ivr_main.php
       - key: ADMIN_PASSWORD
-        sync: false          # יש להזין ידנית בממשק render
+        sync: false          # סיסמת לוח הניהול (admin.php)
       - key: CRON_SECRET
-        generateValue: true  # render יצור ערך אקראי אוטומטית
+        generateValue: true  # Render יצור ערך אקראי אוטומטית
 
   - type: cron
     name: ivr-kursim-weekly-cleanup
@@ -22,6 +37,16 @@ services:
     dockerCommand: >
       php /var/www/html/cron.php
     envVars:
+      - key: UPSTASH_REDIS_REST_URL
+        fromService:
+          name: ivr-kursim
+          type: web
+          envVarKey: UPSTASH_REDIS_REST_URL
+      - key: UPSTASH_REDIS_REST_TOKEN
+        fromService:
+          name: ivr-kursim
+          type: web
+          envVarKey: UPSTASH_REDIS_REST_TOKEN
       - key: CRON_SECRET
         fromService:
           name: ivr-kursim

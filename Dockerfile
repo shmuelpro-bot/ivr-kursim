@@ -15,9 +15,14 @@ COPY . /var/www/html/
 # Allow .htaccess overrides
 RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
+# Create writable data directory for file-based storage fallback
+RUN mkdir -p /var/www/html/data \
+    && echo "Deny from all" > /var/www/html/data/.htaccess
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/ \
-    && chmod -R 755 /var/www/html/
+    && chmod -R 755 /var/www/html/ \
+    && chmod 775 /var/www/html/data
 
 ENV PORT=80
 EXPOSE 80

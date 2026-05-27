@@ -12,35 +12,47 @@ session_start();
 define('MAX_IMAGES',    4);
 define('MAX_IMG_BYTES', 5 * 1024 * 1024); // 5MB per image (before resize)
 
-// ── Redis helpers ──────────────────────────────────────────────
+// ── KV helpers (Redis → file fallback) ────────────────────────
 
-function redisCmd(array $cmd): mixed {
-    if (!REDIS_URL || !REDIS_TOKEN) return null;
-    $ctx = stream_context_create(['http' => [
-        'method'  => 'POST',
-        'header'  => "Authorization: Bearer " . REDIS_TOKEN . "\r\nContent-Type: application/json",
-        'content' => json_encode([$cmd]),
-    ]]);
-    $r = @file_get_contents(REDIS_URL . '/pipeline', false, $ctx);
-    if (!$r) return null;
-    $d = json_decode($r, true);
-    return $d[0]['result'] ?? null;
+function kvGet(string $key): mixed {
+    if (hasRedis()) {
+        $raw = redisExec(['GET', $key]);
+        return ($raw !== null && $raw !== '') ? json_decode($raw, true) : null;
+    }
+    return fileKvGet($key);
+}
+
+function kvSet(string $key, mixed $value, int $ttlSec = 0): void {
+    if (hasRedis()) {
+        $cmd = $ttlSec > 0
+            ? ['SET', $key, json_encode($value), 'EX', $ttlSec]
+            : ['SET', $key, json_encode($value)];
+        redisExec($cmd);
+    } else {
+        fileKvSet($key, $value, $ttlSec);
+    }
+}
+
+function kvDel(string $key): void {
+    if (hasRedis()) {
+        redisExec(['DEL', $key]);
+    } else {
+        fileKvDel($key);
+    }
 }
 
 function saveAptImages(string $aptId, array $b64): void {
     if (empty($b64)) return;
-    redisCmd(['SET', 'apt_imgs:' . $aptId, json_encode($b64), 'EX', 60 * 60 * 24 * 8]);
+    kvSet('apt_imgs:' . $aptId, $b64, 60 * 60 * 24 * 8);
 }
 
 function getAptImages(string $aptId): array {
-    $raw = redisCmd(['GET', 'apt_imgs:' . $aptId]);
-    if (!$raw) return [];
-    $imgs = json_decode($raw, true);
+    $imgs = kvGet('apt_imgs:' . $aptId);
     return is_array($imgs) ? $imgs : [];
 }
 
 function delAptImages(string $aptId): void {
-    redisCmd(['DEL', 'apt_imgs:' . $aptId]);
+    kvDel('apt_imgs:' . $aptId);
 }
 
 // ── Image resize ───────────────────────────────────────────────
@@ -99,18 +111,21 @@ function dispPhone(string $p): string {
     return $p;
 }
 
-function sendOTPCode(string $phone): bool {
+function sendOTPCode(string $phone): string {
     $code = str_pad((string)random_int(10000, 99999), 5, '0', STR_PAD_LEFT);
-    redisCmd(['SET', 'otp:' . $phone, $code, 'EX', 300]);
-    sendSMS($phone, "קו דירות לשבת – קוד אימות: {$code}\nתקף ל-5 דקות.");
-    return true;
+    kvSet('otp:' . $phone, $code, 300);
+    if (hasTwilio()) {
+        sendSMS($phone, "קו דירות לשבת – קוד אימות: {$code}\nתקף ל-5 דקות.");
+        return '';       // SMS נשלח, לא מציגים קוד
+    }
+    return $code;        // Twilio לא מוגדר – מחזירים קוד לתצוגה
 }
 
 function checkOTP(string $phone, string $code): bool {
-    $stored = redisCmd(['GET', 'otp:' . $phone]);
-    if (!$stored) return false;
+    $stored = kvGet('otp:' . $phone);
+    if ($stored === null) return false;
     if (hash_equals((string)$stored, trim($code))) {
-        redisCmd(['DEL', 'otp:' . $phone]);
+        kvDel('otp:' . $phone);
         return true;
     }
     return false;
@@ -123,8 +138,10 @@ $step      = $_POST['step'] ?? $_GET['step'] ?? ($userPhone ? 'dashboard' : 'hom
 $error     = '';
 $success   = '';
 
+$devOtp = $_SESSION['dev_otp'] ?? '';
+
 if (isset($_GET['logout'])) {
-    unset($_SESSION['pub_phone'], $_SESSION['otp_phone']);
+    unset($_SESSION['pub_phone'], $_SESSION['otp_phone'], $_SESSION['dev_otp']);
     header('Location: publish.php');
     exit;
 }
@@ -136,16 +153,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ── 1. שליחת OTP
     if ($action === 'send_otp') {
-        $raw = trim($_POST['phone'] ?? '');
+        $raw   = trim($_POST['phone'] ?? '');
         $phone = normalizePhone($raw);
         if (strlen($phone) < 12) {
             $error = 'מספר טלפון לא תקין. יש להזין מספר ישראלי (050/052/054...).';
             $step  = 'login';
         } else {
-            sendOTPCode($phone);
+            $devCode = sendOTPCode($phone);       // ריק אם Twilio שלח SMS
             $_SESSION['otp_phone'] = $phone;
             $step    = 'verify';
-            $success = 'קוד אימות נשלח ל-' . dispPhone($phone);
+            if ($devCode !== '') {
+                // Twilio לא מוגדר – מציגים קוד על המסך
+                $_SESSION['dev_otp'] = $devCode;
+                $success = 'קוד אימות (מצב בדיקה): ' . $devCode;
+            } else {
+                $success = 'קוד אימות נשלח ב-SMS ל-' . dispPhone($phone);
+            }
         }
     }
 
@@ -158,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $step  = 'login';
         } elseif (checkOTP($phone, $code)) {
             $_SESSION['pub_phone'] = $phone;
-            unset($_SESSION['otp_phone']);
+            unset($_SESSION['otp_phone'], $_SESSION['dev_otp']);
             $userPhone = $phone;
             $step      = 'dashboard';
         } else {
@@ -653,15 +676,30 @@ $nhJson     = json_encode(NEIGHBORHOODS, JSON_UNESCAPED_UNICODE);
 ════════════════════════════════════════════════════════════ -->
 <?php elseif ($step === 'verify'): ?>
 
-<?php $otpPhone = $_SESSION['otp_phone'] ?? ''; ?>
+<?php
+  $otpPhone  = $_SESSION['otp_phone'] ?? '';
+  $devOtpVal = $_SESSION['dev_otp']   ?? '';
+?>
 <div class="card p-4" style="max-width:420px;margin:0 auto">
   <div class="text-center mb-4">
     <div class="card-icon">🔐</div>
     <h4 class="fw-bold mt-2">הכנס קוד אימות</h4>
     <?php if ($otpPhone): ?>
-      <p class="text-muted small">קוד נשלח ל-<strong><?= htmlspecialchars(dispPhone($otpPhone)) ?></strong></p>
+      <p class="text-muted small">
+        <?= $devOtpVal ? 'מצב בדיקה – לא נשלח SMS' : 'קוד נשלח ל-<strong>' . htmlspecialchars(dispPhone($otpPhone)) . '</strong>' ?>
+      </p>
     <?php endif; ?>
   </div>
+
+  <?php if ($devOtpVal): ?>
+  <div class="alert alert-warning d-flex align-items-center gap-2 mb-3" style="border-radius:12px">
+    <span style="font-size:1.5rem">🛠️</span>
+    <div>
+      <strong>מצב בדיקה (ללא Twilio)</strong><br>
+      הקוד שלך: <span style="font-size:1.6rem;font-weight:800;letter-spacing:.2em;color:#b45309"><?= htmlspecialchars($devOtpVal) ?></span>
+    </div>
+  </div>
+  <?php endif; ?>
 
   <form method="post" id="otp-form">
     <input type="hidden" name="action" value="verify_otp">

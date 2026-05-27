@@ -13,6 +13,51 @@ define('CRON_SECRET',  getenv('CRON_SECRET')                ?: 'cron_change_me')
 define('REDIS_URL',    rtrim(getenv('UPSTASH_REDIS_REST_URL')   ?: '', '/'));
 define('REDIS_TOKEN',  getenv('UPSTASH_REDIS_REST_TOKEN')   ?: '');
 
+// ── File-based storage (fallback when Redis is not configured) ──
+define('DATA_DIR', __DIR__ . '/data');
+
+function dataDir(): string {
+    if (!is_dir(DATA_DIR)) {
+        @mkdir(DATA_DIR, 0755, true);
+        // Block web access to the data directory
+        @file_put_contents(DATA_DIR . '/.htaccess', "Deny from all\n");
+    }
+    return DATA_DIR;
+}
+
+function fileKvGet(string $key): mixed {
+    $path = dataDir() . '/' . preg_replace('/[^a-zA-Z0-9_\-]/', '_', $key) . '.json';
+    if (!file_exists($path)) return null;
+    $data = @json_decode(file_get_contents($path), true);
+    if (!$data) return null;
+    if (isset($data['ttl']) && $data['ttl'] > 0 && time() > $data['ttl']) {
+        @unlink($path);
+        return null;
+    }
+    return $data['v'] ?? null;
+}
+
+function fileKvSet(string $key, mixed $value, int $ttlSec = 0): void {
+    $path = dataDir() . '/' . preg_replace('/[^a-zA-Z0-9_\-]/', '_', $key) . '.json';
+    @file_put_contents($path, json_encode([
+        'v'   => $value,
+        'ttl' => $ttlSec > 0 ? time() + $ttlSec : 0,
+    ]), LOCK_EX);
+}
+
+function fileKvDel(string $key): void {
+    $path = dataDir() . '/' . preg_replace('/[^a-zA-Z0-9_\-]/', '_', $key) . '.json';
+    @unlink($path);
+}
+
+function hasRedis(): bool {
+    return REDIS_URL !== '' && REDIS_TOKEN !== '';
+}
+
+function hasTwilio(): bool {
+    return TWILIO_SID !== '' && TWILIO_TOKEN !== '' && TWILIO_FROM !== '';
+}
+
 // ── Lookup tables ──────────────────────────────────────────────
 
 define('RENTAL_TYPES', [
@@ -92,8 +137,12 @@ function redisExec(array $cmd): mixed {
 }
 
 function getAllApts(): array {
-    $raw  = redisExec(['GET', 'apts_list']);
-    $apts = ($raw !== null && $raw !== '') ? json_decode($raw, true) : [];
+    if (hasRedis()) {
+        $raw  = redisExec(['GET', 'apts_list']);
+        $apts = ($raw !== null && $raw !== '') ? json_decode($raw, true) : [];
+    } else {
+        $apts = fileKvGet('apts_list') ?? [];
+    }
     return is_array($apts) ? $apts : [];
 }
 
@@ -103,7 +152,12 @@ function getApts(): array {
 }
 
 function saveApts(array $apts): void {
-    redisExec(['SET', 'apts_list', json_encode(array_values($apts))]);
+    $list = array_values($apts);
+    if (hasRedis()) {
+        redisExec(['SET', 'apts_list', json_encode($list)]);
+    } else {
+        fileKvSet('apts_list', $list);
+    }
 }
 
 function filterApts(array $apts, array $f): array {
