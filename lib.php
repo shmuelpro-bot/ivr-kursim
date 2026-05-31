@@ -133,6 +133,19 @@ function sendSMS(string $phone, string $msg): void {
     @file_get_contents($url, false, $ctx);
 }
 
+function flashCall(string $phone): void {
+    if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_FROM) return;
+    $url = 'https://api.twilio.com/2010-04-01/Accounts/' . TWILIO_SID . '/Calls.json';
+    $twiml = '<Response><Say language="he-IL">יש מתעניין בדירה שלך. בדוק את ה אס אם אס לפרטים.</Say></Response>';
+    $ctx = stream_context_create(['http' => [
+        'method'  => 'POST',
+        'header'  => "Authorization: Basic " . base64_encode(TWILIO_SID . ':' . TWILIO_TOKEN)
+                   . "\r\nContent-Type: application/x-www-form-urlencoded",
+        'content' => http_build_query(['From' => TWILIO_FROM, 'To' => $phone, 'Twiml' => $twiml]),
+    ]]);
+    @file_get_contents($url, false, $ctx);
+}
+
 // ── TwiML helpers ──────────────────────────────────────────────
 
 function stepUrl(string $step, array $extra = []): string {

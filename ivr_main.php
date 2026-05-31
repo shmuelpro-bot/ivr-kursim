@@ -518,6 +518,7 @@ switch ($step) {
 
     case 'search_contact': {
         $ownerPhone = $_GET['own'] ?? '';
+        $notified   = $_GET['nf']  ?? '0';
         $fP = ['fr' => $_GET['fr'] ?? 0, 'fc' => $_GET['fc'] ?? 0, 'fn' => $_GET['fn'] ?? 0,
                'fa' => $_GET['fa'] ?? 0, 'FB' => $_GET['FB'] ?? 0, 'FBR' => $_GET['FBR'] ?? 0,
                'FP' => $_GET['FP'] ?? 0, 'idx' => $_GET['idx'] ?? 0];
@@ -525,10 +526,15 @@ switch ($step) {
             respond(match($digit) {
                 '1'     => redir(stepUrl('search_results', $fP)),
                 '9'     => redir(stepUrl('main')),
-                default => redir(stepUrl('search_contact', array_merge($fP, ['own' => $ownerPhone]))),
+                default => redir(stepUrl('search_contact', array_merge($fP, ['own' => $ownerPhone, 'nf' => '1']))),
             });
         }
-        respond(menu(stepUrl('search_contact', array_merge($fP, ['own' => $ownerPhone])), [
+        if ($notified === '0' && $ownerPhone) {
+            $callerLocal = preg_replace('/^\+972/', '0', $phone);
+            sendSMS($ownerPhone, "מאגרים: מתעניין במספר {$callerLocal} בדק את דירתך. צור קשר בהקדם!");
+            flashCall($ownerPhone);
+        }
+        respond(menu(stepUrl('search_contact', array_merge($fP, ['own' => $ownerPhone, 'nf' => '1'])), [
             paymentMsg(),
             'מספר הטלפון של בעל הדירה הוא ' . $ownerPhone . '.',
             'לחזרה לרשימה הקש 1.',
