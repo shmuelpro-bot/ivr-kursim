@@ -99,9 +99,10 @@ async function api(action, data={}, timeoutMs=25000) {
     return await r.json();
   } catch(e) {
     clearTimeout(tid);
-    if (e.name === 'AbortError' && timeoutMs < 70000) {
+    if (timeoutMs < 70000) {
       const el = document.getElementById('mg-status-msg');
-      if (el) el.textContent = 'השרת מתעורר… ממתין (עד 60 שנ\')';
+      if (el) el.textContent = 'מנסה שוב… ממתין לשרת (עד 60 שנ\')';
+      await new Promise(r => setTimeout(r, 2000));
       return api(action, data, 70000);
     }
     return {ok:false, error:'שגיאת תקשורת – נסה שנית'};
