@@ -187,6 +187,28 @@ switch ($action) {
         $all   = getAllApts();
         $all[] = $apt;
         saveApts($all);
+
+        // ── שמור ב-Airtable ──────────────────────────────────────
+        $feats = $apt['features'];
+        airtablePush(AIRTABLE_TBL_APTS, [
+            'fld7tbtjrXKi7IllQ' => CITIES[$city]                                      ?? '',
+            'fldftsexmXhe69L0q' => NEIGHBORHOODS[$city][$apt['neighborhood']]         ?? '',
+            'fldow8LeB2ss9JPdw' => 'פעיל',
+            'fldlHirOZiuMvPlGy' => $apt['description'],
+            'fldUxUiVtf7aU6lha' => date('Y-m-d'),
+            'fldd3pY5OkdoFdYJe' => $apt['bedrooms'],
+            'fldHC6ZblBHVwpcsq' => (string)$apt['beds'],
+            'fldX7Dw5AvO2zj7vB' => $apt['floor'],
+            'fldChcH9KauDamxII' => in_array('balcony', $feats),
+            'fld5e1JLBCFBoX0B6' => in_array('yard',    $feats),
+            'fldujRJufFc843ygK' => in_array('view',    $feats),
+            'fld5s6rPfnQU0NzQX' => in_array('access',  $feats),
+            'fldzSwq8T3UZMeGyk' => $apt['price'],
+            'fldQ7S4sGxIAfz25S' => $phone,
+            'fldAo5G0OB8BPlPKi' => [APT_TYPES[$aptType]              ?? ''],
+            'fld7Y6iaz7g9qfBt8' => [RENTAL_TYPES[$apt['rental_type']] ?? ''],
+        ]);
+
         ok(['apt_id' => $aptId, 'expires' => $apt['expires']]);
         break;
 

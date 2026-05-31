@@ -229,6 +229,38 @@ switch ($action) {
         $all   = getAllAtrs();
         $all[] = $atr;
         saveAtrs($all);
+
+        // ── שמור ב-Airtable ──────────────────────────────────────
+        $catLabels = [
+            'family'   => 'פעילות משפחתית',
+            'nature'   => 'טבע ושדות',
+            'park'     => 'פארק ומשחקים',
+            'museum'   => 'מוזיאון ותערוכה',
+            'food'     => 'מסעדות ואוכל',
+            'sport'    => 'ספורט ובריכה',
+            'art'      => 'סדנאות ויצירה',
+            'holy'     => 'מקומות קדושים',
+            'culture'  => 'תרבות ובידור',
+            'event'    => 'אירועים',
+            'shopping' => 'קניות ושוק',
+            'kids'     => 'לילדים',
+        ];
+        airtablePush(AIRTABLE_TBL_ATR, [
+            'fldwyzUjSiAjyLnEZ' => $atr['name'],
+            'fldOijnIWb408v4l8' => $catLabels[$cat]                                   ?? $cat,
+            'fldh451rEJ6v1qbpj' => CITIES[$city]                                      ?? '',
+            'fldsX0n5VoUOG2tzc' => NEIGHBORHOODS[$city][$atr['neighborhood']]         ?? '',
+            'fldKJLN4wy9W7oMJQ' => $atr['address'],
+            'fldREcy2SRXLdiYnF' => $atr['description'],
+            'fldOK28qerKnI3vwf' => $atr['price'],
+            'fldS15V96NQBXrevf' => $atr['hours'],
+            'fldDwAfhWbuxVVBws' => $atr['phone'],
+            'fldpTFZorhYEXb3pq' => $atr['website'],
+            'fld0MNpsPN1bChchX' => $phone,
+            'fld6a4FcYwlZeHg44' => date('Y-m-d'),
+            'fldwNdlPAIwFn9V5l' => date('Y-m-d', $atr['expires']),
+        ]);
+
         ok(['id' => $id]);
         break;
 

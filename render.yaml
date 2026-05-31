@@ -24,6 +24,12 @@ services:
       - key: UPSTASH_REDIS_REST_TOKEN
         sync: false          # הזן ידנית: AXxxxxxxxxxxxx
 
+      # ── Airtable (רישום אוטומטי) ────────────────────────────────
+      # קבל ב: https://airtable.com/create/tokens → צור Personal Access Token
+      # הרשאות נדרשות: data.records:write על בסיס appHp5qRmLqh3CL9X
+      - key: AIRTABLE_TOKEN
+        sync: false          # הזן ידנית: patXXXXXXXXXXXXXXXX
+
       # ── System ──────────────────────────────────────────────────
       - key: IVR_SELF_URL
         value: https://maagarim-dirot.co.il/ivr_main.php

@@ -4,14 +4,18 @@
  */
 
 // ── Configuration ──────────────────────────────────────────────
-define('TWILIO_SID',   getenv('TWILIO_ACCOUNT_SID')        ?: '');
-define('TWILIO_TOKEN', getenv('TWILIO_AUTH_TOKEN')          ?: '');
-define('TWILIO_FROM',  getenv('TWILIO_PHONE_NUMBER')        ?: '');
-define('SELF_URL',     getenv('IVR_SELF_URL')               ?: 'https://ivr-kursim-shabat.onrender.com/ivr_main.php');
-define('ADMIN_PASS',   getenv('ADMIN_PASSWORD')             ?: 'Shabbat@2024!');
-define('CRON_SECRET',  getenv('CRON_SECRET')                ?: 'cron_change_me');
-define('REDIS_URL',    rtrim(getenv('UPSTASH_REDIS_REST_URL')   ?: '', '/'));
-define('REDIS_TOKEN',  getenv('UPSTASH_REDIS_REST_TOKEN')   ?: '');
+define('TWILIO_SID',       getenv('TWILIO_ACCOUNT_SID')          ?: '');
+define('TWILIO_TOKEN',     getenv('TWILIO_AUTH_TOKEN')            ?: '');
+define('TWILIO_FROM',      getenv('TWILIO_PHONE_NUMBER')          ?: '');
+define('SELF_URL',         getenv('IVR_SELF_URL')                 ?: 'https://ivr-kursim-shabat.onrender.com/ivr_main.php');
+define('ADMIN_PASS',       getenv('ADMIN_PASSWORD')               ?: 'Shabbat@2024!');
+define('CRON_SECRET',      getenv('CRON_SECRET')                  ?: 'cron_change_me');
+define('REDIS_URL',        rtrim(getenv('UPSTASH_REDIS_REST_URL') ?: '', '/'));
+define('REDIS_TOKEN',      getenv('UPSTASH_REDIS_REST_TOKEN')     ?: '');
+define('AIRTABLE_TOKEN',   getenv('AIRTABLE_TOKEN')               ?: '');
+define('AIRTABLE_BASE',    'appHp5qRmLqh3CL9X');
+define('AIRTABLE_TBL_APTS','tblgn9xGLKXaW0nyy');
+define('AIRTABLE_TBL_ATR', 'tbl538TWG6kGbKEB0');
 
 // ── File-based storage (fallback when Redis is not configured) ──
 define('DATA_DIR', __DIR__ . '/data');
@@ -56,6 +60,23 @@ function hasRedis(): bool {
 
 function hasTwilio(): bool {
     return TWILIO_SID !== '' && TWILIO_TOKEN !== '' && TWILIO_FROM !== '';
+}
+
+function hasAirtable(): bool {
+    return AIRTABLE_TOKEN !== '';
+}
+
+function airtablePush(string $tableId, array $fields): void {
+    if (!hasAirtable()) return;
+    $url = 'https://api.airtable.com/v0/' . AIRTABLE_BASE . '/' . $tableId;
+    $ctx = stream_context_create(['http' => [
+        'method'  => 'POST',
+        'header'  => "Authorization: Bearer " . AIRTABLE_TOKEN . "\r\nContent-Type: application/json",
+        'content' => json_encode(['fields' => $fields, 'typecast' => true], JSON_UNESCAPED_UNICODE),
+        'ignore_errors' => true,
+        'timeout' => 5,
+    ]]);
+    @file_get_contents($url, false, $ctx);
 }
 
 // ── Lookup tables ──────────────────────────────────────────────
