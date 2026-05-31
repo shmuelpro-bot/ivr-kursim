@@ -72,12 +72,12 @@ function saveAtrs(array $list): void {
     kvs('atr_list', array_values($list));
 }
 
-// ── Token auth (same pattern as api.php) ─────────────────────
-function mkToken(string $phone): string {
-    $d = base64_encode($phone . ':' . time());
+// ── Token auth ───────────────────────────────────────────────
+function mkToken(string $id): string {
+    $d = base64_encode($id . ':' . time());
     return $d . '.' . hash_hmac('sha256', $d, 'mg_' . ADMIN_PASS);
 }
-function phoneFromToken(string $t): string|false {
+function idFromToken(string $t): string|false {
     $p = explode('.', $t, 2);
     if (count($p) !== 2) return false;
     if (!hash_equals(hash_hmac('sha256', $p[0], 'mg_' . ADMIN_PASS), $p[1])) return false;
@@ -86,71 +86,20 @@ function phoneFromToken(string $t): string|false {
     if (count($parts) !== 2 || time() - intval($parts[1]) > 86400 * 30) return false;
     return $parts[0];
 }
-function authPhone(array $b): string {
-    $ph = phoneFromToken($b['token'] ?? '');
-    if (!$ph) fail('לא מאומת – נא להתחבר', 401);
-    return $ph;
-}
-function normPhone(string $p): string {
-    $p = preg_replace('/\D/', '', $p);
-    if (strlen($p) === 10 && str_starts_with($p, '0')) return '+972' . substr($p, 1);
-    if (strlen($p) === 9)                                return '+972' . $p;
-    if (str_starts_with($p, '972') && strlen($p) === 12) return '+' . $p;
-    return $p;
+function authUser(array $b): string {
+    $id = idFromToken($b['token'] ?? '');
+    if (!$id) fail('לא מאומת – נא להתחבר', 401);
+    return $id;
 }
 
 // ══════════════════════════════════════════════════════════════
 switch ($action) {
 
-    // ── שליחת OTP (SMS) ───────────────────────────────────────
-    case 'send_otp':
-        $phone = normPhone(trim($body['phone'] ?? ''));
-        if (strlen($phone) < 12) fail('מספר טלפון לא תקין');
-        $code = str_pad((string)random_int(10000, 99999), 5, '0', STR_PAD_LEFT);
-        kvs('otp_a:' . $phone, $code, 300);
-        $devCode = '';
-        if (hasTwilio()) {
-            sendSMS($phone, "מאגרים – קוד אימות: {$code}\nתקף 5 דקות.");
-        } else {
-            $devCode = $code;
-        }
-        ok(['dev_code' => $devCode]);
-        break;
-
-    // ── שיחת טלפון OTP ────────────────────────────────────────
-    case 'send_otp_call':
-        $phone = normPhone(trim($body['phone'] ?? ''));
-        if (strlen($phone) < 12) fail('מספר טלפון לא תקין');
-        if (!hasTwilio()) fail('שיחות טלפון אינן זמינות כרגע');
-        $code   = str_pad((string)random_int(10000, 99999), 5, '0', STR_PAD_LEFT);
-        kvs('otp_a:' . $phone, $code, 300);
-        $vToken = bin2hex(random_bytes(16));
-        kvs('vtk:' . $vToken, $code, 120);
-        $twimlUrl = 'https://ivr-kursim.onrender.com/otp_voice.php?t=' . urlencode($vToken);
-        $url = 'https://api.twilio.com/2010-04-01/Accounts/' . TWILIO_SID . '/Calls.json';
-        $ctx = stream_context_create(['http' => [
-            'method'  => 'POST',
-            'header'  => "Authorization: Basic " . base64_encode(TWILIO_SID . ':' . TWILIO_TOKEN)
-                       . "\r\nContent-Type: application/x-www-form-urlencoded",
-            'content' => http_build_query(['From'=>TWILIO_FROM,'To'=>$phone,'Url'=>$twimlUrl]),
-            'ignore_errors' => true,
-        ]]);
-        $r = @file_get_contents($url, false, $ctx);
-        if ($r === false) fail('שגיאה בהתחברות לשירות שיחות');
-        $resp = json_decode($r, true);
-        if (!empty($resp['status']) && in_array($resp['status'], ['failed','canceled']))
-            fail('לא ניתן להתקשר: ' . ($resp['message'] ?? ''));
-        ok(['call' => true]);
-        break;
-
-    // ── אימות OTP ─────────────────────────────────────────────
-    case 'verify_otp':
-        $phone  = normPhone(trim($body['phone'] ?? ''));
-        $code   = trim($body['code'] ?? '');
-        $stored = kv('otp_a:' . $phone);
-        if (!$stored || !hash_equals((string)$stored, $code)) fail('קוד שגוי או פג תוקף');
-        kvd('otp_a:' . $phone);
-        ok(['token' => mkToken($phone), 'phone' => $phone]);
+    // ── כניסה עם אימייל ───────────────────────────────────────
+    case 'email_login':
+        $email = strtolower(trim($body['email'] ?? ''));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail('כתובת אימייל לא תקינה');
+        ok(['token' => mkToken($email), 'email' => $email]);
         break;
 
     // ── נתוני טופס ────────────────────────────────────────────
@@ -186,7 +135,7 @@ switch ($action) {
 
     // ── הוספת אטרקציה ─────────────────────────────────────────
     case 'add_attraction':
-        $phone = authPhone($body);
+        $phone = authUser($body);
         $name  = mb_substr(strip_tags(trim($body['name'] ?? '')), 0, 100);
         $cat   = trim($body['category'] ?? '');
         $city  = intval($body['city'] ?? 0);
@@ -207,6 +156,7 @@ switch ($action) {
             'hours'        => mb_substr(strip_tags($body['hours']       ?? ''), 0, 150),
             'phone'        => mb_substr(strip_tags($body['contact_phone'] ?? ''), 0, 20),
             'website'      => filter_var($body['website'] ?? '', FILTER_SANITIZE_URL),
+            'pub_email'    => $phone,
             'pub_phone'    => $phone,
             'has_images'   => false,
             'image_count'  => 0,
@@ -266,9 +216,11 @@ switch ($action) {
 
     // ── האטרקציות שלי ─────────────────────────────────────────
     case 'my_attractions':
-        $phone = authPhone($body);
+        $phone = authUser($body);
         $all   = getAllAtrs();
-        $mine  = array_values(array_filter($all, fn($a) => ($a['pub_phone'] ?? '') === $phone));
+        $mine  = array_values(array_filter($all, fn($a) =>
+            ($a['pub_email'] ?? $a['pub_phone'] ?? '') === $phone
+        ));
         foreach ($mine as &$atr) {
             $atr['images'] = $atr['has_images'] ? (kv('atr_imgs:' . $atr['id']) ?? []) : [];
         }
@@ -277,11 +229,12 @@ switch ($action) {
 
     // ── מחיקת אטרקציה ─────────────────────────────────────────
     case 'delete_attraction':
-        $phone = authPhone($body);
+        $phone = authUser($body);
         $id    = trim($body['id'] ?? '');
         if (!$id) fail('חסר מזהה');
         $all = array_values(array_filter(getAllAtrs(),
-            fn($a) => !($a['id'] === $id && ($a['pub_phone'] ?? '') === $phone)
+            fn($a) => !($a['id'] === $id &&
+                ($a['pub_email'] ?? $a['pub_phone'] ?? '') === $phone)
         ));
         saveAtrs($all);
         kvd('atr_imgs:' . $id);

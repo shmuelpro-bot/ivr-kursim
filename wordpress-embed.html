@@ -1,6 +1,6 @@
 <!-- ════════════════════════════════════════════════════
      מאגרים – פרסום דירות לשבוע הקרוב
-     הדבק בבלוק "HTML מותאם אישית" בגוטנברג
+     הדבק בבלוק HTML בוורדפרס / אלמנטור
 ════════════════════════════════════════════════════ -->
 <div id="mg-app" dir="rtl"></div>
 
@@ -19,7 +19,7 @@
 .mg-btn-danger{background:#fff;color:#dc2626;border:2px solid #dc2626;padding:6px 14px;font-size:.85rem}
 .mg-btn-link{background:none;border:none;color:#2563eb;cursor:pointer;font-size:.9rem;padding:4px}
 .mg-btn-full{width:100%;display:block;text-align:center;margin-top:10px}
-.mg-input{width:100%;border:1.5px solid #d1d5db;border-radius:10px;padding:10px 12px;font-size:1rem;outline:none;transition:border-color .2s;direction:ltr;text-align:center}
+.mg-input{width:100%;border:1.5px solid #d1d5db;border-radius:10px;padding:10px 12px;font-size:1rem;outline:none;transition:border-color .2s;direction:ltr;text-align:left}
 .mg-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
 .mg-input-rtl{direction:rtl;text-align:right}
 .mg-label{display:block;font-weight:700;color:#374151;margin-bottom:6px;font-size:.95rem}
@@ -29,10 +29,6 @@
 .mg-alert{border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.95rem}
 .mg-alert-err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
 .mg-alert-ok{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
-.mg-alert-warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a;font-size:1.1rem;text-align:center}
-.mg-otp{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
-.mg-otp input{width:50px;height:56px;text-align:center;font-size:1.5rem;font-weight:800;border:2px solid #d1d5db;border-radius:10px;outline:none}
-.mg-otp input:focus{border-color:#2563eb}
 .mg-opt{display:flex;gap:12px;margin-bottom:16px}
 .mg-opt a{flex:1;text-align:center;padding:22px 10px;border:2px solid #e2e8f0;border-radius:14px;cursor:pointer;text-decoration:none;color:inherit;transition:all .18s}
 .mg-opt a:hover{border-color:#2563eb;background:#eff6ff;transform:translateY(-2px)}
@@ -62,33 +58,30 @@
 .mg-section-title{font-size:1.1rem;font-weight:700;color:#1e293b;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #f1f5f9}
 .mg-loading{text-align:center;padding:40px;color:#6b7280}
 .mg-empty{text-align:center;padding:48px 16px;color:#6b7280}
-.mg-phone-badge{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:8px;padding:4px 12px;font-weight:700;font-size:.9rem}
+.mg-email-badge{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:8px;padding:4px 12px;font-weight:700;font-size:.85rem;word-break:break-all}
 textarea.mg-input{min-height:80px;resize:vertical;direction:rtl;text-align:right}
-@media(max-width:500px){.mg-otp input{width:42px;height:48px;font-size:1.25rem}.mg-feat{grid-template-columns:1fr 1fr}.mg-opt{flex-direction:column}}
+@media(max-width:500px){.mg-feat{grid-template-columns:1fr 1fr}.mg-opt{flex-direction:column}}
 </style>
 
 <script>
 (function(){
 'use strict';
 
-const API  = 'https://ivr-kursim.onrender.com/api.php';
-const TK   = 'mg_token';
-const PH   = 'mg_phone';
+const API      = 'https://ivr-kursim.onrender.com/api.php';
+const TK       = 'mg_token';
+const EM       = 'mg_email';
 const MAX_IMGS = 4;
 
 // ── State ────────────────────────────────────────────────────
 const S = {
-  step:      localStorage.getItem(TK) ? 'dashboard' : 'home',
-  token:     localStorage.getItem(TK) || null,
-  phone:     localStorage.getItem(PH) || null,
-  otpPhone:  null,
-  devCode:   null,
-  error:     '',
-  success:   '',
-  loading:   false,
-  fd:        null,   // form_data
-  listings:  [],
-  imgs:      [],     // File objects for upload
+  step:     localStorage.getItem(TK) ? 'dashboard' : 'home',
+  token:    localStorage.getItem(TK) || null,
+  email:    localStorage.getItem(EM) || null,
+  error:    '',
+  success:  '',
+  fd:       null,
+  listings: [],
+  imgs:     [],
 };
 
 // ── API ──────────────────────────────────────────────────────
@@ -97,17 +90,16 @@ async function api(action, data={}, timeoutMs=25000) {
   const tid  = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const r = await fetch(API, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({action, token: S.token||'', ...data}),
-      signal: ctrl.signal
+      method:  'POST',
+      headers: {'Content-Type':'application/json'},
+      body:    JSON.stringify({action, token: S.token||'', ...data}),
+      signal:  ctrl.signal,
     });
     clearTimeout(tid);
     return await r.json();
   } catch(e) {
     clearTimeout(tid);
     if (e.name === 'AbortError' && timeoutMs < 70000) {
-      // השרת מתעורר – נסה שנית עם טיימאאוט ארוך
       const el = document.getElementById('mg-status-msg');
       if (el) el.textContent = 'השרת מתעורר… ממתין (עד 60 שנ\')';
       return api(action, data, 70000);
@@ -135,27 +127,17 @@ async function imgToB64(file) {
   });
 }
 
-function dispPhone(p) {
-  if (p && p.startsWith('+972')) {
-    const l = '0' + p.slice(4);
-    return l.slice(0,3)+'-'+l.slice(3,6)+'-'+l.slice(6);
-  }
-  return p||'';
-}
-
 // ── Render ───────────────────────────────────────────────────
 function render(html) {
   document.getElementById('mg-app').innerHTML = html;
 }
-
+function esc(s){ const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
 function alert_html() {
   let h='<span id="mg-status-msg" style="display:block;color:#6b7280;font-size:.85rem;text-align:center;min-height:1.2em;margin-bottom:4px"></span>';
   if (S.error)   h+=`<div class="mg-alert mg-alert-err">⚠️ ${esc(S.error)}</div>`;
   if (S.success) h+=`<div class="mg-alert mg-alert-ok">✅ ${esc(S.success)}</div>`;
   return h;
 }
-
-function esc(s){ const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
 
 // ════ SCREENS ════════════════════════════════════════════════
 
@@ -185,78 +167,36 @@ function showHome() {
 function showLogin() {
   render(`
     <div class="mg-card" style="max-width:420px;margin:0 auto">
-      <div style="text-align:center;margin-bottom:20px">
-        <div style="font-size:2.5rem">📱</div>
-        <h3 style="margin:8px 0 4px">כניסה עם מספר טלפון</h3>
-        <p style="color:#6b7280;font-size:.9rem;margin:0">נשלח קוד אימות – בחר באיזו דרך</p>
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:2.8rem">✉️</div>
+        <h3 style="margin:10px 0 6px">כניסה עם אימייל</h3>
+        <p style="color:#6b7280;font-size:.9rem;margin:0">הזן את כתובת האימייל שלך – ללא סיסמה</p>
       </div>
       ${alert_html()}
-      <label class="mg-label">מספר טלפון (נייד או קווי)</label>
-      <input id="mg-phone-in" class="mg-input" type="tel" placeholder="050-000-0000 / 03-0000000" inputmode="tel">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
-        <button class="mg-btn mg-btn-primary" onclick="doSendOtp('sms')" style="padding:12px 8px;font-size:.95rem">
-          📱 SMS
-        </button>
-        <button class="mg-btn" onclick="doSendOtp('call')"
-          style="background:#f59e0b;color:#fff;padding:12px 8px;font-size:.95rem;border-radius:10px;border:none;font-weight:700;cursor:pointer">
-          📞 שיחת טלפון
-        </button>
-      </div>
-      <p style="text-align:center;color:#9ca3af;font-size:.8rem;margin:10px 0 0">
-        טלפון קווי? בחר "שיחת טלפון" – הקוד יוקרא בשיחה
-      </p>
-      <div style="text-align:center;margin-top:10px">
+      <label class="mg-label">כתובת אימייל</label>
+      <input id="mg-email-in" class="mg-input" type="email" placeholder="you@example.com" inputmode="email" autocomplete="email">
+      <button class="mg-btn mg-btn-primary mg-btn-full" style="margin-top:16px;padding:13px;font-size:1.05rem" onclick="doEmailLogin()">
+        התחבר ←
+      </button>
+      <div style="text-align:center;margin-top:12px">
         <button class="mg-btn-link" onclick="goHome()">← חזרה</button>
       </div>
     </div>
   `);
-  document.getElementById('mg-phone-in').focus();
-}
-
-function showVerify() {
-  render(`
-    <div class="mg-card" style="max-width:400px;margin:0 auto">
-      <div style="text-align:center;margin-bottom:16px">
-        <div style="font-size:2.5rem">🔐</div>
-        <h3 style="margin:8px 0 4px">הכנס קוד אימות</h3>
-        <p style="color:#6b7280;font-size:.9rem;margin:0">
-          ${S.devCode
-            ? 'מצב בדיקה – ללא Twilio'
-            : S.otpViaCall
-              ? '📞 מתקשרים ל-<strong>'+dispPhone(S.otpPhone)+'</strong> – ענה לשיחה'
-              : '📱 SMS נשלח ל-<strong>'+dispPhone(S.otpPhone)+'</strong>'}
-        </p>
-      </div>
-      ${S.devCode ? `<div class="mg-alert mg-alert-warn">🛠️ <strong>מצב בדיקה</strong><br>הקוד שלך: <span style="font-size:1.8rem;font-weight:800;letter-spacing:.15em;color:#92400e">${esc(S.devCode)}</span></div>` : ''}
-      ${alert_html()}
-      <div class="mg-otp" id="mg-otp-wrap">
-        <input type="text" maxlength="1" inputmode="numeric" class="mg-otp-d">
-        <input type="text" maxlength="1" inputmode="numeric" class="mg-otp-d">
-        <input type="text" maxlength="1" inputmode="numeric" class="mg-otp-d">
-        <input type="text" maxlength="1" inputmode="numeric" class="mg-otp-d">
-        <input type="text" maxlength="1" inputmode="numeric" class="mg-otp-d">
-      </div>
-      <button id="mg-otp-btn" class="mg-btn mg-btn-primary mg-btn-full" disabled onclick="doVerify()">אמת</button>
-      <div style="text-align:center;margin-top:12px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
-        <button class="mg-btn-link" onclick="doSendOtp(null,true)">${S.otpViaCall ? '📞 התקשר שוב' : '📱 שלח שוב'}</button>
-        <button class="mg-btn-link" onclick="doSendOtp(S.otpViaCall?'sms':'call',false)">${S.otpViaCall ? '📱 קבל ב-SMS במקום' : '📞 קבל בשיחה במקום'}</button>
-        <button class="mg-btn-link" onclick="goLogin()">שנה מספר</button>
-      </div>
-    </div>
-  `);
-  initOtpInputs();
+  const el = document.getElementById('mg-email-in');
+  if (el) { el.focus(); el.addEventListener('keydown', e => { if(e.key==='Enter') doEmailLogin(); }); }
 }
 
 function showDashboard() {
   render(`
     <div class="mg-card" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:none">
-      <div style="display:flex;align-items:center;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <span style="font-size:2rem">👋</span>
-        <div>
-          <strong>שלום! <span class="mg-phone-badge">${dispPhone(S.phone)}</span></strong><br>
-          <small style="color:#6b7280">מה תרצה לעשות?</small>
+        <div style="flex:1;min-width:0">
+          <strong>שלום!</strong>
+          <div class="mg-email-badge" style="margin-top:4px">${esc(S.email||'')}</div>
         </div>
-        <button class="mg-btn-link" style="margin-right:auto;color:#dc2626" onclick="doLogout()">יציאה</button>
+        <button class="mg-btn-link" style="color:#dc2626;white-space:nowrap" onclick="doLogout()">יציאה</button>
       </div>
     </div>
     ${alert_html()}
@@ -277,14 +217,11 @@ function showDashboard() {
 
 function showForm() {
   const fd = S.fd;
-  if (!fd) { S.loading=true; loadFormData(); return; }
+  if (!fd) { loadFormData(); return; }
 
-  const cities = Object.entries(fd.cities).map(([id,n])=>
-    `<option value="${id}">${n}</option>`).join('');
-  const types = Object.entries(fd.apt_types).map(([id,n])=>
-    `<option value="${id}">${n}</option>`).join('');
-  const rentals = Object.entries(fd.rental_types).map(([id,n])=>
-    `<option value="${id}">${n}</option>`).join('');
+  const cities  = Object.entries(fd.cities).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
+  const types   = Object.entries(fd.apt_types).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
+  const rentals = Object.entries(fd.rental_types).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
   const features = {
     parking:'🅿️ חניה',ac:'❄️ מיזוג',elevator:'🛗 מעלית',balcony:'🌿 מרפסת',
     wifi:'📶 WiFi',washing:'🫧 כביסה',dishwasher:'🍽️ מדיח',bathtub:'🛁 אמבטיה',
@@ -293,12 +230,6 @@ function showForm() {
   };
   const featHtml = Object.entries(features).map(([k,v])=>
     `<label><input type="checkbox" name="feat" value="${k}"> <span>${v}</span></label>`).join('');
-
-  let thumbsHtml = S.imgs.map((f,i)=>`
-    <div class="mg-thumb">
-      <img src="${URL.createObjectURL(f)}">
-      <button onclick="removeImg(${i})">✕</button>
-    </div>`).join('');
 
   render(`
     <button class="mg-back" onclick="goDash()">← חזרה</button>
@@ -319,7 +250,7 @@ function showForm() {
       </div>
       <div style="margin-top:12px">
         <label class="mg-label">קומה</label>
-        <input id="mg-floor" class="mg-input mg-input-rtl" placeholder='קרקע / 3 / גג...' style="text-align:right">
+        <input id="mg-floor" class="mg-input mg-input-rtl" placeholder="קרקע / 3 / גג..." style="text-align:right">
       </div>
     </div>
 
@@ -382,9 +313,8 @@ function showForm() {
         <div style="font-weight:700;margin-top:4px">לחץ להוספת תמונות</div>
         <div style="font-size:.8rem;color:#94a3b8;margin-top:2px">JPG / PNG / WebP – עד 5MB</div>
       </div>
-      <input type="file" id="mg-file" multiple accept="image/*" style="display:none"
-             onchange="addImgs(this.files)">
-      <div class="mg-thumbs" id="mg-thumbs">${thumbsHtml}</div>
+      <input type="file" id="mg-file" multiple accept="image/*" style="display:none" onchange="addImgs(this.files)">
+      <div class="mg-thumbs" id="mg-thumbs"></div>
     </div>
 
     <div class="mg-card">
@@ -396,7 +326,7 @@ function showForm() {
         </div>
         <div class="mg-col">
           <label class="mg-label">טלפון ליצירת קשר</label>
-          <input id="mg-cphone" class="mg-input" placeholder="${dispPhone(S.phone)}" value="${dispPhone(S.phone)}">
+          <input id="mg-cphone" class="mg-input" placeholder="050-000-0000" type="tel">
         </div>
       </div>
     </div>
@@ -407,36 +337,35 @@ function showForm() {
     <div style="height:20px"></div>
   `);
 
-  // textarea counter
   const ta = document.getElementById('mg-desc');
   const tc = document.getElementById('mg-desc-c');
-  ta.addEventListener('input', ()=> tc.textContent = ta.value.length + ' / 800');
+  if (ta) ta.addEventListener('input', ()=> tc.textContent = ta.value.length + ' / 800');
 }
 
 function showListings() {
   if (!S.listingsLoaded) { loadListings(); return; }
   const list = S.listings;
-  const cityName  = id => (S.listFd && S.listFd.cities)    ? (S.listFd.cities[id]||id)    : id;
-  const typeName  = id => (S.listFd && S.listFd.apt_types)  ? (S.listFd.apt_types[id]||id) : id;
-  const rentName  = id => (S.listFd && S.listFd.rental_types) ? (S.listFd.rental_types[id]||id) : id;
+  const cityName = id => (S.listFd?.cities)     ? (S.listFd.cities[id]||id)       : id;
+  const typeName = id => (S.listFd?.apt_types)   ? (S.listFd.apt_types[id]||id)    : id;
+  const rentName = id => (S.listFd?.rental_types)? (S.listFd.rental_types[id]||id) : id;
   const fmap = {parking:'חניה',ac:'מיזוג',elevator:'מעלית',balcony:'מרפסת',wifi:'WiFi',
     washing:'כביסה',dishwasher:'מדיח',bathtub:'אמבטיה',shabbat_mode:'שבת',
     crib:'עריסה',synagogue:'ביהכ"נ',garden:'גינה',handicapped:'נגיש',quiet:'שקט'};
   const now = Date.now()/1000;
 
-  let cards = list.length === 0
+  const cards = list.length === 0
     ? `<div class="mg-empty"><div style="font-size:3rem">🏚️</div><h4>אין פרסומים פעילים</h4>
        <button class="mg-btn mg-btn-primary" onclick="goForm()">פרסם עכשיו</button></div>`
     : list.map(a => {
-      const exp   = a.expires < now;
-      const img1  = a.images && a.images[0];
+      const exp  = a.expires < now;
+      const img1 = a.images && a.images[0];
       const feats = (a.features||[]).slice(0,5).map(f=>`<span class="mg-badge mg-badge-blue">${fmap[f]||f}</span>`).join('');
       return `
         <div class="mg-listing">
           <div class="mg-listing-img">${img1?`<img src="${img1}">`:'🏠'}</div>
           <div class="mg-listing-body">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-              <strong>${cityName(a.city)}${a.neighborhood?'':''}</strong>
+              <strong>${cityName(a.city)}</strong>
               <span class="mg-badge ${exp?'mg-badge-red':'mg-badge-green'}">${exp?'פג תוקף':'פעיל'}</span>
             </div>
             <div style="margin-bottom:6px">
@@ -468,26 +397,24 @@ function showListings() {
 
 // ════ ACTIONS ════════════════════════════════════════════════
 
-function goHome()     { S.error='';S.success='';S.step='home';    showHome(); }
-function goLogin(to)  { S._afterLogin=to||'form'; S.step='login'; S.error='';S.success=''; showLogin(); }
+function goHome()     { S.error='';S.success='';S.step='home';     showHome(); }
+function goLogin(to)  { S._afterLogin=to||'form'; S.error='';S.success=''; showLogin(); }
 function goDash()     { S.error='';S.success='';S.step='dashboard'; showDashboard(); }
 function goForm()     { S.error='';S.success='';S.step='form'; S.imgs=[]; showForm(); }
-function goListings() { S.error='';S.success='';S.step='listings';S.listingsLoaded=false; showListings(); }
+function goListings() { S.error='';S.success='';S.step='listings'; S.listingsLoaded=false; showListings(); }
 
 async function loadFormData() {
-  render(`<div class="mg-loading">⏳ טוען נתונים...</div>`);
+  render(`<div class="mg-loading">⏳ טוען נתונים...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
   const r = await api('form_data');
-  if (!r.ok) { S.error=r.error; S.loading=false; showForm(); return; }
-  S.fd = r; S.loading=false;
+  if (!r.ok) { S.error=r.error; showForm(); return; }
+  S.fd = r;
   showForm();
 }
 
 async function loadListings() {
-  render(`<div class="mg-loading">⏳ טוען פרסומים...</div>`);
+  render(`<div class="mg-loading">⏳ טוען פרסומים...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
   const r = await api('my_listings');
-  if (r.ok===false && r.error && r.error.includes('מאומת')) {
-    doLogout(); return;
-  }
+  if (r.ok===false && r.error?.includes('מאומת')) { doLogout(); return; }
   if (!r.ok) { S.error=r.error||'שגיאה'; showListings(); return; }
   S.listings    = r.listings || [];
   S.listFd      = {cities:r.cities, apt_types:r.apt_types, rental_types:r.rental_types};
@@ -495,78 +422,50 @@ async function loadListings() {
   showListings();
 }
 
-async function doSendOtp(method, resend) {
-  const inp = document.getElementById('mg-phone-in');
-  const ph  = resend ? S.otpPhone : (inp ? inp.value.trim() : '');
-  S.error=''; S.success='';
-  if (!ph) { S.error='נא להזין מספר טלפון'; showLogin(); return; }
-
-  const isCall = (method === 'call') || S.otpMethod === 'call';
-  if (!resend) S.otpMethod = method;
-
-  const loadMsg = isCall ? '📞 מתחבר לשיחה...' : '📱 שולח SMS...';
-  render(`<div class="mg-loading">⏳ ${loadMsg}<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
-
-  const action = isCall ? 'send_otp_call' : 'send_otp';
-  const r = await api(action, {phone: ph});
-
-  if (!r.ok) {
-    S.error = r.error;
-    // אם שיחה נכשלה, הצע SMS
-    if (isCall) S.error += ' – נסה לקבל קוד ב-SMS';
+async function doEmailLogin() {
+  const inp = document.getElementById('mg-email-in');
+  const em  = inp ? inp.value.trim().toLowerCase() : '';
+  S.error = '';
+  if (!em || !em.includes('@') || !em.includes('.')) {
+    S.error = 'נא להזין כתובת אימייל תקינה';
     showLogin();
     return;
   }
-  if (!resend) S.otpPhone = ph;
-  S.devCode  = r.dev_code || null;
-  S.otpViaCall = isCall && !r.dev_code;
-  S.step = 'verify';
-  showVerify();
-}
-
-async function doVerify() {
-  const digits = [...document.querySelectorAll('.mg-otp-d')];
-  const code   = digits.map(d=>d.value).join('');
-  if (code.length < 5) return;
-  S.error='';
-  render(`<div class="mg-loading">⏳ מאמת...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
-  const r = await api('verify_otp', {phone: S.otpPhone, code});
-  if (!r.ok) { S.error=r.error; showVerify(); return; }
-  S.token = r.token; S.phone = r.phone;
+  render(`<div class="mg-loading">⏳ מתחבר...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
+  const r = await api('email_login', {email: em});
+  if (!r.ok) { S.error = r.error; showLogin(); return; }
+  S.token = r.token; S.email = r.email;
   localStorage.setItem(TK, r.token);
-  localStorage.setItem(PH, r.phone);
-  S.devCode = null;
-  S.success = 'אומת בהצלחה!';
+  localStorage.setItem(EM, r.email);
+  S.success = 'ברוך הבא! 👋';
   if (S._afterLogin === 'listings') goListings();
   else goDash();
 }
 
 async function doPublish() {
-  S.error='';
+  S.error = '';
   const city    = document.getElementById('mg-city')?.value;
   const aptType = document.getElementById('mg-type')?.value;
-  if (!city)    { S.error='נא לבחור עיר';       showForm(); return; }
-  if (!aptType) { S.error='נא לבחור סוג דירה';  showForm(); return; }
+  if (!city)    { S.error='נא לבחור עיר';      showForm(); return; }
+  if (!aptType) { S.error='נא לבחור סוג דירה'; showForm(); return; }
 
   const feats = [...document.querySelectorAll('input[name=feat]:checked')].map(i=>i.value);
-
-  // Convert images
-  render(`<div class="mg-loading">⏳ מעלה...</div>`);
+  render(`<div class="mg-loading">⏳ מעלה...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
   const images = await Promise.all(S.imgs.map(imgToB64));
 
   const r = await api('publish', {
     city,
-    neighborhood: document.getElementById('mg-nh')?.value||'0',
-    apt_type:     aptType,
-    bedrooms:     document.getElementById('mg-rooms')?.value||'1',
-    beds:         document.getElementById('mg-beds')?.value||'4',
-    rental_type:  document.getElementById('mg-rent')?.value||'1',
-    price:        document.getElementById('mg-price')?.value||'0',
-    floor:        document.getElementById('mg-floor')?.value||'',
-    features:     feats,
-    description:  document.getElementById('mg-desc')?.value||'',
-    contact_name: document.getElementById('mg-cname')?.value||'',
-    contact_phone:document.getElementById('mg-cphone')?.value||'',
+    neighborhood:  document.getElementById('mg-nh')?.value    || '0',
+    apt_type:      aptType,
+    bedrooms:      document.getElementById('mg-rooms')?.value || '1',
+    beds:          document.getElementById('mg-beds')?.value  || '4',
+    rental_type:   document.getElementById('mg-rent')?.value  || '1',
+    price:         document.getElementById('mg-price')?.value || '0',
+    floor:         document.getElementById('mg-floor')?.value || '',
+    features:      feats,
+    description:   document.getElementById('mg-desc')?.value  || '',
+    contact_name:  document.getElementById('mg-cname')?.value || '',
+    contact_phone: document.getElementById('mg-cphone')?.value|| '',
     images,
   });
   if (!r.ok) { S.error=r.error; showForm(); return; }
@@ -586,8 +485,9 @@ async function doDelete(aptId) {
 }
 
 function doLogout() {
-  localStorage.removeItem(TK); localStorage.removeItem(PH);
-  S.token=null; S.phone=null; S.step='home';
+  localStorage.removeItem(TK);
+  localStorage.removeItem(EM);
+  S.token=null; S.email=null; S.step='home';
   goHome();
 }
 
@@ -614,34 +514,6 @@ function refreshThumbs() {
   if (drop) drop.style.display = S.imgs.length >= MAX_IMGS ? 'none' : '';
 }
 
-// ── OTP inputs ───────────────────────────────────────────────
-function initOtpInputs() {
-  const ds = document.querySelectorAll('.mg-otp-d');
-  const btn = document.getElementById('mg-otp-btn');
-  const sync = () => {
-    const v = [...ds].map(d=>d.value).join('');
-    if (btn) btn.disabled = v.length < 5;
-  };
-  ds.forEach((inp,i) => {
-    inp.addEventListener('input', ()=>{
-      inp.value = inp.value.replace(/\D/,'');
-      if (inp.value && i < ds.length-1) ds[i+1].focus();
-      sync();
-    });
-    inp.addEventListener('keydown', e => {
-      if (e.key==='Backspace' && !inp.value && i>0) ds[i-1].focus();
-    });
-    inp.addEventListener('paste', e => {
-      const p = (e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'');
-      if (p.length >= 5) {
-        ds.forEach((d,j)=>d.value=p[j]||''); sync();
-        e.preventDefault();
-      }
-    });
-  });
-  if (ds[0]) ds[0].focus();
-}
-
 // ── Neighborhood update ──────────────────────────────────────
 function updateNh() {
   const city = parseInt(document.getElementById('mg-city')?.value);
@@ -653,11 +525,9 @@ function updateNh() {
 }
 
 // ── Init ─────────────────────────────────────────────────────
-// expose globals for onclick handlers
-Object.assign(window,{goHome,goLogin,goDash,goForm,goListings,doSendOtp,doVerify,doPublish,doDelete,doLogout,addImgs,removeImg,updateNh,initOtpInputs});
+Object.assign(window, {goHome,goLogin,goDash,goForm,goListings,doEmailLogin,doPublish,doDelete,doLogout,addImgs,removeImg,updateNh});
 
-// Initial render
-if (S.token && S.phone) showDashboard();
+if (S.token && S.email) showDashboard();
 else showHome();
 
 })();

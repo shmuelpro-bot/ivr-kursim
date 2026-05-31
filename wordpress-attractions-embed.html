@@ -95,16 +95,15 @@ textarea.at-input{min-height:80px;resize:vertical;direction:rtl;text-align:right
 (function(){
 'use strict';
 
-const API  = 'https://ivr-kursim.onrender.com/api_attractions.php';
-const TK   = 'mg_atr_token';
-const PH   = 'mg_atr_phone';
+const API      = 'https://ivr-kursim.onrender.com/api_attractions.php';
+const TK       = 'mg_atr_token';
+const EM       = 'mg_atr_email';
 const MAX_IMGS = 6;
 
 const S = {
-  view:      'browse',   // browse | detail | login | verify | dashboard | form | mine
+  view:      'browse',
   token:     localStorage.getItem(TK) || null,
-  phone:     localStorage.getItem(PH) || null,
-  otpPhone:  null, otpMethod: 'sms', otpViaCall: false, devCode: null,
+  email:     localStorage.getItem(EM) || null,
   error: '', success: '',
   fd: null,
   attractions: [], total: 0,
@@ -117,14 +116,26 @@ const S = {
 
 const app = () => document.getElementById('atr-app');
 
-async function api(action, data={}) {
+async function api(action, data={}, timeoutMs=25000) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const r = await fetch(API, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({action, token: S.token||'', ...data})
+      body: JSON.stringify({action, token: S.token||'', ...data}),
+      signal: ctrl.signal,
     });
+    clearTimeout(tid);
     return await r.json();
-  } catch(e) { return {ok:false, error:'שגיאת תקשורת – נסה שנית'}; }
+  } catch(e) {
+    clearTimeout(tid);
+    if (e.name==='AbortError' && timeoutMs<70000) {
+      const el=document.getElementById('mg-status-msg');
+      if(el) el.textContent='השרת מתעורר… ממתין (עד 60 שנ\')';
+      return api(action, data, 70000);
+    }
+    return {ok:false, error:'שגיאת תקשורת – נסה שנית'};
+  }
 }
 
 async function imgToB64(file) {
@@ -280,57 +291,24 @@ function showDetail(atrJson) {
 function showLogin() {
   render(`
     <div class="at-card" style="max-width:420px;margin:0 auto">
-      <div style="text-align:center;margin-bottom:18px">
-        <div style="font-size:2.2rem">📱</div>
-        <h3 style="margin:8px 0 4px">כניסה לאזור האישי</h3>
-        <p style="color:#6b7280;font-size:.88rem;margin:0">כדי להוסיף ולנהל אטרקציות</p>
+      <div style="text-align:center;margin-bottom:22px">
+        <div style="font-size:2.4rem">✉️</div>
+        <h3 style="margin:10px 0 6px">כניסה לאזור האישי</h3>
+        <p style="color:#6b7280;font-size:.88rem;margin:0">הזן אימייל – כדי להוסיף ולנהל אטרקציות</p>
       </div>
       ${alerts()}
-      <label class="at-label">מספר טלפון (נייד או קווי)</label>
-      <input id="at-phone-in" class="at-input at-input-ltr" type="tel" placeholder="050-000-0000 / 03-0000000" inputmode="tel" style="text-align:center">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
-        <button class="at-btn at-btn-green" onclick="doSendOtp('sms')">📱 SMS</button>
-        <button class="at-btn at-btn-amber" onclick="doSendOtp('call')">📞 שיחת טלפון</button>
-      </div>
-      <p style="text-align:center;color:#9ca3af;font-size:.78rem;margin:8px 0 0">טלפון קווי? בחר "שיחת טלפון"</p>
+      <label class="at-label">כתובת אימייל</label>
+      <input id="at-email-in" class="at-input" type="email" placeholder="you@example.com" inputmode="email" autocomplete="email" style="text-align:left;direction:ltr">
+      <button class="at-btn at-btn-green at-btn-full" style="margin-top:14px;padding:13px;font-size:1rem" onclick="doEmailLogin()">
+        התחבר ←
+      </button>
       <div style="text-align:center;margin-top:10px">
         <button class="at-btn-link" onclick="showBrowse()">← חזרה לאטרקציות</button>
       </div>
     </div>
   `);
-  document.getElementById('at-phone-in').focus();
-}
-
-function showVerify() {
-  render(`
-    <div class="at-card" style="max-width:400px;margin:0 auto">
-      <div style="text-align:center;margin-bottom:14px">
-        <div style="font-size:2.2rem">🔐</div>
-        <h3 style="margin:8px 0 4px">הכנס קוד אימות</h3>
-        <p style="color:#6b7280;font-size:.88rem;margin:0">
-          ${S.devCode ? 'מצב בדיקה – ללא SMS'
-            : S.otpViaCall ? '📞 מתקשרים אליך – ענה לשיחה'
-            : '📱 SMS נשלח ל-<strong>'+dispPhone(S.otpPhone)+'</strong>'}
-        </p>
-      </div>
-      ${S.devCode?`<div class="at-alert at-warn">🛠️ <strong>מצב בדיקה</strong><br>הקוד: <span style="font-size:1.8rem;font-weight:800;letter-spacing:.15em;color:#92400e">${esc(S.devCode)}</span></div>`:''}
-      ${alerts()}
-      <div class="at-otp">
-        <input type="text" maxlength="1" inputmode="numeric" class="at-otp-d">
-        <input type="text" maxlength="1" inputmode="numeric" class="at-otp-d">
-        <input type="text" maxlength="1" inputmode="numeric" class="at-otp-d">
-        <input type="text" maxlength="1" inputmode="numeric" class="at-otp-d">
-        <input type="text" maxlength="1" inputmode="numeric" class="at-otp-d">
-      </div>
-      <button id="at-otp-btn" class="at-btn at-btn-green at-btn-full" disabled onclick="doVerify()">אמת</button>
-      <div style="text-align:center;margin-top:10px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
-        <button class="at-btn-link" onclick="doSendOtp(null,true)">${S.otpViaCall?'📞 התקשר שוב':'📱 שלח שוב'}</button>
-        <button class="at-btn-link" onclick="doSendOtp(S.otpViaCall?'sms':'call',false)">${S.otpViaCall?'📱 קבל ב-SMS':'📞 קבל בשיחה'}</button>
-        <button class="at-btn-link" onclick="showLogin()">שנה מספר</button>
-      </div>
-    </div>
-  `);
-  initOtp();
+  const el = document.getElementById('at-email-in');
+  if (el) { el.focus(); el.addEventListener('keydown', e => { if(e.key==='Enter') doEmailLogin(); }); }
 }
 
 function showDash() {
@@ -338,8 +316,11 @@ function showDash() {
     <div class="at-card" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:none">
       <div style="display:flex;align-items:center;gap:12px">
         <span style="font-size:2rem">👋</span>
-        <div><strong>שלום! <span class="at-phone-badge">${dispPhone(S.phone)}</span></strong><br>
-          <small style="color:#6b7280">ניהול האטרקציות שלך</small></div>
+        <div style="flex:1;min-width:0">
+          <strong>שלום!</strong>
+          <div style="font-size:.82rem;color:#065f46;word-break:break-all;margin-top:2px">${esc(S.email||'')}</div>
+          <small style="color:#6b7280">ניהול האטרקציות שלך</small>
+        </div>
         <button class="at-btn-link" style="margin-right:auto;color:#dc2626" onclick="doLogout()">יציאה</button>
       </div>
     </div>
@@ -446,7 +427,7 @@ function showForm() {
       <div class="at-row">
         <div class="at-col">
           <label class="at-label">טלפון</label>
-          <input id="af-phone" class="at-input at-input-ltr" placeholder="050-000-0000" value="${dispPhone(S.phone)}" style="text-align:center">
+          <input id="af-phone" class="at-input at-input-ltr" placeholder="050-000-0000" style="text-align:center">
         </div>
         <div class="at-col">
           <label class="at-label">אתר אינטרנט</label>
@@ -541,32 +522,19 @@ function goDash()   { S.error='';S.success=''; showDash(); }
 function goForm()   { S.error='';S.success='';S.imgs=[]; showForm(); }
 function goMine()   { S.error='';S.success='';S.myLoaded=false; showMine(); }
 
-async function doSendOtp(method, resend) {
-  const inp = document.getElementById('at-phone-in');
-  const ph  = resend ? S.otpPhone : (inp?inp.value.trim():'');
-  S.error=''; S.success='';
-  if (!ph) { S.error='נא להזין מספר'; showLogin(); return; }
-  if (!resend) S.otpMethod = method;
-  const isCall = (method==='call')||(resend&&S.otpViaCall);
-  render(`<div class="at-loading">⏳ ${isCall?'מתחבר לשיחה...':'שולח SMS...'}</div>`);
-  const r = await api(isCall?'send_otp_call':'send_otp', {phone:ph});
-  if (!r.ok) { S.error=r.error+(isCall?' – נסה SMS':''); showLogin(); return; }
-  if (!resend) S.otpPhone=ph;
-  S.devCode=r.dev_code||null; S.otpViaCall=isCall&&!r.dev_code;
-  showVerify();
-}
-
-async function doVerify() {
-  const ds=[...document.querySelectorAll('.at-otp-d')];
-  const code=ds.map(d=>d.value).join('');
-  if(code.length<5) return;
+async function doEmailLogin() {
+  const inp = document.getElementById('at-email-in');
+  const em  = inp ? inp.value.trim().toLowerCase() : '';
   S.error='';
-  render(`<div class="at-loading">⏳ מאמת...</div>`);
-  const r = await api('verify_otp',{phone:S.otpPhone,code});
-  if(!r.ok){S.error=r.error;showVerify();return;}
-  S.token=r.token; S.phone=r.phone; S.devCode=null;
-  localStorage.setItem(TK,r.token); localStorage.setItem(PH,r.phone);
-  S.success='אומת בהצלחה!';
+  if (!em || !em.includes('@') || !em.includes('.')) {
+    S.error='נא להזין כתובת אימייל תקינה'; showLogin(); return;
+  }
+  render(`<div class="at-loading">⏳ מתחבר...<span id="mg-status-msg" style="display:block;font-size:.82rem;color:#9ca3af"></span></div>`);
+  const r = await api('email_login', {email: em});
+  if (!r.ok) { S.error=r.error; showLogin(); return; }
+  S.token=r.token; S.email=r.email;
+  localStorage.setItem(TK, r.token); localStorage.setItem(EM, r.email);
+  S.success='ברוך הבא! 👋';
   showDash();
 }
 
@@ -607,8 +575,8 @@ async function doDelAtr(id) {
 }
 
 function doLogout() {
-  localStorage.removeItem(TK); localStorage.removeItem(PH);
-  S.token=null; S.phone=null;
+  localStorage.removeItem(TK); localStorage.removeItem(EM);
+  S.token=null; S.email=null;
   showBrowse();
 }
 
@@ -696,7 +664,7 @@ function showDetail(jsonStr) {
 
 // Expose globals
 Object.assign(window,{setCat,setFilter,goLogin,goDash,goForm,goMine,
-  doSendOtp,doVerify,doAddAtr,doDelAtr,doLogout,
+  doEmailLogin,doAddAtr,doDelAtr,doLogout,
   addImgs,rmImg,updAtrNh,setDetailImg,showDetail,loadBrowse,showBrowse,showMine});
 
 // Init

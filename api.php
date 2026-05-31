@@ -28,11 +28,11 @@ $body = array_merge($_GET, $_POST, $body);
 $action = trim($body['action'] ?? '');
 
 // ── Token (HMAC, 30 days) ──────────────────────────────────────
-function mkToken(string $phone): string {
-    $d = base64_encode($phone . ':' . time());
+function mkToken(string $id): string {
+    $d = base64_encode($id . ':' . time());
     return $d . '.' . hash_hmac('sha256', $d, 'mg_' . ADMIN_PASS);
 }
-function phoneFromToken(string $t): string|false {
+function idFromToken(string $t): string|false {
     $p = explode('.', $t, 2);
     if (count($p) !== 2) return false;
     if (!hash_equals(hash_hmac('sha256', $p[0], 'mg_' . ADMIN_PASS), $p[1])) return false;
@@ -41,10 +41,10 @@ function phoneFromToken(string $t): string|false {
     if (count($parts) !== 2 || time() - intval($parts[1]) > 86400 * 30) return false;
     return $parts[0];
 }
-function authPhone(array $b): string {
-    $phone = phoneFromToken($b['token'] ?? '');
-    if (!$phone) fail('לא מאומת – נא להתחבר מחדש', 401);
-    return $phone;
+function authUser(array $b): string {
+    $id = idFromToken($b['token'] ?? '');
+    if (!$id) fail('לא מאומת – נא להתחבר מחדש', 401);
+    return $id;
 }
 
 // ── KV (Redis → file fallback) ──────────────────────────────────
@@ -68,68 +68,14 @@ function kv_del(string $k): void {
     else fileKvDel($k);
 }
 
-// ── Phone normalization ────────────────────────────────────────
-function normPhone(string $p): string {
-    $p = preg_replace('/\D/', '', $p);
-    if (strlen($p) === 10 && str_starts_with($p, '0')) return '+972' . substr($p, 1);
-    if (strlen($p) === 9)                                return '+972' . $p;
-    if (str_starts_with($p, '972') && strlen($p) === 12) return '+' . $p;
-    return $p;
-}
-
 // ══════════════════════════════════════════════════════════════
 switch ($action) {
 
-    // ── שיחת טלפון OTP ────────────────────────────────────────
-    case 'send_otp_call':
-        $phone = normPhone(trim($body['phone'] ?? ''));
-        if (strlen($phone) < 12) fail('מספר טלפון לא תקין');
-        if (!hasTwilio()) fail('שיחות טלפון אינן זמינות כרגע – השתמש ב-SMS');
-        $code   = str_pad((string)random_int(10000, 99999), 5, '0', STR_PAD_LEFT);
-        kv_set('otp:' . $phone, $code, 300);
-        $vToken = bin2hex(random_bytes(16));
-        kv_set('vtk:' . $vToken, $code, 120);
-        $twimlUrl = 'https://ivr-kursim.onrender.com/otp_voice.php?t=' . urlencode($vToken);
-        $url = 'https://api.twilio.com/2010-04-01/Accounts/' . TWILIO_SID . '/Calls.json';
-        $ctx = stream_context_create(['http' => [
-            'method'  => 'POST',
-            'header'  => "Authorization: Basic " . base64_encode(TWILIO_SID . ':' . TWILIO_TOKEN)
-                       . "\r\nContent-Type: application/x-www-form-urlencoded",
-            'content' => http_build_query(['From' => TWILIO_FROM, 'To' => $phone, 'Url' => $twimlUrl]),
-            'ignore_errors' => true,
-        ]]);
-        $r = @file_get_contents($url, false, $ctx);
-        if ($r === false) fail('שגיאה בהתחברות לשירות שיחות');
-        $resp = json_decode($r, true);
-        if (!empty($resp['status']) && in_array($resp['status'], ['failed','canceled'])) {
-            fail('לא ניתן להתקשר למספר זה: ' . ($resp['message'] ?? ''));
-        }
-        ok(['call' => true]);
-        break;
-
-    // ── שליחת OTP ─────────────────────────────────────────────
-    case 'send_otp':
-        $phone = normPhone(trim($body['phone'] ?? ''));
-        if (strlen($phone) < 12) fail('מספר טלפון לא תקין');
-        $code = str_pad((string)random_int(10000, 99999), 5, '0', STR_PAD_LEFT);
-        kv_set('otp:' . $phone, $code, 300);
-        $devCode = '';
-        if (hasTwilio()) {
-            sendSMS($phone, "קו דירות לשבת – קוד אימות: {$code}\nתקף 5 דקות.");
-        } else {
-            $devCode = $code; // מצב בדיקה ללא Twilio
-        }
-        ok(['dev_code' => $devCode]);
-        break;
-
-    // ── אימות OTP ─────────────────────────────────────────────
-    case 'verify_otp':
-        $phone  = normPhone(trim($body['phone'] ?? ''));
-        $code   = trim($body['code'] ?? '');
-        $stored = kv_get('otp:' . $phone);
-        if (!$stored || !hash_equals((string)$stored, $code)) fail('קוד שגוי או פג תוקף');
-        kv_del('otp:' . $phone);
-        ok(['token' => mkToken($phone), 'phone' => $phone]);
+    // ── כניסה עם אימייל (ללא סיסמה) ──────────────────────────
+    case 'email_login':
+        $email = strtolower(trim($body['email'] ?? ''));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail('כתובת אימייל לא תקינה');
+        ok(['token' => mkToken($email), 'email' => $email]);
         break;
 
     // ── מידע לטופס ────────────────────────────────────────────
@@ -144,7 +90,7 @@ switch ($action) {
 
     // ── פרסום דירה ────────────────────────────────────────────
     case 'publish':
-        $phone   = authPhone($body);
+        $userId  = authUser($body);
         $city    = intval($body['city']     ?? 0);
         $aptType = intval($body['apt_type'] ?? 0);
         if (!$city    || !isset(CITIES[$city]))       fail('נא לבחור עיר');
@@ -164,8 +110,8 @@ switch ($action) {
             'features'     => array_map('strip_tags', (array)($body['features'] ?? [])),
             'description'  => mb_substr(strip_tags($body['description'] ?? ''), 0, 800),
             'contact_name' => mb_substr(strip_tags($body['contact_name'] ?? ''), 0, 60),
-            'owner_phone'  => $phone,
-            'pub_phone'    => $phone,
+            'pub_email'    => $userId,
+            'pub_phone'    => $userId,
             'has_images'   => false,
             'image_count'  => 0,
             'expires'      => nextShabbatEnd(),
@@ -204,7 +150,6 @@ switch ($action) {
             'fldujRJufFc843ygK' => in_array('view',    $feats),
             'fld5s6rPfnQU0NzQX' => in_array('access',  $feats),
             'fldzSwq8T3UZMeGyk' => $apt['price'],
-            'fldQ7S4sGxIAfz25S' => $phone,
             'fldAo5G0OB8BPlPKi' => [APT_TYPES[$aptType]              ?? ''],
             'fld7Y6iaz7g9qfBt8' => [RENTAL_TYPES[$apt['rental_type']] ?? ''],
         ]);
@@ -214,9 +159,11 @@ switch ($action) {
 
     // ── הדירות שלי ────────────────────────────────────────────
     case 'my_listings':
-        $phone = authPhone($body);
-        $all   = getAllApts();
-        $mine  = array_values(array_filter($all, fn($a) => ($a['pub_phone'] ?? '') === $phone));
+        $userId = authUser($body);
+        $all    = getAllApts();
+        $mine   = array_values(array_filter($all, fn($a) =>
+            ($a['pub_email'] ?? $a['pub_phone'] ?? '') === $userId
+        ));
         foreach ($mine as &$apt) {
             $apt['images'] = $apt['has_images'] ? (kv_get('apt_imgs:' . $apt['id']) ?? []) : [];
         }
@@ -230,11 +177,12 @@ switch ($action) {
 
     // ── מחיקת דירה ────────────────────────────────────────────
     case 'delete_apt':
-        $phone = authPhone($body);
-        $aptId = trim($body['apt_id'] ?? '');
+        $userId = authUser($body);
+        $aptId  = trim($body['apt_id'] ?? '');
         if (!$aptId) fail('חסר מזהה');
         $all = array_values(array_filter(getAllApts(),
-            fn($a) => !($a['id'] === $aptId && ($a['pub_phone'] ?? '') === $phone)
+            fn($a) => !($a['id'] === $aptId &&
+                ($a['pub_email'] ?? $a['pub_phone'] ?? '') === $userId)
         ));
         saveApts($all);
         kv_del('apt_imgs:' . $aptId);
