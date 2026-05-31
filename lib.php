@@ -136,7 +136,7 @@ function sendSMS(string $phone, string $msg): void {
 function flashCall(string $phone): void {
     if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_FROM) return;
     $url = 'https://api.twilio.com/2010-04-01/Accounts/' . TWILIO_SID . '/Calls.json';
-    $twiml = '<Response><Say language="he-IL">יש מתעניין בדירה שלך. בדוק את ה אס אם אס לפרטים.</Say></Response>';
+    $twiml = '<Response><Hangup/></Response>';
     $ctx = stream_context_create(['http' => [
         'method'  => 'POST',
         'header'  => "Authorization: Basic " . base64_encode(TWILIO_SID . ':' . TWILIO_TOKEN)
