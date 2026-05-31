@@ -4,80 +4,14 @@
  */
 
 // ── Configuration ──────────────────────────────────────────────
-define('TWILIO_SID',       getenv('TWILIO_ACCOUNT_SID')          ?: '');
-define('TWILIO_TOKEN',     getenv('TWILIO_AUTH_TOKEN')            ?: '');
-define('TWILIO_FROM',      getenv('TWILIO_PHONE_NUMBER')          ?: '');
-define('SELF_URL',         getenv('IVR_SELF_URL')                 ?: 'https://ivr-kursim-shabat.onrender.com/ivr_main.php');
-define('ADMIN_PASS',       getenv('ADMIN_PASSWORD')               ?: 'Shabbat@2024!');
-define('CRON_SECRET',      getenv('CRON_SECRET')                  ?: 'cron_change_me');
-define('REDIS_URL',        rtrim(getenv('UPSTASH_REDIS_REST_URL') ?: '', '/'));
-define('REDIS_TOKEN',      getenv('UPSTASH_REDIS_REST_TOKEN')     ?: '');
-define('AIRTABLE_TOKEN',   getenv('AIRTABLE_TOKEN')               ?: '');
-define('AIRTABLE_BASE',    'appHp5qRmLqh3CL9X');
-define('AIRTABLE_TBL_APTS','tblgn9xGLKXaW0nyy');
-define('AIRTABLE_TBL_ATR', 'tbl538TWG6kGbKEB0');
-
-// ── File-based storage (fallback when Redis is not configured) ──
-define('DATA_DIR', __DIR__ . '/data');
-
-function dataDir(): string {
-    if (!is_dir(DATA_DIR)) {
-        @mkdir(DATA_DIR, 0755, true);
-        // Block web access to the data directory
-        @file_put_contents(DATA_DIR . '/.htaccess', "Deny from all\n");
-    }
-    return DATA_DIR;
-}
-
-function fileKvGet(string $key): mixed {
-    $path = dataDir() . '/' . preg_replace('/[^a-zA-Z0-9_\-]/', '_', $key) . '.json';
-    if (!file_exists($path)) return null;
-    $data = @json_decode(file_get_contents($path), true);
-    if (!$data) return null;
-    if (isset($data['ttl']) && $data['ttl'] > 0 && time() > $data['ttl']) {
-        @unlink($path);
-        return null;
-    }
-    return $data['v'] ?? null;
-}
-
-function fileKvSet(string $key, mixed $value, int $ttlSec = 0): void {
-    $path = dataDir() . '/' . preg_replace('/[^a-zA-Z0-9_\-]/', '_', $key) . '.json';
-    @file_put_contents($path, json_encode([
-        'v'   => $value,
-        'ttl' => $ttlSec > 0 ? time() + $ttlSec : 0,
-    ]), LOCK_EX);
-}
-
-function fileKvDel(string $key): void {
-    $path = dataDir() . '/' . preg_replace('/[^a-zA-Z0-9_\-]/', '_', $key) . '.json';
-    @unlink($path);
-}
-
-function hasRedis(): bool {
-    return REDIS_URL !== '' && REDIS_TOKEN !== '';
-}
-
-function hasTwilio(): bool {
-    return TWILIO_SID !== '' && TWILIO_TOKEN !== '' && TWILIO_FROM !== '';
-}
-
-function hasAirtable(): bool {
-    return AIRTABLE_TOKEN !== '';
-}
-
-function airtablePush(string $tableId, array $fields): void {
-    if (!hasAirtable()) return;
-    $url = 'https://api.airtable.com/v0/' . AIRTABLE_BASE . '/' . $tableId;
-    $ctx = stream_context_create(['http' => [
-        'method'  => 'POST',
-        'header'  => "Authorization: Bearer " . AIRTABLE_TOKEN . "\r\nContent-Type: application/json",
-        'content' => json_encode(['fields' => $fields, 'typecast' => true], JSON_UNESCAPED_UNICODE),
-        'ignore_errors' => true,
-        'timeout' => 5,
-    ]]);
-    @file_get_contents($url, false, $ctx);
-}
+define('TWILIO_SID',   getenv('TWILIO_ACCOUNT_SID')        ?: '');
+define('TWILIO_TOKEN', getenv('TWILIO_AUTH_TOKEN')          ?: '');
+define('TWILIO_FROM',  getenv('TWILIO_PHONE_NUMBER')        ?: '');
+define('SELF_URL',     getenv('IVR_SELF_URL')               ?: 'https://ivr-kursim-shabat.onrender.com/ivr_main.php');
+define('ADMIN_PASS',   getenv('ADMIN_PASSWORD')             ?: 'Shabbat@2024!');
+define('CRON_SECRET',  getenv('CRON_SECRET')                ?: 'cron_change_me');
+define('REDIS_URL',    rtrim(getenv('UPSTASH_REDIS_REST_URL')   ?: '', '/'));
+define('REDIS_TOKEN',  getenv('UPSTASH_REDIS_REST_TOKEN')   ?: '');
 
 // ── Lookup tables ──────────────────────────────────────────────
 
@@ -158,12 +92,8 @@ function redisExec(array $cmd): mixed {
 }
 
 function getAllApts(): array {
-    if (hasRedis()) {
-        $raw  = redisExec(['GET', 'apts_list']);
-        $apts = ($raw !== null && $raw !== '') ? json_decode($raw, true) : [];
-    } else {
-        $apts = fileKvGet('apts_list') ?? [];
-    }
+    $raw  = redisExec(['GET', 'apts_list']);
+    $apts = ($raw !== null && $raw !== '') ? json_decode($raw, true) : [];
     return is_array($apts) ? $apts : [];
 }
 
@@ -173,12 +103,7 @@ function getApts(): array {
 }
 
 function saveApts(array $apts): void {
-    $list = array_values($apts);
-    if (hasRedis()) {
-        redisExec(['SET', 'apts_list', json_encode($list)]);
-    } else {
-        fileKvSet('apts_list', $list);
-    }
+    redisExec(['SET', 'apts_list', json_encode(array_values($apts))]);
 }
 
 function filterApts(array $apts, array $f): array {
@@ -204,6 +129,19 @@ function sendSMS(string $phone, string $msg): void {
         'header'  => "Authorization: Basic " . base64_encode(TWILIO_SID . ':' . TWILIO_TOKEN)
                    . "\r\nContent-Type: application/x-www-form-urlencoded",
         'content' => http_build_query(['From' => TWILIO_FROM, 'To' => $phone, 'Body' => $msg]),
+    ]]);
+    @file_get_contents($url, false, $ctx);
+}
+
+function flashCall(string $phone): void {
+    if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_FROM) return;
+    $url = 'https://api.twilio.com/2010-04-01/Accounts/' . TWILIO_SID . '/Calls.json';
+    $twiml = '<Response><Hangup/></Response>';
+    $ctx = stream_context_create(['http' => [
+        'method'  => 'POST',
+        'header'  => "Authorization: Basic " . base64_encode(TWILIO_SID . ':' . TWILIO_TOKEN)
+                   . "\r\nContent-Type: application/x-www-form-urlencoded",
+        'content' => http_build_query(['From' => TWILIO_FROM, 'To' => $phone, 'Twiml' => $twiml]),
     ]]);
     @file_get_contents($url, false, $ctx);
 }

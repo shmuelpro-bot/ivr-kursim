@@ -440,10 +440,78 @@ switch ($step) {
         $p = ['fr' => $_GET['fr'] ?? 0, 'fc' => $_GET['fc'] ?? 0, 'fn' => $_GET['fn'] ?? 0,
               'fa' => $_GET['fa'] ?? 0, 'FB' => $_GET['FB'] ?? 0, 'FBR' => $_GET['FBR'] ?? 0];
         if ($digit !== null) {
-            respond(redir(stepUrl('search_results', array_merge($p, ['FP' => intval($digit), 'idx' => 0]))));
+            respond(redir(stepUrl('search_intro', array_merge($p, ['FP' => intval($digit)]))));
         }
         respond(numInput(stepUrl('search_price', $p),
             'הקלד מחיר מקסימום ללילה ולחץ סולמית. לדילוג הקש 0 ולחץ סולמית.'));
+        break;
+    }
+
+    case 'search_intro': {
+        $fr  = intval($_GET['fr']  ?? 0);
+        $fc  = intval($_GET['fc']  ?? 0);
+        $fn  = intval($_GET['fn']  ?? 0);
+        $fa  = intval($_GET['fa']  ?? 0);
+        $fb  = intval($_GET['FB']  ?? 0);
+        $fbr = intval($_GET['FBR'] ?? 0);
+        $fp  = intval($_GET['FP']  ?? 0);
+        $fP  = ['fr' => $fr, 'fc' => $fc, 'fn' => $fn, 'fa' => $fa,
+                'FB' => $fb, 'FBR' => $fbr, 'FP' => $fp];
+
+        $total = count(filterApts(getApts(), [
+            'rental_type' => $fr, 'city' => $fc, 'neighborhood' => $fn,
+            'apt_type' => $fa, 'beds_min' => $fb, 'bedrooms_min' => $fbr, 'price_max' => $fp,
+        ]));
+
+        if ($total === 0) {
+            if ($digit !== null) respond(redir(stepUrl($digit === '1' ? 'search_notice' : 'main')));
+            respond(menu(stepUrl('search_intro', $fP), [
+                'לא נמצאו דירות התואמות את הסינון שלך.',
+                'לחיפוש חדש הקש 1.',
+                'לתפריט הראשי הקש 9.',
+            ]));
+        }
+
+        if ($digit !== null) {
+            respond(match($digit) {
+                '1'     => redir(stepUrl('search_results', array_merge($fP, ['idx' => 0]))),
+                '2'     => redir(stepUrl('search_notify_all', $fP)),
+                '9'     => redir(stepUrl('main')),
+                default => redir(stepUrl('search_intro', $fP)),
+            });
+        }
+        respond(menu(stepUrl('search_intro', $fP), [
+            'נמצאו ' . $total . ' דירות המתאימות לחיפוש שלך.',
+            'לשמיעת הדירות הקש 1.',
+            'לצינתוק לכל בעלי הדירות המתאימים הקש 2.',
+            'לתפריט הראשי הקש 9.',
+        ]));
+        break;
+    }
+
+    case 'search_notify_all': {
+        $fr  = intval($_GET['fr']  ?? 0);
+        $fc  = intval($_GET['fc']  ?? 0);
+        $fn  = intval($_GET['fn']  ?? 0);
+        $fa  = intval($_GET['fa']  ?? 0);
+        $fb  = intval($_GET['FB']  ?? 0);
+        $fbr = intval($_GET['FBR'] ?? 0);
+        $fp  = intval($_GET['FP']  ?? 0);
+
+        $results = filterApts(getApts(), [
+            'rental_type' => $fr, 'city' => $fc, 'neighborhood' => $fn,
+            'apt_type' => $fa, 'beds_min' => $fb, 'bedrooms_min' => $fbr, 'price_max' => $fp,
+        ]);
+
+        $phones = array_unique(array_column($results, 'owner_phone'));
+        foreach ($phones as $ownerPhone) {
+            flashCall($ownerPhone);
+        }
+        $count = count($phones);
+        respond(say(
+            'שלחנו צינתוק ל ' . $count . ' בעלי דירות.',
+            'הם יראו שיחה שלא נענתה ויצרו איתך קשר בהקדם.',
+        ) . redir(stepUrl('main')));
         break;
     }
 
