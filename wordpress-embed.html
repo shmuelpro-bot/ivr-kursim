@@ -171,19 +171,28 @@ function showHome() {
 
 function showLogin() {
   render(`
-    <div class="mg-card" style="max-width:400px;margin:0 auto">
+    <div class="mg-card" style="max-width:420px;margin:0 auto">
       <div style="text-align:center;margin-bottom:20px">
         <div style="font-size:2.5rem">📱</div>
-        <h3 style="margin:8px 0 4px">כניסה עם טלפון</h3>
-        <p style="color:#6b7280;font-size:.9rem;margin:0">נשלח קוד אימות ב-SMS</p>
+        <h3 style="margin:8px 0 4px">כניסה עם מספר טלפון</h3>
+        <p style="color:#6b7280;font-size:.9rem;margin:0">נשלח קוד אימות – בחר באיזו דרך</p>
       </div>
       ${alert_html()}
-      <label class="mg-label">מספר נייד ישראלי</label>
-      <input id="mg-phone-in" class="mg-input" type="tel" placeholder="050-000-0000" inputmode="tel">
-      <button class="mg-btn mg-btn-primary mg-btn-full" style="margin-top:12px" onclick="doSendOtp()">
-        שלח קוד אימות
-      </button>
-      <div style="text-align:center;margin-top:12px">
+      <label class="mg-label">מספר טלפון (נייד או קווי)</label>
+      <input id="mg-phone-in" class="mg-input" type="tel" placeholder="050-000-0000 / 03-0000000" inputmode="tel">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+        <button class="mg-btn mg-btn-primary" onclick="doSendOtp('sms')" style="padding:12px 8px;font-size:.95rem">
+          📱 SMS
+        </button>
+        <button class="mg-btn" onclick="doSendOtp('call')"
+          style="background:#f59e0b;color:#fff;padding:12px 8px;font-size:.95rem;border-radius:10px;border:none;font-weight:700;cursor:pointer">
+          📞 שיחת טלפון
+        </button>
+      </div>
+      <p style="text-align:center;color:#9ca3af;font-size:.8rem;margin:10px 0 0">
+        טלפון קווי? בחר "שיחת טלפון" – הקוד יוקרא בשיחה
+      </p>
+      <div style="text-align:center;margin-top:10px">
         <button class="mg-btn-link" onclick="goHome()">← חזרה</button>
       </div>
     </div>
@@ -198,7 +207,11 @@ function showVerify() {
         <div style="font-size:2.5rem">🔐</div>
         <h3 style="margin:8px 0 4px">הכנס קוד אימות</h3>
         <p style="color:#6b7280;font-size:.9rem;margin:0">
-          ${S.devCode ? 'מצב בדיקה – ללא SMS' : 'נשלח ל-<strong>'+dispPhone(S.otpPhone)+'</strong>'}
+          ${S.devCode
+            ? 'מצב בדיקה – ללא Twilio'
+            : S.otpViaCall
+              ? '📞 מתקשרים ל-<strong>'+dispPhone(S.otpPhone)+'</strong> – ענה לשיחה'
+              : '📱 SMS נשלח ל-<strong>'+dispPhone(S.otpPhone)+'</strong>'}
         </p>
       </div>
       ${S.devCode ? `<div class="mg-alert mg-alert-warn">🛠️ <strong>מצב בדיקה</strong><br>הקוד שלך: <span style="font-size:1.8rem;font-weight:800;letter-spacing:.15em;color:#92400e">${esc(S.devCode)}</span></div>` : ''}
@@ -211,8 +224,9 @@ function showVerify() {
         <input type="text" maxlength="1" inputmode="numeric" class="mg-otp-d">
       </div>
       <button id="mg-otp-btn" class="mg-btn mg-btn-primary mg-btn-full" disabled onclick="doVerify()">אמת</button>
-      <div style="text-align:center;margin-top:12px;display:flex;justify-content:center;gap:8px">
-        <button class="mg-btn-link" onclick="doSendOtp(true)">שלח שוב</button>
+      <div style="text-align:center;margin-top:12px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+        <button class="mg-btn-link" onclick="doSendOtp(null,true)">${S.otpViaCall ? '📞 התקשר שוב' : '📱 שלח שוב'}</button>
+        <button class="mg-btn-link" onclick="doSendOtp(S.otpViaCall?'sms':'call',false)">${S.otpViaCall ? '📱 קבל ב-SMS במקום' : '📞 קבל בשיחה במקום'}</button>
         <button class="mg-btn-link" onclick="goLogin()">שנה מספר</button>
       </div>
     </div>
@@ -468,16 +482,31 @@ async function loadListings() {
   showListings();
 }
 
-async function doSendOtp(resend) {
+async function doSendOtp(method, resend) {
   const inp = document.getElementById('mg-phone-in');
-  const ph  = resend ? S.otpPhone : (inp ? inp.value : '');
+  const ph  = resend ? S.otpPhone : (inp ? inp.value.trim() : '');
   S.error=''; S.success='';
-  if (!ph) { S.error='נא להזין מספר'; showLogin(); return; }
-  render(`<div class="mg-loading">⏳ שולח קוד...</div>`);
-  const r = await api('send_otp', {phone: ph});
-  if (!r.ok) { S.error=r.error; showLogin(); return; }
+  if (!ph) { S.error='נא להזין מספר טלפון'; showLogin(); return; }
+
+  const isCall = (method === 'call') || S.otpMethod === 'call';
+  if (!resend) S.otpMethod = method;
+
+  const loadMsg = isCall ? '📞 מתחבר לשיחה...' : '📱 שולח SMS...';
+  render(`<div class="mg-loading">⏳ ${loadMsg}</div>`);
+
+  const action = isCall ? 'send_otp_call' : 'send_otp';
+  const r = await api(action, {phone: ph});
+
+  if (!r.ok) {
+    S.error = r.error;
+    // אם שיחה נכשלה, הצע SMS
+    if (isCall) S.error += ' – נסה לקבל קוד ב-SMS';
+    showLogin();
+    return;
+  }
   if (!resend) S.otpPhone = ph;
-  S.devCode = r.dev_code || null;
+  S.devCode  = r.dev_code || null;
+  S.otpViaCall = isCall && !r.dev_code;
   S.step = 'verify';
   showVerify();
 }

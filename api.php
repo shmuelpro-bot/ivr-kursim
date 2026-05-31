@@ -80,6 +80,33 @@ function normPhone(string $p): string {
 // ══════════════════════════════════════════════════════════════
 switch ($action) {
 
+    // ── שיחת טלפון OTP ────────────────────────────────────────
+    case 'send_otp_call':
+        $phone = normPhone(trim($body['phone'] ?? ''));
+        if (strlen($phone) < 12) fail('מספר טלפון לא תקין');
+        if (!hasTwilio()) fail('שיחות טלפון אינן זמינות כרגע – השתמש ב-SMS');
+        $code   = str_pad((string)random_int(10000, 99999), 5, '0', STR_PAD_LEFT);
+        kv_set('otp:' . $phone, $code, 300);
+        $vToken = bin2hex(random_bytes(16));
+        kv_set('vtk:' . $vToken, $code, 120);
+        $twimlUrl = 'https://ivr-kursim.onrender.com/otp_voice.php?t=' . urlencode($vToken);
+        $url = 'https://api.twilio.com/2010-04-01/Accounts/' . TWILIO_SID . '/Calls.json';
+        $ctx = stream_context_create(['http' => [
+            'method'  => 'POST',
+            'header'  => "Authorization: Basic " . base64_encode(TWILIO_SID . ':' . TWILIO_TOKEN)
+                       . "\r\nContent-Type: application/x-www-form-urlencoded",
+            'content' => http_build_query(['From' => TWILIO_FROM, 'To' => $phone, 'Url' => $twimlUrl]),
+            'ignore_errors' => true,
+        ]]);
+        $r = @file_get_contents($url, false, $ctx);
+        if ($r === false) fail('שגיאה בהתחברות לשירות שיחות');
+        $resp = json_decode($r, true);
+        if (!empty($resp['status']) && in_array($resp['status'], ['failed','canceled'])) {
+            fail('לא ניתן להתקשר למספר זה: ' . ($resp['message'] ?? ''));
+        }
+        ok(['call' => true]);
+        break;
+
     // ── שליחת OTP ─────────────────────────────────────────────
     case 'send_otp':
         $phone = normPhone(trim($body['phone'] ?? ''));
