@@ -1,0 +1,707 @@
+<!-- ════════════════════════════════════════════════════
+     מאגרים – אטרקציות לציבור החרדי
+     הדבק בווידג'ט HTML באלמנטור
+════════════════════════════════════════════════════ -->
+<div id="atr-app" dir="rtl"></div>
+
+<style>
+#atr-app *{box-sizing:border-box;font-family:Arial,sans-serif}
+#atr-app{max-width:900px;margin:0 auto;padding:8px;direction:rtl;text-align:right}
+.at-hero{background:linear-gradient(135deg,#065f46,#059669);color:#fff;border-radius:14px;padding:28px 20px;text-align:center;margin-bottom:20px}
+.at-hero h2{margin:0 0 6px;font-size:1.6rem}
+.at-hero p{margin:0;opacity:.9;font-size:.95rem}
+.at-card{background:#fff;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.08);padding:20px;margin-bottom:14px}
+.at-btn{display:inline-block;padding:10px 24px;border-radius:10px;border:none;font-size:.95rem;font-weight:700;cursor:pointer;transition:opacity .15s}
+.at-btn-green{background:#059669;color:#fff}.at-btn-green:hover{opacity:.88}
+.at-btn-blue{background:#2563eb;color:#fff}.at-btn-blue:hover{opacity:.88}
+.at-btn-amber{background:#d97706;color:#fff;border-radius:10px;border:none;font-weight:700;cursor:pointer;padding:10px 22px;font-size:.95rem}
+.at-btn-outline{background:#fff;color:#374151;border:2px solid #d1d5db}
+.at-btn-danger{background:#fff;color:#dc2626;border:2px solid #dc2626;padding:5px 12px;font-size:.82rem;border-radius:8px;cursor:pointer;font-weight:600}
+.at-btn-link{background:none;border:none;color:#059669;cursor:pointer;font-size:.88rem;padding:4px}
+.at-btn-full{width:100%;display:block;text-align:center;margin-top:10px}
+.at-input{width:100%;border:1.5px solid #d1d5db;border-radius:10px;padding:10px 12px;font-size:.97rem;outline:none;transition:border-color .2s}
+.at-input:focus{border-color:#059669;box-shadow:0 0 0 3px rgba(5,150,105,.12)}
+.at-input-rtl{direction:rtl;text-align:right}.at-input-ltr{direction:ltr;text-align:left}
+.at-label{display:block;font-weight:700;color:#374151;margin-bottom:5px;font-size:.92rem}
+.at-select{width:100%;border:1.5px solid #d1d5db;border-radius:10px;padding:10px 12px;font-size:.95rem;background:#fff;direction:rtl}
+.at-row{display:flex;gap:12px;flex-wrap:wrap}
+.at-col{flex:1;min-width:140px}
+.at-alert{border-radius:10px;padding:11px 14px;margin-bottom:12px;font-size:.92rem}
+.at-err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.at-ok{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.at-warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a;text-align:center;font-size:1.05rem}
+/* Filter bar */
+.at-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px}
+.at-filters select{border:1.5px solid #d1d5db;border-radius:10px;padding:8px 12px;font-size:.9rem;background:#fff;direction:rtl;min-width:130px}
+/* Category chips */
+.at-cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.at-cat-chip{padding:6px 14px;border-radius:20px;border:1.5px solid #d1d5db;background:#fff;cursor:pointer;font-size:.85rem;transition:all .15s;white-space:nowrap}
+.at-cat-chip:hover,.at-cat-chip.active{border-color:#059669;background:#ecfdf5;color:#065f46;font-weight:700}
+/* Attraction cards grid */
+.at-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:16px}
+.at-item{border:1.5px solid #e2e8f0;border-radius:14px;overflow:hidden;background:#fff;transition:box-shadow .18s;cursor:pointer}
+.at-item:hover{box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.at-item-img{height:150px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:2.5rem;overflow:hidden}
+.at-item-img img{width:100%;height:100%;object-fit:cover}
+.at-item-body{padding:12px}
+.at-item-name{font-weight:700;font-size:1rem;margin-bottom:4px}
+.at-item-cat{font-size:.78rem;color:#6b7280;margin-bottom:6px}
+.at-item-loc{font-size:.82rem;color:#374151}
+.at-item-price{font-size:.82rem;font-weight:600;color:#059669;margin-top:4px}
+/* Modal overlay */
+.at-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.at-modal{background:#fff;border-radius:16px;padding:24px;max-width:560px;width:100%;margin:auto;position:relative;z-index:9999}
+.at-modal-close{position:absolute;top:14px;left:14px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#6b7280}
+/* OTP */
+.at-otp{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.at-otp input{width:50px;height:54px;text-align:center;font-size:1.4rem;font-weight:800;border:2px solid #d1d5db;border-radius:10px;outline:none}
+.at-otp input:focus{border-color:#059669}
+/* Features */
+.at-feat{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-bottom:8px}
+.at-feat label{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:.85rem;transition:all .15s}
+.at-feat label:hover{border-color:#059669;background:#ecfdf5}
+.at-feat label:has(input:checked){border-color:#059669;background:#ecfdf5;font-weight:600;color:#065f46}
+/* Image upload */
+.at-drop{border:2px dashed #94a3b8;border-radius:12px;padding:18px;text-align:center;cursor:pointer;background:#f8fafc;transition:all .18s}
+.at-drop:hover,.at-drop.over{border-color:#059669;background:#ecfdf5}
+.at-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.at-thumb{position:relative;width:80px;height:65px;border-radius:8px;overflow:hidden;border:2px solid #e2e8f0}
+.at-thumb img{width:100%;height:100%;object-fit:cover}
+.at-thumb button{position:absolute;top:1px;left:1px;width:18px;height:18px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:50%;font-size:.6rem;cursor:pointer;line-height:1}
+/* Badge */
+.at-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.75rem;font-weight:600}
+.at-badge-green{background:#dcfce7;color:#15803d}
+.at-badge-red{background:#fee2e2;color:#dc2626}
+/* Detail view */
+.at-detail-img{height:220px;background:#f1f5f9;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:4rem;margin-bottom:14px}
+.at-detail-img img{width:100%;height:100%;object-fit:cover}
+.at-img-dots{display:flex;gap:6px;justify-content:center;margin-top:6px}
+.at-img-dot{width:8px;height:8px;border-radius:50%;background:#d1d5db;cursor:pointer;transition:background .15s}
+.at-img-dot.active{background:#059669}
+.at-back{color:#6b7280;font-size:.9rem;cursor:pointer;display:inline-block;margin-bottom:12px;background:none;border:none;padding:0}
+.at-section{font-size:1rem;font-weight:700;color:#1e293b;margin:14px 0 8px;padding-bottom:6px;border-bottom:2px solid #f1f5f9}
+.at-loading{text-align:center;padding:40px;color:#6b7280;font-size:1.1rem}
+.at-empty{text-align:center;padding:48px 16px;color:#6b7280}
+.at-opt{display:flex;gap:10px;margin-bottom:14px}
+.at-opt a{flex:1;text-align:center;padding:18px 8px;border:2px solid #e2e8f0;border-radius:14px;cursor:pointer;text-decoration:none;color:inherit;transition:all .18s}
+.at-opt a:hover{border-color:#059669;background:#ecfdf5;transform:translateY(-2px)}
+.at-opt .oi{font-size:1.8rem;display:block;margin-bottom:5px}
+.at-phone-badge{background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;border-radius:8px;padding:3px 10px;font-weight:700;font-size:.88rem}
+textarea.at-input{min-height:80px;resize:vertical;direction:rtl;text-align:right}
+@media(max-width:500px){.at-grid{grid-template-columns:1fr}.at-otp input{width:42px;height:48px}}
+</style>
+
+<script>
+(function(){
+'use strict';
+
+const API  = 'https://ivr-kursim.onrender.com/api_attractions.php';
+const TK   = 'mg_atr_token';
+const PH   = 'mg_atr_phone';
+const MAX_IMGS = 6;
+
+const S = {
+  view:      'browse',   // browse | detail | login | verify | dashboard | form | mine
+  token:     localStorage.getItem(TK) || null,
+  phone:     localStorage.getItem(PH) || null,
+  otpPhone:  null, otpMethod: 'sms', otpViaCall: false, devCode: null,
+  error: '', success: '',
+  fd: null,
+  attractions: [], total: 0,
+  filter: {city:'', category:'', neighborhood:''},
+  activeCat: '',
+  detail: null, detailImgIdx: 0,
+  imgs: [],
+  myList: [],
+};
+
+const app = () => document.getElementById('atr-app');
+
+async function api(action, data={}) {
+  try {
+    const r = await fetch(API, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({action, token: S.token||'', ...data})
+    });
+    return await r.json();
+  } catch(e) { return {ok:false, error:'שגיאת תקשורת – נסה שנית'}; }
+}
+
+async function imgToB64(file) {
+  return new Promise(res => {
+    const canvas = document.createElement('canvas');
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      let w=img.width, h=img.height;
+      const ratio = Math.min(960/w, 720/h, 1);
+      w=Math.round(w*ratio); h=Math.round(h*ratio);
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      res(canvas.toDataURL('image/jpeg', 0.75));
+    };
+    img.src = url;
+  });
+}
+
+function esc(s){ const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+function dispPhone(p){ if(p&&p.startsWith('+972')){const l='0'+p.slice(4);return l.slice(0,3)+'-'+l.slice(3,6)+'-'+l.slice(6);}return p||''; }
+function cityName(id){ return (S.fd&&S.fd.cities)?S.fd.cities[id]||'':''; }
+function nhName(city,nh){ return (S.fd&&S.fd.neighborhoods)?((S.fd.neighborhoods[city]||{})[nh]||''):''; }
+function catLabel(k){ return (S.fd&&S.fd.categories)?S.fd.categories[k]||k:k; }
+
+function alerts() {
+  let h='';
+  if(S.error)   h+=`<div class="at-alert at-err">⚠️ ${esc(S.error)}</div>`;
+  if(S.success) h+=`<div class="at-alert at-ok">✅ ${esc(S.success)}</div>`;
+  return h;
+}
+
+function render(html){ app().innerHTML = html; }
+
+// ══ SCREENS ══════════════════════════════════════════════════
+
+function showBrowse() {
+  if (!S.fd) { loadFd().then(showBrowse); return; }
+  const cats = Object.entries(S.fd.categories);
+  const cities = Object.entries(S.fd.cities);
+
+  const catChips = [['','הכל 🔍'], ...cats].map(([k,v]) =>
+    `<span class="at-cat-chip ${S.activeCat===k?'active':''}" onclick="setCat('${k}')">${v}</span>`
+  ).join('');
+
+  const cityOpts = cities.map(([id,n]) =>
+    `<option value="${id}" ${S.filter.city==id?'selected':''}>${n}</option>`).join('');
+
+  const nhOpts = S.filter.city && S.fd.neighborhoods[S.filter.city]
+    ? Object.entries(S.fd.neighborhoods[S.filter.city]).map(([id,n])=>
+        `<option value="${id}" ${S.filter.neighborhood==id?'selected':''}>${n}</option>`).join('')
+    : '';
+
+  const list = S.attractions;
+  const grid = list.length===0
+    ? `<div class="at-empty"><div style="font-size:3rem">🔍</div><p>לא נמצאו אטרקציות בסינון זה</p></div>`
+    : `<div class="at-grid">${list.map(atr => {
+        const img1 = atr.images&&atr.images[0];
+        const catEmoji = (S.fd.categories[atr.category]||'🎯').split(' ')[0];
+        const loc = [cityName(atr.city), nhName(atr.city,atr.neighborhood)].filter(Boolean).join(' / ');
+        return `<div class="at-item" onclick="showDetail(${JSON.stringify(JSON.stringify(atr))})">
+          <div class="at-item-img">${img1?`<img src="${img1}">`:`<span>${catEmoji}</span>`}</div>
+          <div class="at-item-body">
+            <div class="at-item-name">${esc(atr.name)}</div>
+            <div class="at-item-cat">${esc(catLabel(atr.category))}</div>
+            <div class="at-item-loc">📍 ${esc(loc)}</div>
+            ${atr.price?`<div class="at-item-price">💰 ${esc(atr.price)}</div>`:''}
+          </div>
+        </div>`;
+      }).join('')}</div>`;
+
+  render(`
+    <div class="at-hero">
+      <div style="font-size:2.2rem">🎯</div>
+      <h2>אטרקציות לציבור החרדי</h2>
+      <p>מצא פעילויות, מקומות ואירועים בעירך</p>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${S.token
+          ? `<button class="at-btn at-btn-green" onclick="goDash()">👤 האזור שלי</button>`
+          : `<button class="at-btn at-btn-green" onclick="goLogin()">+ הוסף אטרקציה</button>`}
+      </div>
+      ${S.token ? `<span class="at-phone-badge">${dispPhone(S.phone)}</span>` : ''}
+    </div>
+
+    ${alerts()}
+
+    <!-- Category chips -->
+    <div class="at-cats">${catChips}</div>
+
+    <!-- Filters -->
+    <div class="at-filters">
+      <div>
+        <label style="font-size:.8rem;color:#6b7280;display:block;margin-bottom:3px">עיר</label>
+        <select onchange="setFilter('city',this.value)">
+          <option value="">כל הערים</option>${cityOpts}
+        </select>
+      </div>
+      ${S.filter.city && nhOpts ? `<div>
+        <label style="font-size:.8rem;color:#6b7280;display:block;margin-bottom:3px">שכונה</label>
+        <select onchange="setFilter('neighborhood',this.value)">
+          <option value="">כל השכונות</option>${nhOpts}
+        </select>
+      </div>` : ''}
+      <div style="align-self:flex-end">
+        <small style="color:#9ca3af">${S.total} אטרקציות</small>
+      </div>
+    </div>
+
+    ${grid}
+  `);
+}
+
+function showDetail(atrJson) {
+  const atr = typeof atrJson === 'string' ? JSON.parse(atrJson) : atrJson;
+  S.detail = atr;
+  S.detailImgIdx = 0;
+  const imgs = atr.images||[];
+  const loc  = [cityName(atr.city), nhName(atr.city,atr.neighborhood)].filter(Boolean).join(' / ');
+  const dots  = imgs.length > 1
+    ? `<div class="at-img-dots">${imgs.map((_,i)=>`<div class="at-img-dot ${i===0?'active':''}" onclick="setDetailImg(${i})"></div>`).join('')}</div>`
+    : '';
+
+  render(`
+    <button class="at-back" onclick="showBrowse()">← חזרה לכל האטרקציות</button>
+    <div class="at-card">
+      <div class="at-detail-img" id="det-img">
+        ${imgs[0]?`<img id="det-img-el" src="${imgs[0]}">`:`<span style="font-size:4rem">${(S.fd?.categories[atr.category]||'🎯').split(' ')[0]}</span>`}
+      </div>
+      ${dots}
+      <h2 style="margin:12px 0 4px;font-size:1.4rem">${esc(atr.name)}</h2>
+      <div style="color:#6b7280;font-size:.9rem;margin-bottom:12px">${esc(catLabel(atr.category))}</div>
+
+      <div class="at-row" style="gap:16px;margin-bottom:12px">
+        ${loc?`<div><strong>📍 מיקום</strong><br><span style="font-size:.9rem">${esc(loc)}</span></div>`:''}
+        ${atr.address?`<div><strong>🏠 כתובת</strong><br><span style="font-size:.9rem">${esc(atr.address)}</span></div>`:''}
+        ${atr.price?`<div><strong>💰 מחיר</strong><br><span style="font-size:.9rem;color:#059669;font-weight:700">${esc(atr.price)}</span></div>`:''}
+        ${atr.hours?`<div><strong>🕐 שעות</strong><br><span style="font-size:.9rem">${esc(atr.hours)}</span></div>`:''}
+      </div>
+
+      ${atr.description?`<div class="at-section">תיאור</div><p style="font-size:.95rem;color:#374151;line-height:1.6">${esc(atr.description)}</p>`:''}
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+        ${atr.phone?`<a href="tel:${esc(atr.phone)}" class="at-btn at-btn-green" style="text-decoration:none">📞 ${esc(atr.phone)}</a>`:''}
+        ${atr.website?`<a href="${esc(atr.website)}" target="_blank" rel="noopener" class="at-btn at-btn-blue" style="text-decoration:none">🌐 לאתר</a>`:''}
+      </div>
+    </div>
+  `);
+}
+
+function showLogin() {
+  render(`
+    <div class="at-card" style="max-width:420px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:2.2rem">📱</div>
+        <h3 style="margin:8px 0 4px">כניסה לאזור האישי</h3>
+        <p style="color:#6b7280;font-size:.88rem;margin:0">כדי להוסיף ולנהל אטרקציות</p>
+      </div>
+      ${alerts()}
+      <label class="at-label">מספר טלפון (נייד או קווי)</label>
+      <input id="at-phone-in" class="at-input at-input-ltr" type="tel" placeholder="050-000-0000 / 03-0000000" inputmode="tel" style="text-align:center">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+        <button class="at-btn at-btn-green" onclick="doSendOtp('sms')">📱 SMS</button>
+        <button class="at-btn at-btn-amber" onclick="doSendOtp('call')">📞 שיחת טלפון</button>
+      </div>
+      <p style="text-align:center;color:#9ca3af;font-size:.78rem;margin:8px 0 0">טלפון קווי? בחר "שיחת טלפון"</p>
+      <div style="text-align:center;margin-top:10px">
+        <button class="at-btn-link" onclick="showBrowse()">← חזרה לאטרקציות</button>
+      </div>
+    </div>
+  `);
+  document.getElementById('at-phone-in').focus();
+}
+
+function showVerify() {
+  render(`
+    <div class="at-card" style="max-width:400px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:14px">
+        <div style="font-size:2.2rem">🔐</div>
+        <h3 style="margin:8px 0 4px">הכנס קוד אימות</h3>
+        <p style="color:#6b7280;font-size:.88rem;margin:0">
+          ${S.devCode ? 'מצב בדיקה – ללא SMS'
+            : S.otpViaCall ? '📞 מתקשרים אליך – ענה לשיחה'
+            : '📱 SMS נשלח ל-<strong>'+dispPhone(S.otpPhone)+'</strong>'}
+        </p>
+      </div>
+      ${S.devCode?`<div class="at-alert at-warn">🛠️ <strong>מצב בדיקה</strong><br>הקוד: <span style="font-size:1.8rem;font-weight:800;letter-spacing:.15em;color:#92400e">${esc(S.devCode)}</span></div>`:''}
+      ${alerts()}
+      <div class="at-otp">
+        <input type="text" maxlength="1" inputmode="numeric" class="at-otp-d">
+        <input type="text" maxlength="1" inputmode="numeric" class="at-otp-d">
+        <input type="text" maxlength="1" inputmode="numeric" class="at-otp-d">
+        <input type="text" maxlength="1" inputmode="numeric" class="at-otp-d">
+        <input type="text" maxlength="1" inputmode="numeric" class="at-otp-d">
+      </div>
+      <button id="at-otp-btn" class="at-btn at-btn-green at-btn-full" disabled onclick="doVerify()">אמת</button>
+      <div style="text-align:center;margin-top:10px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+        <button class="at-btn-link" onclick="doSendOtp(null,true)">${S.otpViaCall?'📞 התקשר שוב':'📱 שלח שוב'}</button>
+        <button class="at-btn-link" onclick="doSendOtp(S.otpViaCall?'sms':'call',false)">${S.otpViaCall?'📱 קבל ב-SMS':'📞 קבל בשיחה'}</button>
+        <button class="at-btn-link" onclick="showLogin()">שנה מספר</button>
+      </div>
+    </div>
+  `);
+  initOtp();
+}
+
+function showDash() {
+  render(`
+    <div class="at-card" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:none">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:2rem">👋</span>
+        <div><strong>שלום! <span class="at-phone-badge">${dispPhone(S.phone)}</span></strong><br>
+          <small style="color:#6b7280">ניהול האטרקציות שלך</small></div>
+        <button class="at-btn-link" style="margin-right:auto;color:#dc2626" onclick="doLogout()">יציאה</button>
+      </div>
+    </div>
+    ${alerts()}
+    <div class="at-opt">
+      <a onclick="goForm()"><span class="oi">➕</span><strong>הוסף אטרקציה</strong><small style="color:#6b7280">חדשה</small></a>
+      <a onclick="goMine()"><span class="oi">📋</span><strong>האטרקציות שלי</strong><small style="color:#6b7280">נהל</small></a>
+      <a onclick="showBrowse()"><span class="oi">🔍</span><strong>גלישה</strong><small style="color:#6b7280">כל האטרקציות</small></a>
+    </div>
+  `);
+}
+
+function showForm() {
+  if (!S.fd) { loadFd().then(showForm); return; }
+  const cats = Object.entries(S.fd.categories).map(([k,v])=>
+    `<option value="${k}">${v}</option>`).join('');
+  const cities = Object.entries(S.fd.cities).map(([id,n])=>
+    `<option value="${id}">${n}</option>`).join('');
+  const features = {
+    kosher:'🥩 כשר',family_friendly:'👨‍👩‍👧‍👦 מתאים למשפחות',free:'🆓 חינמי',
+    accessible:'♿ נגיש',outdoor:'🌿 בחוץ',indoor:'🏠 בפנים',
+    separate:'🚻 הפרדה',strollers:'🍼 נגיש לעגלות',parking:'🅿️ חניה'
+  };
+  const featHtml = Object.entries(features).map(([k,v])=>
+    `<label><input type="checkbox" name="afeat" value="${k}"><span>${v}</span></label>`).join('');
+  const thumbs = S.imgs.map((f,i)=>`<div class="at-thumb"><img src="${URL.createObjectURL(f)}"><button onclick="rmImg(${i})">✕</button></div>`).join('');
+
+  render(`
+    <button class="at-back" onclick="goDash()">← חזרה</button>
+    ${alerts()}
+    <div class="at-card">
+      <div class="at-section" style="margin-top:0">📌 פרטי האטרקציה</div>
+      <div style="margin-bottom:12px">
+        <label class="at-label">שם האטרקציה *</label>
+        <input id="af-name" class="at-input at-input-rtl" placeholder="שם מלא ומדויק" maxlength="100">
+      </div>
+      <div class="at-row">
+        <div class="at-col">
+          <label class="at-label">קטגוריה *</label>
+          <select id="af-cat" class="at-select"><option value="">בחר...</option>${cats}</select>
+        </div>
+      </div>
+    </div>
+
+    <div class="at-card">
+      <div class="at-section" style="margin-top:0">📍 מיקום</div>
+      <div class="at-row">
+        <div class="at-col">
+          <label class="at-label">עיר *</label>
+          <select id="af-city" class="at-select" onchange="updAtrNh()"><option value="">בחר...</option>${cities}</select>
+        </div>
+        <div class="at-col">
+          <label class="at-label">שכונה</label>
+          <select id="af-nh" class="at-select"><option value="0">אופציונלי</option></select>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <label class="at-label">כתובת מדויקת</label>
+        <input id="af-addr" class="at-input at-input-rtl" placeholder="רחוב ומספר">
+      </div>
+    </div>
+
+    <div class="at-card">
+      <div class="at-section" style="margin-top:0">💰 מחיר ושעות</div>
+      <div class="at-row">
+        <div class="at-col">
+          <label class="at-label">מחיר</label>
+          <input id="af-price" class="at-input at-input-rtl" placeholder="חינמי / 50 ₪ / לפי גיל...">
+        </div>
+        <div class="at-col">
+          <label class="at-label">שעות פעילות</label>
+          <input id="af-hours" class="at-input at-input-rtl" placeholder="א׳-ה׳ 9:00-18:00">
+        </div>
+      </div>
+    </div>
+
+    <div class="at-card">
+      <div class="at-section" style="margin-top:0">✨ מאפיינים</div>
+      <div class="at-feat">${featHtml}</div>
+    </div>
+
+    <div class="at-card">
+      <div class="at-section" style="margin-top:0">📝 תיאור</div>
+      <textarea id="af-desc" class="at-input" maxlength="1000" rows="4" placeholder="תאר את האטרקציה בפירוט: מה יש, למי מתאים, מה מיוחד..."></textarea>
+      <div style="text-align:left;font-size:.78rem;color:#9ca3af" id="af-desc-c">0 / 1000</div>
+    </div>
+
+    <div class="at-card">
+      <div class="at-section" style="margin-top:0">🖼️ תמונות (עד ${MAX_IMGS})</div>
+      <div class="at-drop" id="af-drop" onclick="document.getElementById('af-file').click()"
+           ondragover="event.preventDefault();this.classList.add('over')"
+           ondragleave="this.classList.remove('over')"
+           ondrop="event.preventDefault();this.classList.remove('over');addImgs(event.dataTransfer.files)">
+        <div style="font-size:1.8rem">📷</div>
+        <div style="font-weight:700;margin-top:4px">לחץ להוספת תמונות</div>
+        <div style="font-size:.8rem;color:#94a3b8;margin-top:2px">עד 6 תמונות – JPG / PNG / WebP</div>
+      </div>
+      <input type="file" id="af-file" multiple accept="image/*" style="display:none" onchange="addImgs(this.files)">
+      <div class="at-thumbs" id="af-thumbs">${thumbs}</div>
+    </div>
+
+    <div class="at-card">
+      <div class="at-section" style="margin-top:0">📞 פרטי קשר</div>
+      <div class="at-row">
+        <div class="at-col">
+          <label class="at-label">טלפון</label>
+          <input id="af-phone" class="at-input at-input-ltr" placeholder="050-000-0000" value="${dispPhone(S.phone)}" style="text-align:center">
+        </div>
+        <div class="at-col">
+          <label class="at-label">אתר אינטרנט</label>
+          <input id="af-web" class="at-input at-input-ltr" placeholder="https://..." style="text-align:center">
+        </div>
+      </div>
+    </div>
+
+    <button class="at-btn at-btn-green at-btn-full" style="font-size:1.1rem;padding:14px" onclick="doAddAtr()">
+      🚀 פרסם אטרקציה
+    </button>
+    <div style="height:20px"></div>
+  `);
+
+  const ta=document.getElementById('af-desc'),tc=document.getElementById('af-desc-c');
+  ta.addEventListener('input',()=>tc.textContent=ta.value.length+' / 1000');
+}
+
+function showMine() {
+  if (!S.myLoaded) { loadMine(); return; }
+  const list = S.myList;
+  const cards = list.length===0
+    ? `<div class="at-empty"><div style="font-size:3rem">🎯</div><h4>אין אטרקציות</h4><button class="at-btn at-btn-green" onclick="goForm()">הוסף עכשיו</button></div>`
+    : list.map(atr => {
+        const img1 = atr.images&&atr.images[0];
+        const exp  = atr.expires < Date.now()/1000;
+        const loc  = [cityName(atr.city), nhName(atr.city,atr.neighborhood)].filter(Boolean).join(' / ');
+        return `<div class="at-card" style="padding:14px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            ${img1?`<img src="${img1}" style="width:70px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0">`:
+              `<div style="width:70px;height:60px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0">${(S.fd?.categories[atr.category]||'🎯').split(' ')[0]}</div>`}
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:.98rem">${esc(atr.name)}</div>
+              <div style="font-size:.82rem;color:#6b7280">${esc(catLabel(atr.category))} · ${esc(loc)}</div>
+              <span class="at-badge ${exp?'at-badge-red':'at-badge-green'}">${exp?'פג תוקף':'פעיל'}</span>
+            </div>
+            <button class="at-btn-danger" onclick="doDelAtr('${atr.id}')">הסר</button>
+          </div>
+        </div>`;
+      }).join('');
+
+  render(`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0">📋 האטרקציות שלי</h3>
+      <button class="at-btn at-btn-green" onclick="goForm()">+ הוסף</button>
+    </div>
+    <button class="at-back" onclick="goDash()">← חזרה</button>
+    ${alerts()}
+    ${cards}
+  `);
+}
+
+// ══ ACTIONS ══════════════════════════════════════════════════
+
+async function loadFd() {
+  if (S.fd) return;
+  const r = await api('form_data');
+  if (r.ok) S.fd = r;
+}
+
+async function loadBrowse() {
+  render(`<div class="at-loading">⏳ טוען אטרקציות...</div>`);
+  const r = await api('get_attractions', {
+    city: S.filter.city, category: S.activeCat, neighborhood: S.filter.neighborhood
+  });
+  if (!r.ok) { S.error=r.error; }
+  else { S.fd = S.fd || r; S.attractions = r.attractions||[]; S.total = r.total||0; S.error=''; }
+  showBrowse();
+}
+
+async function loadMine() {
+  render(`<div class="at-loading">⏳ טוען...</div>`);
+  const r = await api('my_attractions');
+  if (!r.ok) { S.error=r.error; showMine(); return; }
+  S.fd = S.fd || r;
+  S.myList = r.attractions||[]; S.myLoaded=true;
+  showMine();
+}
+
+function setCat(cat) {
+  S.activeCat = cat; S.filter.neighborhood='';
+  loadBrowse();
+}
+function setFilter(key,val) {
+  S.filter[key] = val;
+  if (key==='city') S.filter.neighborhood='';
+  loadBrowse();
+}
+
+function goLogin()  { S.error='';S.success='';S._afterLogin='form'; showLogin(); }
+function goDash()   { S.error='';S.success=''; showDash(); }
+function goForm()   { S.error='';S.success='';S.imgs=[]; showForm(); }
+function goMine()   { S.error='';S.success='';S.myLoaded=false; showMine(); }
+
+async function doSendOtp(method, resend) {
+  const inp = document.getElementById('at-phone-in');
+  const ph  = resend ? S.otpPhone : (inp?inp.value.trim():'');
+  S.error=''; S.success='';
+  if (!ph) { S.error='נא להזין מספר'; showLogin(); return; }
+  if (!resend) S.otpMethod = method;
+  const isCall = (method==='call')||(resend&&S.otpViaCall);
+  render(`<div class="at-loading">⏳ ${isCall?'מתחבר לשיחה...':'שולח SMS...'}</div>`);
+  const r = await api(isCall?'send_otp_call':'send_otp', {phone:ph});
+  if (!r.ok) { S.error=r.error+(isCall?' – נסה SMS':''); showLogin(); return; }
+  if (!resend) S.otpPhone=ph;
+  S.devCode=r.dev_code||null; S.otpViaCall=isCall&&!r.dev_code;
+  showVerify();
+}
+
+async function doVerify() {
+  const ds=[...document.querySelectorAll('.at-otp-d')];
+  const code=ds.map(d=>d.value).join('');
+  if(code.length<5) return;
+  S.error='';
+  render(`<div class="at-loading">⏳ מאמת...</div>`);
+  const r = await api('verify_otp',{phone:S.otpPhone,code});
+  if(!r.ok){S.error=r.error;showVerify();return;}
+  S.token=r.token; S.phone=r.phone; S.devCode=null;
+  localStorage.setItem(TK,r.token); localStorage.setItem(PH,r.phone);
+  S.success='אומת בהצלחה!';
+  showDash();
+}
+
+async function doAddAtr() {
+  S.error='';
+  const name = document.getElementById('af-name')?.value.trim();
+  const cat  = document.getElementById('af-cat')?.value;
+  const city = document.getElementById('af-city')?.value;
+  if(!name){S.error='נא להזין שם';showForm();return;}
+  if(!cat) {S.error='נא לבחור קטגוריה';showForm();return;}
+  if(!city){S.error='נא לבחור עיר';showForm();return;}
+  const feats=[...document.querySelectorAll('input[name=afeat]:checked')].map(i=>i.value);
+  render(`<div class="at-loading">⏳ מעלה...</div>`);
+  const images = await Promise.all(S.imgs.map(imgToB64));
+  const r = await api('add_attraction',{
+    name, category:cat, city,
+    neighborhood: document.getElementById('af-nh')?.value||'0',
+    address:  document.getElementById('af-addr')?.value||'',
+    price:    document.getElementById('af-price')?.value||'',
+    hours:    document.getElementById('af-hours')?.value||'',
+    features: feats,
+    description: document.getElementById('af-desc')?.value||'',
+    contact_phone: document.getElementById('af-phone')?.value||'',
+    website:  document.getElementById('af-web')?.value||'',
+    images,
+  });
+  if(!r.ok){S.error=r.error;showForm();return;}
+  S.success='האטרקציה פורסמה בהצלחה! 🎉';
+  S.myLoaded=false; S.imgs=[];
+  goMine();
+}
+
+async function doDelAtr(id) {
+  if(!confirm('להסיר אטרקציה זו?')) return;
+  const r = await api('delete_attraction',{id});
+  if(!r.ok){S.error=r.error;showMine();return;}
+  S.success='הוסר.'; S.myLoaded=false; showMine();
+}
+
+function doLogout() {
+  localStorage.removeItem(TK); localStorage.removeItem(PH);
+  S.token=null; S.phone=null;
+  showBrowse();
+}
+
+// Detail image slider
+function setDetailImg(i) {
+  S.detailImgIdx=i;
+  const imgs=S.detail?.images||[];
+  const el=document.getElementById('det-img');
+  if(el&&imgs[i]) el.innerHTML=`<img id="det-img-el" src="${imgs[i]}" style="width:100%;height:100%;object-fit:cover">`;
+  document.querySelectorAll('.at-img-dot').forEach((d,j)=>d.classList.toggle('active',j===i));
+}
+
+// Neighborhood
+function updAtrNh() {
+  const city=parseInt(document.getElementById('af-city')?.value);
+  const sel=document.getElementById('af-nh');
+  if(!sel||!S.fd) return;
+  const nhs=S.fd.neighborhoods[city]||{};
+  sel.innerHTML='<option value="0">אופציונלי</option>'+
+    Object.entries(nhs).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
+}
+
+// Images
+function addImgs(files) {
+  Array.from(files).forEach(f=>{
+    if(S.imgs.length>=MAX_IMGS) return;
+    if(!f.type.startsWith('image/')) return;
+    if(f.size>8*1024*1024){alert('קובץ גדול מ-8MB: '+f.name);return;}
+    S.imgs.push(f);
+  });
+  refreshThumbs();
+}
+function rmImg(i){S.imgs.splice(i,1);refreshThumbs();}
+function refreshThumbs(){
+  const w=document.getElementById('af-thumbs'),d=document.getElementById('af-drop');
+  if(!w) return;
+  w.innerHTML=S.imgs.map((f,i)=>`<div class="at-thumb"><img src="${URL.createObjectURL(f)}"><button onclick="rmImg(${i})">✕</button></div>`).join('');
+  if(d) d.style.display=S.imgs.length>=MAX_IMGS?'none':'';
+}
+
+// OTP inputs
+function initOtp(){
+  const ds=document.querySelectorAll('.at-otp-d');
+  const btn=document.getElementById('at-otp-btn');
+  const sync=()=>{const v=[...ds].map(d=>d.value).join('');if(btn)btn.disabled=v.length<5;};
+  ds.forEach((inp,i)=>{
+    inp.addEventListener('input',()=>{inp.value=inp.value.replace(/\D/,'');if(inp.value&&i<ds.length-1)ds[i+1].focus();sync();});
+    inp.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!inp.value&&i>0)ds[i-1].focus();});
+    inp.addEventListener('paste',e=>{
+      const p=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'');
+      if(p.length>=5){ds.forEach((d,j)=>d.value=p[j]||'');sync();e.preventDefault();}
+    });
+  });
+  if(ds[0]) ds[0].focus();
+}
+
+// showDetail wrapper for onclick
+function showDetail(jsonStr) {
+  const atr = JSON.parse(jsonStr);
+  S.detail=atr; S.detailImgIdx=0;
+  const imgs=atr.images||[];
+  const loc=[cityName(atr.city),nhName(atr.city,atr.neighborhood)].filter(Boolean).join(' / ');
+  const mainImg = imgs[0]?`<img id="det-img-el" src="${imgs[0]}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:4rem">${(S.fd?.categories[atr.category]||'🎯').split(' ')[0]}</span>`;
+  const dots=imgs.length>1?`<div class="at-img-dots">${imgs.map((_,i)=>`<div class="at-img-dot ${i===0?'active':''}" onclick="setDetailImg(${i})"></div>`).join('')}</div>`:'';
+  render(`
+    <button class="at-back" onclick="loadBrowse()">← חזרה לכל האטרקציות</button>
+    <div class="at-card">
+      <div class="at-detail-img" id="det-img">${mainImg}</div>${dots}
+      <h2 style="margin:12px 0 4px;font-size:1.4rem">${esc(atr.name)}</h2>
+      <div style="color:#6b7280;font-size:.9rem;margin-bottom:12px">${esc(catLabel(atr.category))}</div>
+      <div class="at-row" style="gap:16px;margin-bottom:12px">
+        ${loc?`<div><strong>📍</strong> ${esc(loc)}</div>`:''}
+        ${atr.address?`<div><strong>🏠</strong> ${esc(atr.address)}</div>`:''}
+        ${atr.price?`<div><strong>💰</strong> <span style="color:#059669;font-weight:700">${esc(atr.price)}</span></div>`:''}
+        ${atr.hours?`<div><strong>🕐</strong> ${esc(atr.hours)}</div>`:''}
+      </div>
+      ${atr.description?`<div class="at-section">תיאור</div><p style="font-size:.95rem;color:#374151;line-height:1.6">${esc(atr.description)}</p>`:''}
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+        ${atr.phone?`<a href="tel:${esc(atr.phone)}" class="at-btn at-btn-green" style="text-decoration:none">📞 ${esc(atr.phone)}</a>`:''}
+        ${atr.website?`<a href="${esc(atr.website)}" target="_blank" rel="noopener" class="at-btn at-btn-blue" style="text-decoration:none">🌐 לאתר</a>`:''}
+      </div>
+    </div>
+  `);
+}
+
+// Expose globals
+Object.assign(window,{setCat,setFilter,goLogin,goDash,goForm,goMine,
+  doSendOtp,doVerify,doAddAtr,doDelAtr,doLogout,
+  addImgs,rmImg,updAtrNh,setDetailImg,showDetail,loadBrowse,showBrowse,showMine});
+
+// Init
+loadBrowse();
+
+})();
+</script>
+<!-- ════ סוף קוד אטרקציות ════ -->
