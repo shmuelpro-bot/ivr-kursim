@@ -92,15 +92,28 @@ const S = {
 };
 
 // ── API ──────────────────────────────────────────────────────
-async function api(action, data={}) {
+async function api(action, data={}, timeoutMs=25000) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const r = await fetch(API, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({action, token: S.token||'', ...data})
+      body: JSON.stringify({action, token: S.token||'', ...data}),
+      signal: ctrl.signal
     });
+    clearTimeout(tid);
     return await r.json();
-  } catch(e) { return {ok:false, error:'שגיאת תקשורת – נסה שנית'}; }
+  } catch(e) {
+    clearTimeout(tid);
+    if (e.name === 'AbortError' && timeoutMs < 70000) {
+      // השרת מתעורר – נסה שנית עם טיימאאוט ארוך
+      const el = document.getElementById('mg-status-msg');
+      if (el) el.textContent = 'השרת מתעורר… ממתין (עד 60 שנ\')';
+      return api(action, data, 70000);
+    }
+    return {ok:false, error:'שגיאת תקשורת – נסה שנית'};
+  }
 }
 
 async function imgToB64(file) {
@@ -136,7 +149,7 @@ function render(html) {
 }
 
 function alert_html() {
-  let h='';
+  let h='<span id="mg-status-msg" style="display:block;color:#6b7280;font-size:.85rem;text-align:center;min-height:1.2em;margin-bottom:4px"></span>';
   if (S.error)   h+=`<div class="mg-alert mg-alert-err">⚠️ ${esc(S.error)}</div>`;
   if (S.success) h+=`<div class="mg-alert mg-alert-ok">✅ ${esc(S.success)}</div>`;
   return h;
@@ -492,7 +505,7 @@ async function doSendOtp(method, resend) {
   if (!resend) S.otpMethod = method;
 
   const loadMsg = isCall ? '📞 מתחבר לשיחה...' : '📱 שולח SMS...';
-  render(`<div class="mg-loading">⏳ ${loadMsg}</div>`);
+  render(`<div class="mg-loading">⏳ ${loadMsg}<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
 
   const action = isCall ? 'send_otp_call' : 'send_otp';
   const r = await api(action, {phone: ph});
@@ -516,7 +529,7 @@ async function doVerify() {
   const code   = digits.map(d=>d.value).join('');
   if (code.length < 5) return;
   S.error='';
-  render(`<div class="mg-loading">⏳ מאמת...</div>`);
+  render(`<div class="mg-loading">⏳ מאמת...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
   const r = await api('verify_otp', {phone: S.otpPhone, code});
   if (!r.ok) { S.error=r.error; showVerify(); return; }
   S.token = r.token; S.phone = r.phone;
