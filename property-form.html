@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>טופס פרסום נכס</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+
+    .header {
+      background: linear-gradient(135deg, #1a3a6b, #2563eb);
+      color: white;
+      padding: 32px 28px;
+      border-radius: 16px 16px 0 0;
+      text-align: center;
+    }
+    .header h1 { font-size: 1.9rem; margin-bottom: 8px; }
+    .header p { opacity: 0.85; font-size: 0.95rem; }
+
+    .card {
+      background: white;
+      padding: 24px 28px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .card:last-of-type {
+      border-radius: 0 0 16px 16px;
+      border-bottom: none;
+      padding-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a3a6b;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #dbeafe;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .form-row.single { grid-template-columns: 1fr; }
+    .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+    label.field-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+    }
+    .required { color: #ef4444; margin-right: 2px; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      background: #fafafa;
+      direction: rtl;
+    }
+    input:focus, textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+      background: white;
+    }
+    textarea { resize: vertical; min-height: 90px; }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 10px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.18s;
+      background: #fafafa;
+      user-select: none;
+    }
+    .checkbox-item:hover { border-color: #93c5fd; background: #eff6ff; }
+    .checkbox-item input[type="checkbox"] {
+      width: 17px; height: 17px;
+      accent-color: #2563eb;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .checkbox-item span { font-size: 0.88rem; font-weight: 500; color: #374151; }
+    .checkbox-item:has(input:checked) { border-color: #2563eb; background: #eff6ff; }
+    .checkbox-item:has(input:checked) span { color: #1d4ed8; font-weight: 600; }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .feature-box {
+      border: 1.5px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fafafa;
+      transition: all 0.18s;
+      overflow: hidden;
+    }
+    .feature-box:has(input:checked) { border-color: #2563eb; background: #eff6ff; }
+    .feature-box label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 16px 8px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .feature-box input[type="checkbox"] { display: none; }
+    .feature-box .icon { font-size: 1.6rem; }
+    .feature-box .feat-name { font-size: 0.85rem; font-weight: 600; color: #374151; }
+    .feature-box:has(input:checked) .feat-name { color: #1d4ed8; }
+
+    .submit-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #1a3a6b, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 10px;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+    }
+    .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(37,99,235,0.35); }
+    .submit-btn:active { transform: translateY(0); }
+    .submit-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .alert {
+      padding: 15px 20px;
+      border-radius: 10px;
+      margin-top: 16px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: none;
+    }
+    .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .alert-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .form-row, .form-row.triple { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .checkbox-grid { grid-template-columns: 1fr 1fr; }
+      .header h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>📋 טופס פרסום נכס</h1>
+    <p>מלאו את הפרטים ולחצו שלח — הנכס יתווסף אוטומטית למאגר הדירות</p>
+  </div>
+
+  <form id="propertyForm" novalidate>
+
+    <div class="card">
+      <div class="section-title">📍 מיקום</div>
+      <div class="form-row triple">
+        <div class="form-group">
+          <label class="field-label">עיר / יישוב <span class="required">*</span></label>
+          <input type="text" name="city" required placeholder="לדוג׳ תל אביב">
+        </div>
+        <div class="form-group">
+          <label class="field-label">שכונה</label>
+          <input type="text" name="neighborhood" placeholder="שם השכונה">
+        </div>
+        <div class="form-group">
+          <label class="field-label">כתובת מלאה <span class="required">*</span></label>
+          <input type="text" name="address" required placeholder="רחוב ומספר בית">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🏠 סוג הנכס</div>
+      <div class="checkbox-grid">
+        <label class="checkbox-item"><input type="checkbox" name="property_type" value="מגורים"><span>🏢 מגורים</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="property_type" value="יוקרה/משופצת"><span>✨ יוקרה / משופצת</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="property_type" value="דירת אירוח שלא גרים בה"><span>🛎️ דירת אירוח</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="property_type" value="דירת נופש"><span>🏖️ דירת נופש</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="property_type" value="מושבים"><span>🌾 מושבים</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="property_type" value="צימרים ובתי הארחה"><span>🏡 צימרים / בתי הארחה</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="property_type" value="מתחם נופש גדול"><span>🏕️ מתחם נופש גדול</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="property_type" value='דירת גמ"ח עד 150 ש"ח'><span>💙 דירת גמ"ח עד 150 ש"ח</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="property_type" value="מלונות"><span>🏨 מלונות</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🎯 מיועד ל</div>
+      <div class="checkbox-grid">
+        <label class="checkbox-item"><input type="checkbox" name="purpose" value="השכרה"><span>🔑 השכרה</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="purpose" value="מכירה"><span>💰 מכירה</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="purpose" value="שבתות"><span>🕯️ שבתות</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="purpose" value="חגים"><span>🎉 חגים</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="purpose" value="בין הזמנים"><span>📅 בין הזמנים</span></label>
+        <label class="checkbox-item"><input type="checkbox" name="purpose" value="אירוח גם לימי חול"><span>☀️ ימי חול</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📐 פרטי הנכס</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">מספר חדרים</label>
+          <input type="number" name="rooms" placeholder="לדוג׳ 3.5" min="1" max="20" step="0.5">
+        </div>
+        <div class="form-group">
+          <label class="field-label">קומה</label>
+          <input type="text" name="floor" placeholder="לדוג׳ 4 (ללא מעלית)">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">מטר מרובע</label>
+          <input type="number" name="sqm" placeholder="שטח הדירה במ״ר" min="1">
+        </div>
+        <div class="form-group">
+          <label class="field-label">מחיר (₪)</label>
+          <input type="number" name="price" placeholder="מחיר בשקלים" min="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">✨ מאפיינים</div>
+      <div class="features-grid">
+        <div class="feature-box"><label><input type="checkbox" name="balcony" value="true"><div class="icon">🏗️</div><div class="feat-name">מרפסת</div></label></div>
+        <div class="feature-box"><label><input type="checkbox" name="yard" value="true"><div class="icon">🌿</div><div class="feat-name">חצר</div></label></div>
+        <div class="feature-box"><label><input type="checkbox" name="view" value="true"><div class="icon">🌄</div><div class="feat-name">נוף</div></label></div>
+        <div class="feature-box"><label><input type="checkbox" name="accessibility" value="true"><div class="icon">♿</div><div class="feat-name">נגישות</div></label></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📝 תיאור ואטרקציות</div>
+      <div class="form-row single" style="margin-bottom:14px">
+        <div class="form-group">
+          <label class="field-label">תיאור הנכס</label>
+          <textarea name="description" placeholder="תארו את הנכס: מצב הדירה, ריהוט, מיזוג, מה כלול במחיר..."></textarea>
+        </div>
+      </div>
+      <div class="form-row single">
+        <div class="form-group">
+          <label class="field-label">אטרקציות / מה קרוב לנכס</label>
+          <input type="text" name="attractions" placeholder="לדוג׳ קרוב לים, שוק, מרכז קניות, בית כנסת...">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📞 יצירת קשר</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">טלפון <span class="required">*</span></label>
+          <input type="tel" name="phone" required placeholder="050-0000000">
+        </div>
+        <div class="form-group">
+          <label class="field-label">ווטספ</label>
+          <input type="tel" name="whatsapp" placeholder="050-0000000">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">דוא"ל</label>
+          <input type="email" name="email" placeholder="example@mail.com">
+        </div>
+        <div class="form-group">
+          <label class="field-label">אתר אינטרנט</label>
+          <input type="url" name="website" placeholder="https://...">
+        </div>
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn">✅ שליחה לאישור פרסום</button>
+      <div class="alert alert-success" id="successAlert">🎉 הנכס נשלח בהצלחה! הוא יופיע במאגר הדירות בקרוב.</div>
+      <div class="alert alert-error" id="errorAlert">❌ אירעה שגיאה בשליחה. בדקו את החיבור לאינטרנט ונסו שנית.</div>
+    </div>
+
+  </form>
+</div>
+
+<script>
+  document.getElementById('propertyForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const successAlert = document.getElementById('successAlert');
+    const errorAlert   = document.getElementById('errorAlert');
+    const city    = this.city.value.trim();
+    const address = this.address.value.trim();
+    const phone   = this.phone.value.trim();
+    if (!city || !address || !phone) {
+      alert('נא למלא את שדות החובה: עיר, כתובת וטלפון');
+      return;
+    }
+    btn.disabled    = true;
+    btn.textContent = '⏳ שולח...';
+    successAlert.style.display = 'none';
+    errorAlert.style.display   = 'none';
+    const fd = new FormData(this);
+    const fields = {};
+    if (city)                        fields['fld7tbtjrXKi7IllQ'] = city;
+    const nbhd = fd.get('neighborhood')?.trim();
+    if (nbhd)                        fields['fldftsexmXhe69L0q'] = nbhd;
+    if (address)                     fields['fld5ZKQLD7FsvhKdl'] = address;
+    const desc = fd.get('description')?.trim();
+    if (desc)                        fields['fldlHirOZiuMvPlGy'] = desc;
+    const floor = fd.get('floor')?.trim();
+    if (floor)                       fields['fldX7Dw5AvO2zj7vB'] = floor;
+    if (phone)                       fields['fldQ7S4sGxIAfz25S'] = phone;
+    const wa = fd.get('whatsapp')?.trim();
+    if (wa)                          fields['fldYaSNcCZ0hbClkj'] = wa;
+    const email = fd.get('email')?.trim();
+    if (email)                       fields['fldW75ElervNZ4ZW9'] = email;
+    const site = fd.get('website')?.trim();
+    if (site)                        fields['fldiFfIbH557MhoZx'] = site;
+    const attr = fd.get('attractions')?.trim();
+    if (attr)                        fields['fldMINrMOwvKu3phk'] = attr;
+    const rooms = parseFloat(fd.get('rooms'));
+    if (!isNaN(rooms) && rooms > 0)  fields['fldd3pY5OkdoFdYJe'] = rooms;
+    const sqm   = parseFloat(fd.get('sqm'));
+    if (!isNaN(sqm)   && sqm   > 0) fields['fldchuZ9WvI7Okfam'] = sqm;
+    const price = parseFloat(fd.get('price'));
+    if (!isNaN(price) && price > 0)  fields['fldzSwq8T3UZMeGyk'] = price;
+    if (fd.get('balcony')       === 'true') fields['fldChcH9KauDamxII'] = true;
+    if (fd.get('yard')          === 'true') fields['fld5e1JLBCFBoX0B6'] = true;
+    if (fd.get('view')          === 'true') fields['fldujRJufFc843ygK'] = true;
+    if (fd.get('accessibility') === 'true') fields['fld5s6rPfnQU0NzQX'] = true;
+    const propType = fd.getAll('property_type');
+    if (propType.length > 0) fields['fldAo5G0OB8BPlPKi'] = propType;
+    const purpose  = fd.getAll('purpose');
+    if (purpose.length  > 0) fields['fld7Y6iaz7g9qfBt8'] = purpose;
+    fields['fldow8LeB2ss9JPdw'] = 'זמין';
+    try {
+      const resp = await fetch('https://hook.eu2.make.com/jmiia6bpy9ljlhyryd56xpm2i0ln61fv', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ fields })
+      });
+      if (resp.ok) {
+        successAlert.style.display = 'block';
+        this.reset();
+        successAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        errorAlert.style.display = 'block';
+      }
+    } catch (err) {
+      errorAlert.style.display = 'block';
+    }
+    btn.disabled    = false;
+    btn.textContent = '✅ שליחה לאישור פרסום';
+  });
+</script>
+</body>
+</html>
