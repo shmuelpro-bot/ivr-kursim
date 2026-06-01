@@ -1,63 +1,48 @@
 services:
   - type: web
-    name: ivr-kursim
+    name: ivr-kursim-shabat
     runtime: docker
     branch: main
     autoDeploy: true
-    domains:
-      - maagarim-dirot.co.il
-      - www.maagarim-dirot.co.il
     envVars:
-      # ── Twilio (IVR + SMS OTP) ──────────────────────────────────
-      # קבל ב: https://console.twilio.com
       - key: TWILIO_ACCOUNT_SID
-        sync: false          # הזן ידנית: ACxxxxxxxxxxxxxxxxx
+        sync: false
       - key: TWILIO_AUTH_TOKEN
-        sync: false          # הזן ידנית: auth token מ-Twilio
+        sync: false
       - key: TWILIO_PHONE_NUMBER
-        sync: false          # הזן ידנית: +972xxxxxxxxx (מספר Twilio)
-
-      # ── Upstash Redis (אחסון נתונים) ────────────────────────────
-      # קבל ב: https://console.upstash.com → צור Database → REST API
+        sync: false
       - key: UPSTASH_REDIS_REST_URL
-        sync: false          # הזן ידנית: https://xxxxxxxx.upstash.io
+        sync: false
       - key: UPSTASH_REDIS_REST_TOKEN
-        sync: false          # הזן ידנית: AXxxxxxxxxxxxx
-
-      # ── Airtable (רישום אוטומטי) ────────────────────────────────
-      # קבל ב: https://airtable.com/create/tokens → צור Personal Access Token
-      # הרשאות נדרשות: data.records:write על בסיס appHp5qRmLqh3CL9X
-      - key: AIRTABLE_TOKEN
-        sync: false          # הזן ידנית: patXXXXXXXXXXXXXXXX
-
-      # ── System ──────────────────────────────────────────────────
+        sync: false
       - key: IVR_SELF_URL
-        value: https://maagarim-dirot.co.il/ivr_main.php
+        value: https://ivr-kursim-shabat.onrender.com/ivr_main.php
       - key: ADMIN_PASSWORD
-        sync: false          # סיסמת לוח הניהול (admin.php)
+        sync: false
       - key: CRON_SECRET
-        generateValue: true  # Render יצור ערך אקראי אוטומטית
+        generateValue: true
 
   - type: cron
     name: ivr-kursim-weekly-cleanup
     runtime: docker
     branch: main
-    schedule: "0 19 * * 6"   # שבת 21:00 שעון ישראל (UTC+2/UTC+3)
+    schedule: "0 19 * * 6"
     dockerCommand: >
       php /var/www/html/cron.php
     envVars:
       - key: UPSTASH_REDIS_REST_URL
         fromService:
-          name: ivr-kursim
+          name: ivr-kursim-shabat
           type: web
           envVarKey: UPSTASH_REDIS_REST_URL
       - key: UPSTASH_REDIS_REST_TOKEN
         fromService:
-          name: ivr-kursim
+          name: ivr-kursim-shabat
           type: web
           envVarKey: UPSTASH_REDIS_REST_TOKEN
       - key: CRON_SECRET
         fromService:
-          name: ivr-kursim
+          name: ivr-kursim-shabat
           type: web
           envVarKey: CRON_SECRET
+
