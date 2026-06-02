@@ -116,26 +116,28 @@ const S = {
 
 const app = () => document.getElementById('atr-app');
 
-async function api(action, data={}, timeoutMs=25000) {
+async function api(action, data={}, _try=0) {
+  const ms = _try === 0 ? 20000 : 65000;
   const ctrl = new AbortController();
-  const tid  = setTimeout(() => ctrl.abort(), timeoutMs);
+  const tid  = setTimeout(() => ctrl.abort(), ms);
   try {
-    const r = await fetch(API, {
+    const r    = await fetch(API, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({action, token: S.token||'', ...data}),
       signal: ctrl.signal,
     });
     clearTimeout(tid);
-    return await r.json();
+    const txt = await r.text();
+    try { return JSON.parse(txt); } catch { /* non-JSON – server still waking */ throw new Error('non-json'); }
   } catch(e) {
     clearTimeout(tid);
-    if (timeoutMs < 70000) {
+    if (_try < 3) {
       const el=document.getElementById('mg-status-msg');
-      if(el) el.textContent='מנסה שוב… ממתין לשרת (עד 60 שנ\')';
-      await new Promise(r => setTimeout(r, 2000));
-      return api(action, data, 70000);
+      if(el) el.textContent=`מנסה שוב… ניסיון ${_try+2}/4 (השרת מתעורר)`;
+      await new Promise(r => setTimeout(r, 3000));
+      return api(action, data, _try+1);
     }
-    return {ok:false, error:'שגיאת תקשורת – נסה שנית'};
+    return {ok:false, error:'שגיאת תקשורת – השרת אינו מגיב, נסה שוב בעוד דקה'};
   }
 }
 
