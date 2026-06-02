@@ -2,7 +2,7 @@
 // One-time setup: updates Twilio webhook URL to this server
 $sid   = getenv('TWILIO_ACCOUNT_SID');
 $token = getenv('TWILIO_AUTH_TOKEN');
-$newUrl = 'https://ivr-kursim-1.onrender.com/ivr_main.php';
+$newUrl = 'https://ivr-kursim-1.onrender.com/test_ivr.php';
 
 if (!$sid || !$token) {
     die("Missing Twilio credentials in environment variables.");
