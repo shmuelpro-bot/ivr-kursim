@@ -490,12 +490,27 @@ async function loadFd() {
 }
 
 async function loadBrowse() {
-  render(`<div class="at-loading">⏳ טוען אטרקציות...</div>`);
+  render(`<div class="at-loading">⏳ טוען אטרקציות...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
   const r = await api('get_attractions', {
     city: S.filter.city, category: S.activeCat, neighborhood: S.filter.neighborhood
   });
-  if (!r.ok) { S.error=r.error; }
-  else { S.fd = S.fd || r; S.attractions = r.attractions||[]; S.total = r.total||0; S.error=''; }
+  if (!r.ok) {
+    S.error = r.error;
+    // טען לפחות את נתוני הטופס כדי להציג קטגוריות
+    if (!S.fd) await loadFd();
+    render(`
+      <div class="at-hero"><h2 style="font-size:1.3rem">אטרקציות לציבור החרדי</h2></div>
+      <div class="at-alert at-err">⚠️ ${esc(S.error)}</div>
+      <div style="text-align:center;padding:24px">
+        <button class="at-btn at-btn-green" onclick="loadBrowse()">↻ נסה שוב</button>
+        <p style="color:#9ca3af;font-size:.85rem;margin-top:12px">
+          ייתכן שהשרת מתעורר – נסה שוב בעוד 30 שניות
+        </p>
+      </div>
+    `);
+    return;
+  }
+  S.fd = S.fd || r; S.attractions = r.attractions||[]; S.total = r.total||0; S.error='';
   showBrowse();
 }
 
