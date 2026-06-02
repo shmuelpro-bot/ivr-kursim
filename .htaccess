@@ -13,6 +13,6 @@ Options -Indexes
     Deny from all
 </FilesMatch>
 
-# Redirect root to IVR entry point
+# Route: root → landing page, /ivr → IVR entry point
 RewriteEngine On
-RewriteRule ^$ ivr_main.php [L]
+RewriteRule ^ivr/?$ ivr_main.php [L]

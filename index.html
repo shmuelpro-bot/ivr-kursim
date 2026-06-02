@@ -1,0 +1,2301 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="קו דירות לשבת – שירות IVR טלפוני למציאת ופרסום דירות לשבת ברחבי הארץ. חייגו עכשיו ומצאו דירה לשבת בקלות ובמהירות." />
+  <title>קו דירות לשבת | שירות IVR לדירות שבת</title>
+
+  <!-- Google Fonts: Heebo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    /* =========================================================
+       CSS RESET & ROOT VARIABLES
+       ========================================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --gold:        #c9a84c;
+      --gold-light:  #e8c97a;
+      --gold-dark:   #a07830;
+      --blue-deep:   #1a3a5c;
+      --blue-mid:    #2a5080;
+      --blue-light:  #3d6fa3;
+      --cream:       #fdf8ef;
+      --cream-dark:  #f5edda;
+      --white:       #ffffff;
+      --text-dark:   #1e2a38;
+      --text-mid:    #4a5568;
+      --text-light:  #718096;
+      --shadow-sm:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-md:   0 4px 20px rgba(0,0,0,0.12);
+      --shadow-lg:   0 8px 40px rgba(0,0,0,0.18);
+      --radius-sm:   8px;
+      --radius-md:   16px;
+      --radius-lg:   24px;
+      --transition:  0.3s ease;
+      --font:        'Heebo', sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
+    body {
+      font-family: var(--font);
+      color: var(--text-dark);
+      background: var(--cream);
+      direction: rtl;
+      text-align: right;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    img {
+      max-width: 100%;
+    }
+
+    /* =========================================================
+       UTILITY CLASSES
+       ========================================================= */
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .section {
+      padding: 90px 0;
+    }
+
+    .section-tag {
+      display: inline-block;
+      background: rgba(201, 168, 76, 0.15);
+      color: var(--gold-dark);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 6px 18px;
+      border-radius: 50px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(201, 168, 76, 0.3);
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      color: var(--blue-deep);
+      line-height: 1.25;
+      margin-bottom: 16px;
+    }
+
+    .section-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-mid);
+      max-width: 560px;
+      margin: 0 auto 56px;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 36px;
+      border-radius: 50px;
+      font-family: var(--font);
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: var(--blue-deep);
+      box-shadow: 0 4px 20px rgba(201,168,76,0.4);
+    }
+
+    .btn-primary:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(201,168,76,0.5);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--white);
+      border: 2px solid rgba(255,255,255,0.7);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: var(--white);
+    }
+
+    .btn-blue {
+      background: var(--blue-deep);
+      color: var(--white);
+      box-shadow: 0 4px 20px rgba(26,58,92,0.35);
+    }
+
+    .btn-blue:hover {
+      background: var(--blue-mid);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(26,58,92,0.45);
+    }
+
+    /* =========================================================
+       NAVIGATION
+       ========================================================= */
+    .navbar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      z-index: 1000;
+      background: rgba(253,248,239,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(201,168,76,0.15);
+      transition: box-shadow var(--transition);
+    }
+
+    .navbar.scrolled {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 72px;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-logo-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .nav-logo-text {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--blue-deep);
+      line-height: 1.2;
+    }
+
+    .nav-logo-sub {
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: var(--text-light);
+      display: block;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-links a {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-mid);
+      transition: all var(--transition);
+    }
+
+    .nav-links a:hover {
+      color: var(--blue-deep);
+      background: rgba(26,58,92,0.06);
+    }
+
+    .nav-cta {
+      background: var(--blue-deep) !important;
+      color: var(--white) !important;
+      font-weight: 700 !important;
+      padding: 10px 22px !important;
+    }
+
+    .nav-cta:hover {
+      background: var(--blue-mid) !important;
+    }
+
+    .nav-phone {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gold);
+      color: var(--blue-deep);
+      padding: 8px 18px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: all var(--transition);
+    }
+
+    .nav-phone:hover {
+      background: var(--gold-light);
+      transform: translateY(-1px);
+    }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 26px;
+      height: 2px;
+      background: var(--blue-deep);
+      border-radius: 2px;
+      transition: all var(--transition);
+    }
+
+    .mobile-menu {
+      display: none;
+      background: var(--white);
+      border-top: 1px solid rgba(201,168,76,0.2);
+      padding: 16px 0;
+    }
+
+    .mobile-menu.open {
+      display: block;
+    }
+
+    .mobile-menu a {
+      display: block;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-mid);
+      transition: all var(--transition);
+      border-radius: 8px;
+      margin: 0 12px;
+    }
+
+    .mobile-menu a:hover {
+      background: var(--cream-dark);
+      color: var(--blue-deep);
+    }
+
+    /* =========================================================
+       HERO SECTION
+       ========================================================= */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--blue-deep) 0%, var(--blue-mid) 45%, #1e4d7a 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      padding-top: 72px;
+    }
+
+    /* Decorative background patterns */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 50%, rgba(201,168,76,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 80% 20%, rgba(201,168,76,0.08) 0%, transparent 60%);
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .hero-text {
+      color: var(--white);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(201,168,76,0.2);
+      border: 1px solid rgba(201,168,76,0.4);
+      color: var(--gold-light);
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 28px;
+    }
+
+    .hero-badge i {
+      color: var(--gold);
+    }
+
+    .hero-headline {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 24px;
+      color: var(--white);
+    }
+
+    .hero-headline .highlight {
+      color: var(--gold);
+      display: block;
+    }
+
+    .hero-desc {
+      font-size: 1.15rem;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.75;
+      margin-bottom: 40px;
+      max-width: 500px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 48px;
+    }
+
+    .hero-phone-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-md);
+      padding: 16px 24px;
+      color: var(--white);
+    }
+
+    .hero-phone-display .phone-icon {
+      width: 46px;
+      height: 46px;
+      background: var(--gold);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: var(--blue-deep);
+      flex-shrink: 0;
+    }
+
+    .hero-phone-display .phone-label {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .hero-phone-display .phone-number {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--gold);
+      direction: ltr;
+      display: block;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .hero-stat {
+      text-align: center;
+    }
+
+    .hero-stat .stat-num {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--gold);
+      display: block;
+      line-height: 1;
+    }
+
+    .hero-stat .stat-label {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 4px;
+    }
+
+    /* Hero visual card */
+    .hero-visual {
+      position: relative;
+    }
+
+    .hero-card {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      position: relative;
+    }
+
+    .hero-card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ivr-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .ivr-step-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: all var(--transition);
+    }
+
+    .ivr-step-item:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(201,168,76,0.3);
+    }
+
+    .ivr-step-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: var(--blue-deep);
+      font-weight: 800;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .ivr-step-text {
+      color: var(--white);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .ivr-step-icon {
+      margin-right: auto;
+      color: var(--gold);
+      font-size: 1.1rem;
+    }
+
+    .hero-card-footer {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .availability-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+      50%       { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+    }
+
+    .availability-text {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.7);
+    }
+
+    /* =========================================================
+       HOW IT WORKS
+       ========================================================= */
+    .how-it-works {
+      background: var(--white);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      position: relative;
+    }
+
+    /* Connecting line between steps */
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 52px;
+      right: 12%;
+      left: 12%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), var(--blue-light));
+      z-index: 0;
+    }
+
+    .step-card {
+      position: relative;
+      z-index: 1;
+      background: var(--white);
+      border: 2px solid var(--cream-dark);
+      border-radius: var(--radius-md);
+      padding: 36px 24px 28px;
+      text-align: center;
+      transition: all var(--transition);
+    }
+
+    .step-card:hover {
+      border-color: var(--gold);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-6px);
+    }
+
+    .step-number {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+      color: var(--gold);
+      font-size: 1.6rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 4px 16px rgba(26,58,92,0.25);
+      position: relative;
+    }
+
+    .step-number .step-icon-overlay {
+      position: absolute;
+      bottom: -4px;
+      left: -4px;
+      width: 26px;
+      height: 26px;
+      background: var(--gold);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: var(--blue-deep);
+    }
+
+    .step-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--blue-deep);
+      margin-bottom: 10px;
+    }
+
+    .step-desc {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    /* =========================================================
+       FEATURES / BENEFITS
+       ========================================================= */
+    .features {
+      background: var(--cream);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+    }
+
+    .feature-card {
+      background: var(--white);
+      border-radius: var(--radius-md);
+      padding: 36px 32px;
+      border: 2px solid transparent;
+      transition: all var(--transition);
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .feature-card:hover {
+      border-color: var(--gold);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-4px);
+    }
+
+    .feature-icon-wrap {
+      width: 60px;
+      height: 60px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .feature-card:nth-child(1) .feature-icon-wrap { background: rgba(201,168,76,0.12); color: var(--gold-dark); }
+    .feature-card:nth-child(2) .feature-icon-wrap { background: rgba(26,58,92,0.1);  color: var(--blue-deep); }
+    .feature-card:nth-child(3) .feature-icon-wrap { background: rgba(74,222,128,0.1); color: #16a34a; }
+    .feature-card:nth-child(4) .feature-icon-wrap { background: rgba(168,85,247,0.1); color: #7c3aed; }
+
+    .feature-body {}
+
+    .feature-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--blue-deep);
+      margin-bottom: 10px;
+    }
+
+    .feature-desc {
+      font-size: 0.95rem;
+      color: var(--text-mid);
+      line-height: 1.7;
+    }
+
+    .feature-tag {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 50px;
+      background: var(--cream-dark);
+      color: var(--gold-dark);
+    }
+
+    /* =========================================================
+       PRICING
+       ========================================================= */
+    .pricing {
+      background: var(--white);
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    .pricing-card {
+      border-radius: var(--radius-md);
+      padding: 40px 32px;
+      border: 2px solid var(--cream-dark);
+      background: var(--white);
+      position: relative;
+      transition: all var(--transition);
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .pricing-card.popular {
+      border-color: var(--gold);
+      background: linear-gradient(160deg, var(--blue-deep) 0%, var(--blue-mid) 100%);
+      color: var(--white);
+      transform: translateY(-12px);
+    }
+
+    .pricing-card.popular:hover {
+      transform: translateY(-18px);
+    }
+
+    .popular-badge {
+      position: absolute;
+      top: -16px;
+      right: 50%;
+      transform: translateX(50%);
+      background: var(--gold);
+      color: var(--blue-deep);
+      font-size: 0.8rem;
+      font-weight: 800;
+      padding: 6px 20px;
+      border-radius: 50px;
+      white-space: nowrap;
+    }
+
+    .plan-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--blue-deep);
+      margin-bottom: 8px;
+    }
+
+    .pricing-card.popular .plan-name {
+      color: var(--gold-light);
+    }
+
+    .plan-desc {
+      font-size: 0.88rem;
+      color: var(--text-light);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .pricing-card.popular .plan-desc {
+      color: rgba(255,255,255,0.7);
+    }
+
+    .plan-price {
+      margin-bottom: 28px;
+    }
+
+    .plan-price .amount {
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: var(--blue-deep);
+      line-height: 1;
+    }
+
+    .pricing-card.popular .plan-price .amount {
+      color: var(--gold);
+    }
+
+    .plan-price .currency {
+      font-size: 1.4rem;
+      font-weight: 700;
+      vertical-align: top;
+      line-height: 1.6;
+    }
+
+    .plan-price .period {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      display: block;
+      margin-top: 4px;
+    }
+
+    .pricing-card.popular .plan-price .period {
+      color: rgba(255,255,255,0.6);
+    }
+
+    .plan-features-list {
+      margin-bottom: 32px;
+    }
+
+    .plan-features-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      font-size: 0.92rem;
+      color: var(--text-mid);
+    }
+
+    .pricing-card.popular .plan-features-list li {
+      color: rgba(255,255,255,0.85);
+      border-bottom-color: rgba(255,255,255,0.1);
+    }
+
+    .plan-features-list li i.check {
+      color: var(--gold-dark);
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .pricing-card.popular .plan-features-list li i.check {
+      color: var(--gold-light);
+    }
+
+    .plan-features-list li i.cross {
+      color: #cbd5e0;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .pricing-card.popular .plan-features-list li i.cross {
+      color: rgba(255,255,255,0.3);
+    }
+
+    .plan-cta {
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* =========================================================
+       TESTIMONIALS
+       ========================================================= */
+    .testimonials {
+      background: var(--cream);
+    }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+    }
+
+    .testimonial-card {
+      background: var(--white);
+      border-radius: var(--radius-md);
+      padding: 36px 30px;
+      border: 2px solid transparent;
+      transition: all var(--transition);
+      position: relative;
+    }
+
+    .testimonial-card::before {
+      content: '\201C';
+      font-family: Georgia, serif;
+      font-size: 5rem;
+      line-height: 1;
+      color: rgba(201,168,76,0.2);
+      position: absolute;
+      top: 16px;
+      left: 24px;
+    }
+
+    .testimonial-card:hover {
+      border-color: var(--gold);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-4px);
+    }
+
+    .testimonial-stars {
+      color: var(--gold);
+      font-size: 1rem;
+      margin-bottom: 16px;
+    }
+
+    .testimonial-text {
+      font-size: 0.97rem;
+      color: var(--text-mid);
+      line-height: 1.75;
+      margin-bottom: 24px;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .author-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--white);
+      flex-shrink: 0;
+    }
+
+    .testimonial-card:nth-child(1) .author-avatar { background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid)); }
+    .testimonial-card:nth-child(2) .author-avatar { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); }
+    .testimonial-card:nth-child(3) .author-avatar { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+
+    .author-info .author-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--blue-deep);
+    }
+
+    .author-info .author-city {
+      font-size: 0.82rem;
+      color: var(--text-light);
+    }
+
+    /* =========================================================
+       CTA SECTION
+       ========================================================= */
+    .cta-section {
+      background: linear-gradient(135deg, var(--blue-deep) 0%, var(--blue-mid) 100%);
+      position: relative;
+      overflow: hidden;
+      padding: 100px 0;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(201,168,76,0.1) 0%, transparent 70%);
+    }
+
+    .cta-inner {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
+
+    .cta-title {
+      font-size: clamp(2rem, 4.5vw, 3rem);
+      font-weight: 900;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+
+    .cta-subtitle {
+      font-size: 1.15rem;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 48px;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .cta-phone-wrap {
+      margin-top: 40px;
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-md);
+      padding: 18px 32px;
+    }
+
+    .cta-phone-wrap .phone-label-sm {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.55);
+    }
+
+    .cta-phone-wrap .phone-num {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--gold);
+      direction: ltr;
+      display: block;
+    }
+
+    /* =========================================================
+       CONTACT SECTION
+       ========================================================= */
+    .contact {
+      background: var(--white);
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .contact-info h3 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--blue-deep);
+      margin-bottom: 16px;
+    }
+
+    .contact-info p {
+      color: var(--text-mid);
+      margin-bottom: 32px;
+      line-height: 1.75;
+    }
+
+    .contact-methods {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .contact-method {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--cream);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--cream-dark);
+      transition: all var(--transition);
+    }
+
+    .contact-method:hover {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.05);
+    }
+
+    .contact-method-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .contact-method-label {
+      font-size: 0.78rem;
+      color: var(--text-light);
+    }
+
+    .contact-method-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--blue-deep);
+    }
+
+    /* Contact form */
+    .contact-form {
+      background: var(--cream);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      border: 2px solid var(--cream-dark);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 13px 18px;
+      border: 2px solid rgba(0,0,0,0.08);
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 0.95rem;
+      color: var(--text-dark);
+      background: var(--white);
+      direction: rtl;
+      text-align: right;
+      transition: border-color var(--transition);
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--gold);
+    }
+
+    .form-group textarea {
+      height: 120px;
+      resize: vertical;
+    }
+
+    /* =========================================================
+       FOOTER
+       ========================================================= */
+    .footer {
+      background: var(--blue-deep);
+      color: rgba(255,255,255,0.8);
+      padding: 64px 0 32px;
+    }
+
+    .footer-top {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 40px;
+      padding-bottom: 48px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 36px;
+    }
+
+    .footer-brand {}
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .footer-logo-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--gold);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--blue-deep);
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .footer-logo-name {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--white);
+    }
+
+    .footer-tagline {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      max-width: 260px;
+      margin-bottom: 24px;
+    }
+
+    .footer-social {
+      display: flex;
+      gap: 10px;
+    }
+
+    .social-link {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.95rem;
+      transition: all var(--transition);
+    }
+
+    .social-link:hover {
+      background: var(--gold);
+      color: var(--blue-deep);
+      transform: translateY(-2px);
+    }
+
+    .footer-col h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 18px;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .footer-links a {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.6);
+      transition: color var(--transition);
+    }
+
+    .footer-links a:hover {
+      color: var(--gold-light);
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-copy {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .footer-bottom-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-bottom-links a {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.4);
+      transition: color var(--transition);
+    }
+
+    .footer-bottom-links a:hover {
+      color: var(--gold-light);
+    }
+
+    .shabbat-note {
+      background: rgba(201,168,76,0.12);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      font-size: 0.82rem;
+      color: var(--gold-light);
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* =========================================================
+       SCROLL TO TOP
+       ========================================================= */
+    .scroll-top {
+      position: fixed;
+      bottom: 28px;
+      left: 28px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--blue-deep);
+      color: var(--gold);
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-md);
+      transition: all var(--transition);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .scroll-top.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .scroll-top:hover {
+      background: var(--blue-mid);
+      transform: translateY(-3px);
+    }
+
+    /* =========================================================
+       DIVIDER WAVE
+       ========================================================= */
+    .wave-divider {
+      line-height: 0;
+      overflow: hidden;
+    }
+
+    .wave-divider svg {
+      display: block;
+      width: 100%;
+    }
+
+    /* =========================================================
+       RESPONSIVE — TABLET
+       ========================================================= */
+    @media (max-width: 1024px) {
+      .hero-content {
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+
+      .hero-visual {
+        max-width: 560px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .steps-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .steps-grid::before {
+        display: none;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+        margin: 0 auto;
+      }
+
+      .pricing-card.popular {
+        transform: none;
+      }
+
+      .pricing-card.popular:hover {
+        transform: translateY(-6px);
+      }
+
+      .footer-top {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+    }
+
+    /* =========================================================
+       RESPONSIVE — MOBILE
+       ========================================================= */
+    @media (max-width: 768px) {
+      .section { padding: 64px 0; }
+
+      .nav-links, .nav-phone {
+        display: none;
+      }
+
+      .hamburger {
+        display: flex;
+      }
+
+      .hero {
+        padding-top: 72px;
+        min-height: auto;
+        padding-bottom: 48px;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .hero-stats {
+        gap: 20px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .testimonials-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .steps-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-top {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .contact-form {
+        padding: 28px 20px;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    /* =========================================================
+       ANIMATIONS
+       ========================================================= */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-up {
+      opacity: 0;
+      animation: fadeInUp 0.7s ease forwards;
+    }
+
+    .fade-up.delay-1 { animation-delay: 0.1s; }
+    .fade-up.delay-2 { animation-delay: 0.22s; }
+    .fade-up.delay-3 { animation-delay: 0.36s; }
+    .fade-up.delay-4 { animation-delay: 0.5s; }
+    .fade-up.delay-5 { animation-delay: 0.64s; }
+
+    /* Intersection observer fade */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       NAVIGATION
+       ============================================================ -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <div class="nav-inner">
+        <!-- Logo -->
+        <a href="#" class="nav-logo" aria-label="קו דירות לשבת">
+          <div class="nav-logo-icon">
+            <i class="fas fa-phone-volume"></i>
+          </div>
+          <div>
+            <span class="nav-logo-text">קו דירות לשבת</span>
+            <span class="nav-logo-sub">שירות IVR מתקדם</span>
+          </div>
+        </a>
+
+        <!-- Desktop links -->
+        <ul class="nav-links">
+          <li><a href="#how">איך זה עובד</a></li>
+          <li><a href="#features">יתרונות</a></li>
+          <li><a href="#pricing">תמחור</a></li>
+          <li><a href="#contact">צור קשר</a></li>
+        </ul>
+
+        <!-- Phone CTA -->
+        <a href="tel:1800000000" class="nav-phone">
+          <i class="fas fa-phone"></i>
+          1-800-XXX-XXX
+        </a>
+
+        <!-- Hamburger -->
+        <button class="hamburger" id="hamburger" aria-label="תפריט" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#how" onclick="closeMobileMenu()">איך זה עובד</a>
+      <a href="#features" onclick="closeMobileMenu()">יתרונות</a>
+      <a href="#pricing" onclick="closeMobileMenu()">תמחור</a>
+      <a href="#testimonials" onclick="closeMobileMenu()">לקוחות ממליצים</a>
+      <a href="#contact" onclick="closeMobileMenu()">צור קשר</a>
+      <a href="tel:1800000000" style="color:var(--blue-deep);font-weight:700;margin-top:8px;">
+        <i class="fas fa-phone" style="margin-left:8px;color:var(--gold);"></i>
+        1-800-XXX-XXX
+      </a>
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       HERO
+       ============================================================ -->
+  <section class="hero" id="home">
+    <div class="hero-grid"></div>
+    <div class="container">
+      <div class="hero-content">
+
+        <!-- Text -->
+        <div class="hero-text">
+          <div class="hero-badge fade-up">
+            <i class="fas fa-star-of-david"></i>
+            שירות IVR לדירות שבת
+          </div>
+
+          <h1 class="hero-headline fade-up delay-1">
+            מצאו דירה לשבת
+            <span class="highlight">בקלות ובמהירות</span>
+          </h1>
+
+          <p class="hero-desc fade-up delay-2">
+            שירות קו ייחודי לאיתור ופרסום דירות לשבת בכל רחבי הארץ — בשיחת טלפון אחת בלבד. ללא אינטרנט, ללא אפליקציות, ללא סיבוכים.
+          </p>
+
+          <div class="hero-actions fade-up delay-3">
+            <a href="tel:1800000000" class="btn btn-primary">
+              <i class="fas fa-phone-alt"></i>
+              התחל עכשיו
+            </a>
+            <a href="#how" class="btn btn-outline">
+              איך זה עובד?
+              <i class="fas fa-arrow-left"></i>
+            </a>
+          </div>
+
+          <div class="hero-phone-display fade-up delay-4">
+            <div class="phone-icon">
+              <i class="fas fa-phone-volume"></i>
+            </div>
+            <div>
+              <span class="phone-label">חייגו עכשיו</span>
+              <span class="phone-number">1-800-XXX-XXX</span>
+            </div>
+          </div>
+
+          <div class="hero-stats fade-up delay-5" style="margin-top:40px;">
+            <div class="hero-stat">
+              <span class="stat-num">2,400+</span>
+              <span class="stat-label">דירות רשומות</span>
+            </div>
+            <div class="hero-stat">
+              <span class="stat-num">98%</span>
+              <span class="stat-label">שביעות רצון</span>
+            </div>
+            <div class="hero-stat">
+              <span class="stat-num">24/7</span>
+              <span class="stat-label">זמינות</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Card -->
+        <div class="hero-visual fade-up delay-2">
+          <div class="hero-card">
+            <div class="hero-card-title">
+              <i class="fas fa-headset" style="color:var(--gold);"></i>
+              מערכת IVR חכמה
+            </div>
+
+            <div class="ivr-steps">
+              <div class="ivr-step-item">
+                <div class="ivr-step-num">1</div>
+                <span class="ivr-step-text">חייגו למספר 1-800-XXX-XXX</span>
+                <i class="fas fa-phone ivr-step-icon"></i>
+              </div>
+              <div class="ivr-step-item">
+                <div class="ivr-step-num">2</div>
+                <span class="ivr-step-text">בחרו: חיפוש או פרסום דירה</span>
+                <i class="fas fa-list ivr-step-icon"></i>
+              </div>
+              <div class="ivr-step-item">
+                <div class="ivr-step-num">3</div>
+                <span class="ivr-step-text">קבלו תוצאות מיידיות</span>
+                <i class="fas fa-bolt ivr-step-icon"></i>
+              </div>
+              <div class="ivr-step-item">
+                <div class="ivr-step-num">4</div>
+                <span class="ivr-step-text">צרו קשר עם בעל הדירה</span>
+                <i class="fas fa-user-check ivr-step-icon"></i>
+              </div>
+            </div>
+
+            <div class="hero-card-footer">
+              <div class="availability-dot"></div>
+              <span class="availability-text">המערכת זמינה עכשיו · 24 שעות ביממה</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Wave divider -->
+  <div class="wave-divider" style="background:var(--blue-mid);">
+    <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0,0 C360,60 1080,60 1440,0 L1440,60 L0,60 Z" fill="#ffffff"/>
+    </svg>
+  </div>
+
+  <!-- ============================================================
+       HOW IT WORKS
+       ============================================================ -->
+  <section class="section how-it-works" id="how">
+    <div class="container">
+      <div class="text-center reveal">
+        <span class="section-tag">איך זה עובד?</span>
+        <h2 class="section-title">ארבעה צעדים פשוטים</h2>
+        <p class="section-subtitle">מחיוג ועד לדירת שבת — כולה תהליך מהיר, נוח ופשוט לכל אחד</p>
+      </div>
+
+      <div class="steps-grid">
+
+        <div class="step-card reveal">
+          <div class="step-number">
+            1
+            <div class="step-icon-overlay"><i class="fas fa-phone"></i></div>
+          </div>
+          <h3 class="step-title">חייגו למספר</h3>
+          <p class="step-desc">חייגו לקו החינמי <strong>1-800-XXX-XXX</strong> מכל טלפון — נייד, קווי, ואפילו ממד"א. ללא צורך בסמארטפון</p>
+        </div>
+
+        <div class="step-card reveal">
+          <div class="step-number">
+            2
+            <div class="step-icon-overlay"><i class="fas fa-th-list"></i></div>
+          </div>
+          <h3 class="step-title">בחרו אפשרות</h3>
+          <p class="step-desc">הקישו <strong>1</strong> לחיפוש דירה לשבת, <strong>2</strong> לפרסום הדירה שלכם, <strong>3</strong> לניהול מודעה קיימת</p>
+        </div>
+
+        <div class="step-card reveal">
+          <div class="step-number">
+            3
+            <div class="step-icon-overlay"><i class="fas fa-bolt"></i></div>
+          </div>
+          <h3 class="step-title">קבלו תוצאות</h3>
+          <p class="step-desc">המערכת תקריא לכם את הדירות המתאימות בעיר ובתאריך שביקשתם — מייד ובקול ברור</p>
+        </div>
+
+        <div class="step-card reveal">
+          <div class="step-number">
+            4
+            <div class="step-icon-overlay"><i class="fas fa-handshake"></i></div>
+          </div>
+          <h3 class="step-title">צרו קשר</h3>
+          <p class="step-desc">הקישו להעברה ישירה לבעל הדירה, או בקשו שהמערכת תשלח לכם SMS עם פרטי ההתקשרות</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Wave divider -->
+  <div class="wave-divider" style="background:var(--white);">
+    <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0,60 C360,0 1080,0 1440,60 L1440,60 L0,60 Z" fill="#fdf8ef"/>
+    </svg>
+  </div>
+
+  <!-- ============================================================
+       FEATURES / BENEFITS
+       ============================================================ -->
+  <section class="section features" id="features">
+    <div class="container">
+      <div class="text-center reveal">
+        <span class="section-tag">למה לבחור בנו?</span>
+        <h2 class="section-title">יתרונות שהופכים את החיים לקלים</h2>
+        <p class="section-subtitle">שירות קו דירות לשבת תוכנן במיוחד עבור הציבור הדתי עם כל הצרכים הייחודיים שלו</p>
+      </div>
+
+      <div class="features-grid">
+
+        <div class="feature-card reveal">
+          <div class="feature-icon-wrap">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="feature-body">
+            <h3 class="feature-title">זמין 24/7 כולל שבת</h3>
+            <p class="feature-desc">
+              חיפוש דירות זמין בכל עת — גם לפני שבת ממש בדקה ה-90. <strong>פרסום מודעות חדשות</strong> מושבת אוטומטית מכניסת שבת עד מוצאי שבת, בהתאם לזמני כניסת שבת בעיר שלכם.
+            </p>
+            <span class="feature-tag">✦ שומר שבת</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon-wrap">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <div class="feature-body">
+            <h3 class="feature-title">מהיר וקל — ללא אינטרנט</h3>
+            <p class="feature-desc">
+              לא צריך סמארטפון, לא צריך אינטרנט, לא צריך להתקין אפליקציה. שיחת טלפון אחת קצרה ומצאתם את הדירה שחיפשתם — מושלם לכל הגילאים.
+            </p>
+            <span class="feature-tag">✦ נגיש לכולם</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon-wrap">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <div class="feature-body">
+            <h3 class="feature-title">פרטיות מלאה</h3>
+            <p class="feature-desc">
+              אין רישום, אין פרופיל, אין שיתוף מיקום. פרטי בעל הדירה נמסרים רק לאחר בחירה מפורשת שלכם. השיחות מוצפנות ומאובטחות לחלוטין.
+            </p>
+            <span class="feature-tag">✦ מאובטח ומוצפן</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal">
+          <div class="feature-icon-wrap">
+            <i class="fas fa-map-marked-alt"></i>
+          </div>
+          <div class="feature-body">
+            <h3 class="feature-title">מרחבי הארץ</h3>
+            <p class="feature-desc">
+              מאות ערים ויישובים ברחבי ישראל — מירושלים ובני ברק ועד צפת, טבריה, אשדוד, ואשקלון. רשת גדולה ומתרחבת של משפחות המציעות הארחה לשבת.
+            </p>
+            <span class="feature-tag">✦ ארצי</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PRICING
+       ============================================================ -->
+  <section class="section pricing" id="pricing">
+    <div class="container">
+      <div class="text-center reveal">
+        <span class="section-tag">תמחור</span>
+        <h2 class="section-title">תמחור פשוט וברור</h2>
+        <p class="section-subtitle">ללא חוזים, ללא הפתעות. בחרו את התוכנית המתאימה לכם ובצעו שדרוג או שינוי בכל עת</p>
+      </div>
+
+      <div class="pricing-grid">
+
+        <!-- Basic -->
+        <div class="pricing-card reveal">
+          <div class="plan-name">חיפוש חינמי</div>
+          <div class="plan-desc">מושלם לאלו שמחפשים דירה לשבת ורוצים לנסות את השירות</div>
+          <div class="plan-price">
+            <span class="currency">₪</span><span class="amount">0</span>
+            <span class="period">לתמיד חינמי עבור מחפשים</span>
+          </div>
+          <ul class="plan-features-list">
+            <li><i class="fas fa-check check"></i> חיפוש דירות בכל הארץ</li>
+            <li><i class="fas fa-check check"></i> עד 5 תוצאות בשיחה</li>
+            <li><i class="fas fa-check check"></i> פרטי קשר לדירה</li>
+            <li><i class="fas fa-check check"></i> SMS עם פרטים</li>
+            <li><i class="fas fa-times cross"></i> פרסום מודעה</li>
+            <li><i class="fas fa-times cross"></i> סינון מתקדם</li>
+          </ul>
+          <a href="tel:1800000000" class="btn btn-outline plan-cta" style="color:var(--blue-deep);border-color:var(--blue-deep);">
+            <i class="fas fa-phone"></i>
+            חייגו עכשיו
+          </a>
+        </div>
+
+        <!-- Popular -->
+        <div class="pricing-card popular reveal">
+          <div class="popular-badge">⭐ הכי פופולרי</div>
+          <div class="plan-name">מפרסם בסיסי</div>
+          <div class="plan-desc">מתאים לבעלי דירה שרוצים לפרסם ולהגיע לאורחים לשבת</div>
+          <div class="plan-price">
+            <span class="currency">₪</span><span class="amount">39</span>
+            <span class="period">לחודש (כ-₪10 לשבת)</span>
+          </div>
+          <ul class="plan-features-list">
+            <li><i class="fas fa-check check"></i> מודעה פעילה אחת</li>
+            <li><i class="fas fa-check check"></i> חיפוש ללא הגבלה</li>
+            <li><i class="fas fa-check check"></i> עדכון מודעה מהטלפון</li>
+            <li><i class="fas fa-check check"></i> סטטיסטיקות בסיסיות</li>
+            <li><i class="fas fa-check check"></i> SMS אוטומטי לפונים</li>
+            <li><i class="fas fa-times cross"></i> דוח מפורט</li>
+          </ul>
+          <a href="tel:1800000000" class="btn btn-primary plan-cta">
+            <i class="fas fa-phone"></i>
+            התחל עכשיו
+          </a>
+        </div>
+
+        <!-- Premium -->
+        <div class="pricing-card reveal">
+          <div class="plan-name">מפרסם מקצועי</div>
+          <div class="plan-desc">לבתי הארחה ומי שמציעים דירות בכמה עיירות</div>
+          <div class="plan-price">
+            <span class="currency">₪</span><span class="amount">99</span>
+            <span class="period">לחודש, עד 5 מודעות</span>
+          </div>
+          <ul class="plan-features-list">
+            <li><i class="fas fa-check check"></i> עד 5 מודעות פעילות</li>
+            <li><i class="fas fa-check check"></i> עדיפות בתוצאות חיפוש</li>
+            <li><i class="fas fa-check check"></i> ניהול מלא מהטלפון</li>
+            <li><i class="fas fa-check check"></i> דוח שבועי מפורט</li>
+            <li><i class="fas fa-check check"></i> SMS ואלרטים בזמן אמת</li>
+            <li><i class="fas fa-check check"></i> תמיכה קדימה</li>
+          </ul>
+          <a href="tel:1800000000" class="btn btn-blue plan-cta">
+            <i class="fas fa-phone"></i>
+            התחל עכשיו
+          </a>
+        </div>
+
+      </div>
+
+      <div class="text-center reveal" style="margin-top:40px;">
+        <p style="color:var(--text-light);font-size:0.9rem;">
+          <i class="fas fa-info-circle" style="color:var(--gold);margin-left:6px;"></i>
+          כל התוכניות כוללות תקופת ניסיון של 14 יום ללא תשלום · ביטול בכל עת ללא קנס
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Wave divider -->
+  <div class="wave-divider" style="background:var(--white);">
+    <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0,0 C360,60 1080,60 1440,0 L1440,60 L0,60 Z" fill="#fdf8ef"/>
+    </svg>
+  </div>
+
+  <!-- ============================================================
+       TESTIMONIALS
+       ============================================================ -->
+  <section class="section testimonials" id="testimonials">
+    <div class="container">
+      <div class="text-center reveal">
+        <span class="section-tag">לקוחות ממליצים</span>
+        <h2 class="section-title">מה הם אומרים עלינו?</h2>
+        <p class="section-subtitle">אלפי משפחות כבר מצאו דירת שבת מושלמת דרך הקו שלנו</p>
+      </div>
+
+      <div class="testimonials-grid">
+
+        <div class="testimonial-card reveal">
+          <div class="testimonial-stars">
+            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            <i class="fas fa-star"></i><i class="fas fa-star"></i>
+          </div>
+          <p class="testimonial-text">
+            "לפני שבת שושנים חיפשנו דירה לשבת בצפת בדחיפות — חייגנו, תוך דקתיים קיבלנו שלוש הצעות, ועד שעה אחת עשינו הסדר. פשוט מדהים! השירות הזה הציל לנו את השבת."
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">מ</div>
+            <div class="author-info">
+              <div class="author-name">משה לוי</div>
+              <div class="author-city">ירושלים</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card reveal">
+          <div class="testimonial-stars">
+            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            <i class="fas fa-star"></i><i class="fas fa-star"></i>
+          </div>
+          <p class="testimonial-text">
+            "אני מפרסמת את דירתנו כבר שנה. כל שבת שיש לנו מקום, מתקשרים אלינו 4-5 זוגות! ניהול המודעה מהטלפון פשוט מאוד ואפילו הסבתא שלי מסתדרת עם זה."
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">ר</div>
+            <div class="author-info">
+              <div class="author-name">רבקה כהן</div>
+              <div class="author-city">בני ברק</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card reveal">
+          <div class="testimonial-stars">
+            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+            <i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+          </div>
+          <p class="testimonial-text">
+            "נוסע הרבה לכנסים ועצרות. כל שבת בעיר אחרת — ירושלים, אשדוד, בית שמש. כל פעם מוצא דירה מתאימה בקלות. זה הכלי הכי שימושי שיש לי כרגע. ממליץ בחום!"
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">ד</div>
+            <div class="author-info">
+              <div class="author-name">דוד פרידמן</div>
+              <div class="author-city">תל אביב</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CTA SECTION
+       ============================================================ -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-inner reveal">
+        <span class="section-tag" style="background:rgba(201,168,76,0.2);color:var(--gold-light);border-color:rgba(201,168,76,0.35);">
+          מוכנים להתחיל?
+        </span>
+        <h2 class="cta-title">דירת שבת ממתינה לכם</h2>
+        <p class="cta-subtitle">
+          הצטרפו לאלפי משפחות שכבר גילו את הדרך הקלה ביותר למצוא ולפרסם דירות לשבת
+        </p>
+
+        <div class="cta-buttons">
+          <a href="tel:1800000000" class="btn btn-primary" style="font-size:1.1rem;padding:18px 44px;">
+            <i class="fas fa-phone-alt"></i>
+            חייגו עכשיו בחינם
+          </a>
+          <a href="#how" class="btn btn-outline" style="font-size:1.1rem;padding:18px 40px;">
+            <i class="fas fa-play-circle"></i>
+            למדו עוד
+          </a>
+        </div>
+
+        <div class="cta-phone-wrap">
+          <div style="text-align:center;">
+            <span class="phone-label-sm">מספר חינמי · זמין 24/7</span>
+            <span class="phone-num">1-800-XXX-XXX</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CONTACT
+       ============================================================ -->
+  <section class="section contact" id="contact">
+    <div class="container">
+      <div class="contact-grid">
+
+        <!-- Info -->
+        <div class="contact-info reveal">
+          <span class="section-tag">צור קשר</span>
+          <h3>יש לכם שאלה?<br/>אנחנו כאן לעזור</h3>
+          <p>
+            בין אם אתם מתחילים חדשים שרוצים להבין איך השירות עובד, בין אם בעלי דירה שמחפשים לפרסם — צוות התמיכה שלנו ישמח לסייע.
+          </p>
+
+          <div class="contact-methods">
+            <div class="contact-method">
+              <div class="contact-method-icon">
+                <i class="fas fa-phone"></i>
+              </div>
+              <div>
+                <div class="contact-method-label">קו שירות לקוחות</div>
+                <div class="contact-method-value">1-800-XXX-XXX</div>
+              </div>
+            </div>
+
+            <div class="contact-method">
+              <div class="contact-method-icon">
+                <i class="fas fa-envelope"></i>
+              </div>
+              <div>
+                <div class="contact-method-label">דוא"ל</div>
+                <div class="contact-method-value">info@kav-dirot.co.il</div>
+              </div>
+            </div>
+
+            <div class="contact-method">
+              <div class="contact-method-icon">
+                <i class="fab fa-whatsapp"></i>
+              </div>
+              <div>
+                <div class="contact-method-label">WhatsApp לשאלות</div>
+                <div class="contact-method-value">050-XXX-XXXX</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="shabbat-note">
+            <i class="fas fa-star-of-david"></i>
+            תמיכה זמינה ראשון–חמישי 08:00–20:00 | ערב שישי 08:00–13:00
+          </div>
+        </div>
+
+        <!-- Form -->
+        <div class="contact-form reveal">
+          <h4 style="font-size:1.2rem;font-weight:700;color:var(--blue-deep);margin-bottom:24px;">
+            שלחו לנו הודעה
+          </h4>
+
+          <form onsubmit="handleFormSubmit(event)">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="form-group">
+                <label for="fname">שם פרטי</label>
+                <input type="text" id="fname" placeholder="ישראל" required />
+              </div>
+              <div class="form-group">
+                <label for="lname">שם משפחה</label>
+                <input type="text" id="lname" placeholder="ישראלי" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="phone">מספר טלפון</label>
+              <input type="tel" id="phone" placeholder="05X-XXX-XXXX" dir="ltr" style="text-align:left;" />
+            </div>
+
+            <div class="form-group">
+              <label for="email">כתובת דוא"ל</label>
+              <input type="email" id="email" placeholder="israel@example.com" dir="ltr" style="text-align:left;" />
+            </div>
+
+            <div class="form-group">
+              <label for="message">הודעה</label>
+              <textarea id="message" placeholder="כתבו כאן את שאלתכם או הצעתכם..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-blue" style="width:100%;justify-content:center;">
+              <i class="fas fa-paper-plane"></i>
+              שלח הודעה
+            </button>
+          </form>
+
+          <div id="formSuccess" style="display:none;margin-top:16px;padding:14px 18px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);border-radius:var(--radius-sm);color:#16a34a;font-size:0.9rem;">
+            <i class="fas fa-check-circle" style="margin-left:8px;"></i>
+            הודעתך התקבלה בהצלחה! נחזור אליך בהקדם.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+
+        <!-- Brand -->
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <div class="footer-logo-icon">
+              <i class="fas fa-phone-volume"></i>
+            </div>
+            <div class="footer-logo-name">קו דירות לשבת</div>
+          </div>
+          <p class="footer-tagline">
+            שירות IVR מתקדם המאפשר לכם למצוא ולפרסם דירות לשבת ברחבי הארץ בשיחת טלפון אחת בלבד.
+          </p>
+          <div class="footer-social">
+            <a href="#" class="social-link" aria-label="פייסבוק"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="social-link" aria-label="טוויטר"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="social-link" aria-label="יוטיוב"><i class="fab fa-youtube"></i></a>
+            <a href="#" class="social-link" aria-label="ווצאפ"><i class="fab fa-whatsapp"></i></a>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="footer-col">
+          <h4>ניווט מהיר</h4>
+          <ul class="footer-links">
+            <li><a href="#home">דף הבית</a></li>
+            <li><a href="#how">איך זה עובד?</a></li>
+            <li><a href="#features">יתרונות</a></li>
+            <li><a href="#pricing">תמחור</a></li>
+            <li><a href="#testimonials">ממליצים</a></li>
+            <li><a href="#contact">צור קשר</a></li>
+          </ul>
+        </div>
+
+        <!-- Services -->
+        <div class="footer-col">
+          <h4>שירותים</h4>
+          <ul class="footer-links">
+            <li><a href="#">חיפוש דירה לשבת</a></li>
+            <li><a href="#">פרסום דירה</a></li>
+            <li><a href="#">ניהול מודעה</a></li>
+            <li><a href="#">סטטיסטיקות</a></li>
+            <li><a href="#">API לעסקים</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal -->
+        <div class="footer-col">
+          <h4>מידע</h4>
+          <ul class="footer-links">
+            <li><a href="#">תנאי שימוש</a></li>
+            <li><a href="#">מדיניות פרטיות</a></li>
+            <li><a href="#">שאלות נפוצות</a></li>
+            <li><a href="#">בלוג</a></li>
+            <li><a href="#">אודות</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="footer-bottom">
+        <div class="footer-copy">
+          &copy; 2024 קו דירות לשבת. כל הזכויות שמורות.
+          <span style="margin-right:12px;color:rgba(255,255,255,0.25);">|</span>
+          <span style="font-size:0.8rem;">מופעל בטכנולוגיית Twilio IVR</span>
+        </div>
+        <div class="footer-bottom-links">
+          <a href="#">תנאי שימוש</a>
+          <a href="#">פרטיות</a>
+          <a href="#">נגישות</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scroll to top button -->
+  <button class="scroll-top" id="scrollTopBtn" aria-label="חזרה לראש הדף">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <!-- ============================================================
+       JAVASCRIPT
+       ============================================================ -->
+  <script>
+    // --- Sticky nav shadow on scroll ---
+    const navbar = document.getElementById('navbar');
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
+
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+
+      // Nav shadow
+      if (scrollY > 40) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+
+      // Scroll-to-top visibility
+      if (scrollY > 400) {
+        scrollTopBtn.classList.add('visible');
+      } else {
+        scrollTopBtn.classList.remove('visible');
+      }
+    });
+
+    // --- Scroll to top ---
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // --- Hamburger / mobile menu ---
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    hamburger.addEventListener('click', () => {
+      const isOpen = mobileMenu.classList.toggle('open');
+      hamburger.setAttribute('aria-expanded', isOpen);
+      // Animate hamburger
+      const spans = hamburger.querySelectorAll('span');
+      if (isOpen) {
+        spans[0].style.transform = 'translateY(7px) rotate(45deg)';
+        spans[1].style.opacity = '0';
+        spans[2].style.transform = 'translateY(-7px) rotate(-45deg)';
+      } else {
+        spans[0].style.transform = '';
+        spans[1].style.opacity = '';
+        spans[2].style.transform = '';
+      }
+    });
+
+    function closeMobileMenu() {
+      mobileMenu.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', false);
+      const spans = hamburger.querySelectorAll('span');
+      spans[0].style.transform = '';
+      spans[1].style.opacity = '';
+      spans[2].style.transform = '';
+    }
+
+    // --- Intersection Observer for reveal animations ---
+    const revealEls = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          // Stagger children inside grids
+          const siblings = entry.target.parentElement.querySelectorAll('.reveal');
+          let delay = 0;
+          siblings.forEach((sib, idx) => {
+            if (sib === entry.target) delay = idx * 80;
+          });
+          setTimeout(() => {
+            entry.target.classList.add('revealed');
+          }, delay);
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    revealEls.forEach(el => revealObserver.observe(el));
+
+    // --- Contact form ---
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> שולח...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        e.target.reset();
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> שלח הודעה';
+        btn.disabled = false;
+        document.getElementById('formSuccess').style.display = 'block';
+        setTimeout(() => {
+          document.getElementById('formSuccess').style.display = 'none';
+        }, 5000);
+      }, 1200);
+    }
+
+    // --- Smooth active nav link highlight ---
+    const sections = document.querySelectorAll('section[id]');
+    const navAnchors = document.querySelectorAll('.nav-links a');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(sec => {
+        const top = sec.offsetTop - 100;
+        if (window.scrollY >= top) current = sec.getAttribute('id');
+      });
+      navAnchors.forEach(a => {
+        a.style.color = '';
+        a.style.fontWeight = '';
+        if (a.getAttribute('href') === `#${current}`) {
+          a.style.color = 'var(--blue-deep)';
+          a.style.fontWeight = '700';
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
