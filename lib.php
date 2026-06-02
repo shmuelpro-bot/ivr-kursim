@@ -7,7 +7,7 @@
 define('TWILIO_SID',   getenv('TWILIO_ACCOUNT_SID')        ?: '');
 define('TWILIO_TOKEN', getenv('TWILIO_AUTH_TOKEN')          ?: '');
 define('TWILIO_FROM',  getenv('TWILIO_PHONE_NUMBER')        ?: '');
-define('SELF_URL',     getenv('IVR_SELF_URL')               ?: 'https://ivr-kursim-shabat.onrender.com/ivr_main.php');
+define('SELF_URL',     getenv('IVR_SELF_URL')               ?: 'https://ivr-kursim-1.onrender.com/ivr_main.php');
 define('ADMIN_PASS',   getenv('ADMIN_PASSWORD')             ?: 'Shabbat@2024!');
 define('CRON_SECRET',  getenv('CRON_SECRET')                ?: 'cron_change_me');
 define('REDIS_URL',    rtrim(getenv('UPSTASH_REDIS_REST_URL')   ?: '', '/'));
