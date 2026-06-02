@@ -24,20 +24,26 @@ if (!$data || empty($data['incoming_phone_numbers'])) {
 
 $results = [];
 foreach ($data['incoming_phone_numbers'] as $num) {
-    $pnSid = $num['sid'];
-    $phone = $num['phone_number'];
+    $pnSid  = $num['sid'];
+    $phone  = $num['phone_number'];
+    $appSid = $num['voice_application_sid'] ?? '';
 
     $update = stream_context_create(['http' => [
         'method'  => 'POST',
         'header'  => "Authorization: Basic " . base64_encode("$sid:$token") . "\r\nContent-Type: application/x-www-form-urlencoded",
-        'content' => http_build_query(['VoiceUrl' => $newUrl, 'VoiceMethod' => 'POST']),
+        'content' => http_build_query([
+            'VoiceUrl'            => $newUrl,
+            'VoiceMethod'         => 'POST',
+            'VoiceApplicationSid' => '',   // clear any app that overrides webhook
+        ]),
     ]]);
     $r = file_get_contents("https://api.twilio.com/2010-04-01/Accounts/$sid/IncomingPhoneNumbers/$pnSid.json", false, $update);
     $updated = json_decode($r, true);
-    $results[] = "$phone => " . ($updated['voice_url'] ?? 'error');
+    $voiceUrl = $updated['voice_url'] ?? 'error';
+    $appAfter = $updated['voice_application_sid'] ?? 'none';
+    $results[] = "$phone | voice_url=$voiceUrl | app_sid=$appAfter | was_app=" . ($appSid ?: 'none');
 }
 
 echo "<h2>Done!</h2><ul>";
 foreach ($results as $r) echo "<li>$r</li>";
 echo "</ul>";
-echo "<p>Now call the number to test the IVR.</p>";
