@@ -309,39 +309,33 @@ function mg_action_form_data(): WP_REST_Response {
 // ── Action: all_listings ──────────────────────────────────────────────────────
 
 function mg_action_all_listings( array $body ): WP_REST_Response {
-    $now = time();
-
-    $meta_query = [
-        [
-            'key'     => '_maagarim_expires',
-            'value'   => $now,
-            'compare' => '>',
-            'type'    => 'NUMERIC',
-        ],
-    ];
-
-    // Optional city filter
-    $city = (int) ( $body['city'] ?? 0 );
-    if ( $city && array_key_exists( $city, MG_CITIES ) ) {
-        $meta_query[] = [ 'key' => '_maagarim_city', 'value' => $city, 'type' => 'NUMERIC' ];
-    }
-
-    // Optional rental_type filter
-    $rental_type = (int) ( $body['rental_type'] ?? 0 );
-    if ( $rental_type && array_key_exists( $rental_type, MG_RENTAL_TYPES ) ) {
-        $meta_query[] = [ 'key' => '_maagarim_rental_type', 'value' => $rental_type, 'type' => 'NUMERIC' ];
-    }
-
-    $meta_query['relation'] = 'AND';
-
-    $posts = get_posts( [
+    $args = [
         'post_type'      => 'maagarim_apt',
         'post_status'    => 'publish',
         'posts_per_page' => 100,
         'orderby'        => 'date',
         'order'          => 'DESC',
-        'meta_query'     => $meta_query,
-    ] );
+    ];
+
+    // Optional city filter
+    $city = (int) ( $body['city'] ?? 0 );
+    // Optional rental_type filter
+    $rental_type = (int) ( $body['rental_type'] ?? 0 );
+
+    if ( $city || $rental_type ) {
+        $clauses = [];
+        if ( $city && array_key_exists( $city, MG_CITIES ) ) {
+            $clauses[] = [ 'key' => '_maagarim_city', 'value' => $city, 'type' => 'NUMERIC' ];
+        }
+        if ( $rental_type && array_key_exists( $rental_type, MG_RENTAL_TYPES ) ) {
+            $clauses[] = [ 'key' => '_maagarim_rental_type', 'value' => $rental_type, 'type' => 'NUMERIC' ];
+        }
+        if ( $clauses ) {
+            $args['meta_query'] = array_merge( [ 'relation' => 'AND' ], $clauses );
+        }
+    }
+
+    $posts = get_posts( $args );
 
     $listings = array_map( fn( $p ) => mg_post_to_listing( $p->ID ), $posts );
 
