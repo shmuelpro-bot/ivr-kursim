@@ -3,9 +3,10 @@
  * yemot_api.php – מחלקת חיבור ל-API של ימות המשיח
  */
 
-define('YEMOT_URL', 'https://' . (getenv('YEMOT_SERVER') ?: 'www') . '.call2all.co.il/ym/api/');
+define('YEMOT_URL',     'https://' . (getenv('YEMOT_SERVER') ?: 'www') . '.call2all.co.il/ym/api/');
 define('YEMOT_PHONE',    getenv('YEMOT_PHONE')    ?: '');
 define('YEMOT_PASSWORD', getenv('YEMOT_PASSWORD') ?: '');
+define('YEMOT_IVR_URL',  getenv('YEMOT_IVR_URL')  ?: 'https://ivr-kursim-1.onrender.com/yemot_ivr.php');
 
 // ── HTTP multipart helper ───────────────────────────────────────
 
