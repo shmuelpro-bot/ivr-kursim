@@ -81,6 +81,7 @@ textarea.mg-input{min-height:80px;resize:vertical;direction:rtl;text-align:right
 @keyframes mg-pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
 #mg-ad-close{position:absolute;top:12px;left:14px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#9ca3af;line-height:1}
 #mg-ad-close:hover{color:#374151}
+@keyframes mg-bounce{from{transform:translateY(0)}to{transform:translateY(6px)}}
 </style>
 
 <script>
@@ -706,8 +707,9 @@ function showAd() {
       <button id="mg-ad-close" onclick="closeAd()" title="סגור">✕</button>
       <div style="text-align:center;margin-bottom:16px">
         <div style="font-size:2.8rem">📣</div>
-        <h3 style="margin:8px 0 4px;color:#1e40af;font-size:1.3rem">פרסומת באתר</h3>
-        <div style="font-size:.88rem;color:#6b7280">הפרסומת הזו שקפצה לך — יכולה להיות שלך!</div>
+        <h3 style="margin:8px 0 6px;color:#1e40af;font-size:1.2rem;line-height:1.45">🆕 חדש! ניתן מעכשיו לפרסם חינם נכסים לשבת וחג הקרובים בתחתית האתר</h3>
+        <div style="font-size:1.6rem;color:#2563eb;animation:mg-bounce .9s infinite alternate">⬇</div>
+        <div style="font-size:.88rem;color:#6b7280;margin-top:6px">הפרסומת הזו שקפצה לך — יכולה להיות שלך!</div>
       </div>
       <div style="background:#eff6ff;border-radius:12px;padding:14px 16px;margin-bottom:14px;border:1.5px solid #bfdbfe">
         <div style="font-size:.95rem;color:#374151;line-height:1.6;margin-bottom:8px">
