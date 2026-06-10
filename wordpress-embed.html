@@ -223,10 +223,6 @@ function aptCard(a, fd) {
 
 // ════ SCREENS ════════════════════════════════════════════════
 
-function activeFiltersCount() {
-  return (S.filterCity?1:0)+(S.filterRent?1:0)+(S.filterType?1:0)+(S.filterBeds?1:0)+(S.filterFeats.length);
-}
-
 function resetFilters() {
   S.filterCity=0; S.filterRent=0; S.filterType=0; S.filterBeds=0; S.filterFeats=[];
   showHome();
@@ -238,25 +234,26 @@ function toggleFeat(f) {
   showHome();
 }
 
+function applyFilter(key, val) {
+  S[key] = parseInt(val) || 0;
+  showHome();
+}
+
 function showHome() {
   const fd      = S.allFd || {};
   const cities  = fd.cities        || {};
   const rentals = fd.rental_types  || {};
   const types   = fd.apt_types     || {};
 
-  const cityOpts = Object.entries(cities).map(([id,n])=>
-    `<option value="${id}" ${S.filterCity==id?'selected':''}>${esc(n)}</option>`).join('');
-  const rentOpts = Object.entries(rentals).map(([id,n])=>
-    `<option value="${id}" ${S.filterRent==id?'selected':''}>${esc(n)}</option>`).join('');
-  const typeOpts = Object.entries(types).map(([id,n])=>
-    `<option value="${id}" ${S.filterType==id?'selected':''}>${esc(n)}</option>`).join('');
+  const sel = (val, opts) => Object.entries(opts).map(([id,n])=>
+    `<option value="${id}" ${parseInt(id)===val?'selected':''}>${esc(n)}</option>`).join('');
 
   const filterFeatBtns = Object.entries(FMAP).map(([k,v])=>{
     const on = S.filterFeats.includes(k);
-    return `<button onclick="toggleFeat('${k}')" style="padding:4px 10px;border-radius:20px;border:1.5px solid ${on?'#2563eb':'#d1d5db'};background:${on?'#eff6ff':'#fff'};color:${on?'#1d4ed8':'#374151'};font-size:.8rem;cursor:pointer;margin:2px">${v}</button>`;
+    return `<button onclick="toggleFeat('${k}')" style="padding:5px 11px;border-radius:20px;border:1.5px solid ${on?'#2563eb':'#d1d5db'};background:${on?'#dbeafe':'#f9fafb'};color:${on?'#1d4ed8':'#374151'};font-size:.8rem;cursor:pointer;margin:3px;transition:all .15s">${v}</button>`;
   }).join('');
 
-  const fc = activeFiltersCount();
+  const hasFilter = S.filterCity||S.filterRent||S.filterType||S.filterBeds||S.filterFeats.length;
 
   let cards = '';
   if (!S.allLoaded) {
@@ -265,10 +262,10 @@ function showHome() {
     cards = `<div class="mg-empty"><div style="font-size:3rem">🏚️</div><h4>אין דירות פעילות כרגע</h4><p style="color:#6b7280">היה הראשון לפרסם!</p></div>`;
   } else {
     let filtered = S.allListings;
-    if (S.filterCity) filtered = filtered.filter(a => a.city == S.filterCity);
-    if (S.filterRent) filtered = filtered.filter(a => a.rental_type == S.filterRent);
-    if (S.filterType) filtered = filtered.filter(a => a.apt_type == S.filterType);
-    if (S.filterBeds) filtered = filtered.filter(a => a.beds >= S.filterBeds);
+    if (S.filterCity) filtered = filtered.filter(a => parseInt(a.city)  === S.filterCity);
+    if (S.filterRent) filtered = filtered.filter(a => parseInt(a.rental_type) === S.filterRent);
+    if (S.filterType) filtered = filtered.filter(a => parseInt(a.apt_type)    === S.filterType);
+    if (S.filterBeds) filtered = filtered.filter(a => parseInt(a.beds) >= S.filterBeds);
     if (S.filterFeats.length) filtered = filtered.filter(a =>
       S.filterFeats.every(f => (a.features||[]).includes(f))
     );
@@ -291,45 +288,41 @@ function showHome() {
     </div>
     ${S.allLoaded && Object.keys(cities).length ? `
     <div class="mg-card" style="padding:14px;margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <strong style="font-size:.95rem">🔍 סינון</strong>
-        <div style="display:flex;gap:8px;align-items:center">
-          ${fc ? `<span style="background:#2563eb;color:#fff;border-radius:12px;padding:1px 8px;font-size:.78rem">${fc}</span>` : ''}
-          <button class="mg-btn-link" onclick="S.showFilters=!S.showFilters;showHome()" style="font-size:.85rem">
-            ${S.showFilters ? '▲ סגור' : '▼ פתח'}
-          </button>
-          ${fc ? `<button class="mg-btn-link" onclick="resetFilters()" style="font-size:.82rem;color:#dc2626">נקה הכל</button>` : ''}
-        </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <strong style="font-size:.95rem">🔍 חיפוש וסינון</strong>
+        ${hasFilter ? `<button class="mg-btn-link" onclick="resetFilters()" style="font-size:.82rem;color:#dc2626;font-weight:600">✕ נקה הכל</button>` : ''}
       </div>
-      <div class="mg-row" style="margin-bottom:${S.showFilters?'10px':'0'}">
-        <div class="mg-col">
-          <select class="mg-select" onchange="S.filterCity=parseInt(this.value)||0;showHome()">
-            <option value="0">כל הערים</option>${cityOpts}
-          </select>
-        </div>
-        <div class="mg-col">
-          <select class="mg-select" onchange="S.filterRent=parseInt(this.value)||0;showHome()">
-            <option value="0">כל סוגי השכרה</option>${rentOpts}
-          </select>
-        </div>
-      </div>
-      ${S.showFilters ? `
       <div class="mg-row" style="margin-bottom:10px">
         <div class="mg-col">
-          <select class="mg-select" onchange="S.filterType=parseInt(this.value)||0;showHome()">
-            <option value="0">כל סוגי דירה</option>${typeOpts}
+          <label class="mg-label" style="font-size:.82rem">עיר</label>
+          <select class="mg-select" onchange="applyFilter('filterCity',this.value)">
+            <option value="0">כל הערים</option>${sel(S.filterCity, cities)}
           </select>
         </div>
         <div class="mg-col">
-          <select class="mg-select" onchange="S.filterBeds=parseInt(this.value)||0;showHome()">
-            <option value="0">כל מספר מיטות</option>
-            ${[2,3,4,5,6,8,10].map(n=>`<option value="${n}" ${S.filterBeds==n?'selected':''}>${n}+ מיטות</option>`).join('')}
+          <label class="mg-label" style="font-size:.82rem">סוג השכרה</label>
+          <select class="mg-select" onchange="applyFilter('filterRent',this.value)">
+            <option value="0">הכל</option>${sel(S.filterRent, rentals)}
           </select>
         </div>
       </div>
-      <div style="font-size:.82rem;color:#6b7280;margin-bottom:6px">מה יש בדירה (ניתן לבחור כמה):</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px">${filterFeatBtns}</div>
-      ` : ''}
+      <div class="mg-row" style="margin-bottom:10px">
+        <div class="mg-col">
+          <label class="mg-label" style="font-size:.82rem">סוג דירה</label>
+          <select class="mg-select" onchange="applyFilter('filterType',this.value)">
+            <option value="0">הכל</option>${sel(S.filterType, types)}
+          </select>
+        </div>
+        <div class="mg-col">
+          <label class="mg-label" style="font-size:.82rem">מינימום מיטות</label>
+          <select class="mg-select" onchange="applyFilter('filterBeds',this.value)">
+            <option value="0">ללא מגבלה</option>
+            ${[2,3,4,5,6,8,10].map(n=>`<option value="${n}" ${S.filterBeds===n?'selected':''}>${n}+</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div style="font-size:.82rem;color:#6b7280;margin-bottom:6px;font-weight:600">מה יש בדירה:</div>
+      <div style="display:flex;flex-wrap:wrap">${filterFeatBtns}</div>
     </div>` : ''}
     ${cards}
   `);
@@ -751,7 +744,7 @@ function closeAd() {
 }
 
 // ── Init ─────────────────────────────────────────────────────
-Object.assign(window, {S,goHome,goLogin,goDash,goForm,goListings,doEmailLogin,doPublish,doDelete,doLogout,addImgs,removeImg,updateNh,toggleFeat,resetFilters,closeAd});
+Object.assign(window, {S,goHome,goLogin,goDash,goForm,goListings,doEmailLogin,doPublish,doDelete,doLogout,addImgs,removeImg,updateNh,toggleFeat,resetFilters,applyFilter,closeAd});
 
 loadAllListings();
 setTimeout(showAd, 4000);
