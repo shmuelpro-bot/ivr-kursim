@@ -102,6 +102,10 @@ const S = {
   allFd:       null,
   filterCity:  0,
   filterRent:  0,
+  filterType:  0,
+  filterBeds:  0,
+  filterFeats: [],
+  showFilters: false,
 };
 
 // ── Feature labels ───────────────────────────────────────────
@@ -109,7 +113,10 @@ const FMAP = {
   parking:'🅿️ חניה', ac:'❄️ מיזוג', elevator:'🛗 מעלית', balcony:'🌿 מרפסת',
   wifi:'📶 WiFi', washing:'🫧 כביסה', dishwasher:'🍽️ מדיח', bathtub:'🛁 אמבטיה',
   shabbat_mode:'🕯️ שבת', crib:'👶 עריסה', synagogue:'🕍 ביהכ"נ', garden:'🌳 גינה',
-  handicapped:'♿ נגיש', quiet:'🔇 שקט'
+  handicapped:'♿ נגיש', quiet:'🔇 שקט',
+  pool:'🏊 בריכה', jacuzzi:'🛁 ג׳קוזי', swings:'🎠 נדנדות', hammock:'🌴 ערסל',
+  ping_pong:'🏓 פינג פונג', bouncy_castle:'🎪 בימבות', snooker:'🎱 סנוקר',
+  table_tennis:'🏓 טניס שולחן'
 };
 
 // ── API ──────────────────────────────────────────────────────
@@ -174,7 +181,7 @@ function aptCard(a, fd) {
   const typeName  = fd.apt_types?.[a.apt_type] || '';
   const rentName  = fd.rental_types?.[a.rental_type] || '';
   const img1      = a.images && a.images[0];
-  const feats     = (a.features||[]).slice(0,5).map(f=>`<span class="mg-badge mg-badge-blue">${FMAP[f]||f}</span>`).join('');
+  const feats     = (a.features||[]).map(f=>`<span class="mg-badge mg-badge-blue">${FMAP[f]||f}</span>`).join('');
   const price     = a.price > 0 ? `<span class="mg-badge" style="background:#fef3c7;color:#92400e">₪${Number(a.price).toLocaleString()}</span>` : '';
   const roomsTxt  = a.bedrooms == 0 ? 'סטודיו' : a.bedrooms + " חד'";
   const contact   = a.contact_phone
@@ -197,7 +204,7 @@ function aptCard(a, fd) {
           <span class="mg-badge mg-badge-gray">${a.beds} 🛏</span>
           ${price}
         </div>
-        ${feats ? `<div style="margin-bottom:6px">${feats}</div>` : ''}
+        ${feats ? `<div style="margin-bottom:6px;line-height:1.8">${feats}</div>` : ''}
         ${a.description ? `<p style="font-size:.87rem;color:#4b5563;margin:0 0 6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(a.description)}</p>` : ''}
         ${contact}
       </div>
@@ -206,15 +213,40 @@ function aptCard(a, fd) {
 
 // ════ SCREENS ════════════════════════════════════════════════
 
+function activeFiltersCount() {
+  return (S.filterCity?1:0)+(S.filterRent?1:0)+(S.filterType?1:0)+(S.filterBeds?1:0)+(S.filterFeats.length);
+}
+
+function resetFilters() {
+  S.filterCity=0; S.filterRent=0; S.filterType=0; S.filterBeds=0; S.filterFeats=[];
+  showHome();
+}
+
+function toggleFeat(f) {
+  const i = S.filterFeats.indexOf(f);
+  if (i===-1) S.filterFeats.push(f); else S.filterFeats.splice(i,1);
+  showHome();
+}
+
 function showHome() {
   const fd      = S.allFd || {};
   const cities  = fd.cities        || {};
   const rentals = fd.rental_types  || {};
+  const types   = fd.apt_types     || {};
 
   const cityOpts = Object.entries(cities).map(([id,n])=>
     `<option value="${id}" ${S.filterCity==id?'selected':''}>${esc(n)}</option>`).join('');
   const rentOpts = Object.entries(rentals).map(([id,n])=>
     `<option value="${id}" ${S.filterRent==id?'selected':''}>${esc(n)}</option>`).join('');
+  const typeOpts = Object.entries(types).map(([id,n])=>
+    `<option value="${id}" ${S.filterType==id?'selected':''}>${esc(n)}</option>`).join('');
+
+  const filterFeatBtns = Object.entries(FMAP).map(([k,v])=>{
+    const on = S.filterFeats.includes(k);
+    return `<button onclick="toggleFeat('${k}')" style="padding:4px 10px;border-radius:20px;border:1.5px solid ${on?'#2563eb':'#d1d5db'};background:${on?'#eff6ff':'#fff'};color:${on?'#1d4ed8':'#374151'};font-size:.8rem;cursor:pointer;margin:2px">${v}</button>`;
+  }).join('');
+
+  const fc = activeFiltersCount();
 
   let cards = '';
   if (!S.allLoaded) {
@@ -225,9 +257,15 @@ function showHome() {
     let filtered = S.allListings;
     if (S.filterCity) filtered = filtered.filter(a => a.city == S.filterCity);
     if (S.filterRent) filtered = filtered.filter(a => a.rental_type == S.filterRent);
-    cards = filtered.length === 0
-      ? `<div class="mg-empty"><div style="font-size:2rem">🔍</div><p>לא נמצאו דירות לפי הסינון</p></div>`
-      : filtered.map(a => aptCard(a, fd)).join('');
+    if (S.filterType) filtered = filtered.filter(a => a.apt_type == S.filterType);
+    if (S.filterBeds) filtered = filtered.filter(a => a.beds >= S.filterBeds);
+    if (S.filterFeats.length) filtered = filtered.filter(a =>
+      S.filterFeats.every(f => (a.features||[]).includes(f))
+    );
+    const count = filtered.length;
+    cards = count === 0
+      ? `<div class="mg-empty"><div style="font-size:2rem">🔍</div><p>לא נמצאו דירות לפי הסינון</p><button class="mg-btn mg-btn-outline" onclick="resetFilters()">נקה סינון</button></div>`
+      : `<div style="font-size:.85rem;color:#6b7280;margin-bottom:10px">${count} דירות נמצאו</div>` + filtered.map(a => aptCard(a, fd)).join('');
   }
 
   render(`
@@ -243,7 +281,17 @@ function showHome() {
     </div>
     ${S.allLoaded && Object.keys(cities).length ? `
     <div class="mg-card" style="padding:14px;margin-bottom:14px">
-      <div class="mg-row">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <strong style="font-size:.95rem">🔍 סינון</strong>
+        <div style="display:flex;gap:8px;align-items:center">
+          ${fc ? `<span style="background:#2563eb;color:#fff;border-radius:12px;padding:1px 8px;font-size:.78rem">${fc}</span>` : ''}
+          <button class="mg-btn-link" onclick="S.showFilters=!S.showFilters;showHome()" style="font-size:.85rem">
+            ${S.showFilters ? '▲ סגור' : '▼ פתח'}
+          </button>
+          ${fc ? `<button class="mg-btn-link" onclick="resetFilters()" style="font-size:.82rem;color:#dc2626">נקה הכל</button>` : ''}
+        </div>
+      </div>
+      <div class="mg-row" style="margin-bottom:${S.showFilters?'10px':'0'}">
         <div class="mg-col">
           <select class="mg-select" onchange="S.filterCity=parseInt(this.value)||0;showHome()">
             <option value="0">כל הערים</option>${cityOpts}
@@ -251,10 +299,27 @@ function showHome() {
         </div>
         <div class="mg-col">
           <select class="mg-select" onchange="S.filterRent=parseInt(this.value)||0;showHome()">
-            <option value="0">כל סוגי ההשכרה</option>${rentOpts}
+            <option value="0">כל סוגי השכרה</option>${rentOpts}
           </select>
         </div>
       </div>
+      ${S.showFilters ? `
+      <div class="mg-row" style="margin-bottom:10px">
+        <div class="mg-col">
+          <select class="mg-select" onchange="S.filterType=parseInt(this.value)||0;showHome()">
+            <option value="0">כל סוגי דירה</option>${typeOpts}
+          </select>
+        </div>
+        <div class="mg-col">
+          <select class="mg-select" onchange="S.filterBeds=parseInt(this.value)||0;showHome()">
+            <option value="0">כל מספר מיטות</option>
+            ${[2,3,4,5,6,8,10].map(n=>`<option value="${n}" ${S.filterBeds==n?'selected':''}>${n}+ מיטות</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div style="font-size:.82rem;color:#6b7280;margin-bottom:6px">מה יש בדירה (ניתן לבחור כמה):</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${filterFeatBtns}</div>
+      ` : ''}
     </div>` : ''}
     ${cards}
   `);
@@ -322,13 +387,7 @@ function showForm() {
   const cities  = Object.entries(fd.cities).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
   const types   = Object.entries(fd.apt_types).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
   const rentals = Object.entries(fd.rental_types).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
-  const features = {
-    parking:'🅿️ חניה',ac:'❄️ מיזוג',elevator:'🛗 מעלית',balcony:'🌿 מרפסת',
-    wifi:'📶 WiFi',washing:'🫧 כביסה',dishwasher:'🍽️ מדיח',bathtub:'🛁 אמבטיה',
-    shabbat_mode:'🕯️ מצב שבת',crib:'👶 עריסה',synagogue:'🕍 ביהכ"נ',garden:'🌳 גינה',
-    handicapped:'♿ נגיש',quiet:'🔇 שקט'
-  };
-  const featHtml = Object.entries(features).map(([k,v])=>
+  const featHtml = Object.entries(FMAP).map(([k,v])=>
     `<label><input type="checkbox" name="feat" value="${k}"> <span>${v}</span></label>`).join('');
 
   render(`
@@ -635,7 +694,7 @@ function updateNh() {
 }
 
 // ── Init ─────────────────────────────────────────────────────
-Object.assign(window, {S,goHome,goLogin,goDash,goForm,goListings,doEmailLogin,doPublish,doDelete,doLogout,addImgs,removeImg,updateNh});
+Object.assign(window, {S,goHome,goLogin,goDash,goForm,goListings,doEmailLogin,doPublish,doDelete,doLogout,addImgs,removeImg,updateNh,toggleFeat,resetFilters});
 
 loadAllListings();
 

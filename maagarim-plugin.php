@@ -27,6 +27,7 @@ define( 'MG_APT_TYPES', [
     6 => 'דירה במושב',
     7 => 'דירה לחג הקרוב',
     8 => 'דירה לבין הזמנים',
+    9 => 'וילה',
 ] );
 
 define( 'MG_CITIES', [
@@ -75,6 +76,8 @@ define( 'MG_VALID_FEATURES', [
     'parking', 'ac', 'elevator', 'balcony', 'wifi', 'washing',
     'dishwasher', 'bathtub', 'shabbat_mode', 'crib', 'synagogue',
     'garden', 'handicapped', 'quiet',
+    'pool', 'jacuzzi', 'swings', 'hammock', 'ping_pong',
+    'bouncy_castle', 'snooker', 'table_tennis',
 ] );
 
 // ── Secret Key ────────────────────────────────────────────────────────────────
