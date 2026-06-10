@@ -708,20 +708,31 @@ function showAd() {
     <div id="mg-ad-box">
       <button id="mg-ad-close" onclick="closeAd()" title="סגור">✕</button>
       <div style="text-align:center;margin-bottom:16px">
-        <div style="font-size:3rem">🏡</div>
-        <h3 style="margin:8px 0 4px;color:#1e40af;font-size:1.25rem">פרסם דירה לשבת</h3>
-        <div style="font-size:.9rem;color:#6b7280">הגיעו לאלפי משפחות מחפשות</div>
+        <div style="font-size:2.8rem">📣</div>
+        <h3 style="margin:8px 0 4px;color:#1e40af;font-size:1.3rem">פרסומת באתר</h3>
+        <div style="font-size:.88rem;color:#6b7280">הגיעו לאלפי גולשים מדי שבוע</div>
       </div>
-      <div style="background:#eff6ff;border-radius:12px;padding:16px;margin-bottom:16px;border:1.5px solid #bfdbfe">
-        <div style="font-size:1.05rem;font-weight:700;color:#1e40af;margin-bottom:6px">📢 רוצה לפרסם כאן?</div>
-        <div style="font-size:.95rem;color:#374151;line-height:1.6">
-          ניתן לפרסם הודעה קופצת כמו זו באתר<br>
-          <strong>בעלות של 100 ₪ בלבד לשבוע!</strong>
+      <div style="background:#eff6ff;border-radius:12px;padding:14px 16px;margin-bottom:14px;border:1.5px solid #bfdbfe">
+        <div style="font-size:1rem;font-weight:700;color:#1e40af;margin-bottom:8px">📢 ניתן לפרסם כאן הכל!</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;font-size:.82rem;color:#374151">
+          <span>🏡 דירות לשבת</span>
+          <span>💻 בניית אתרים</span>
+          <span>🍳 סדנת בישול</span>
+          <span>✈️ טיסות לחו"ל</span>
+          <span>🎓 שיעורים פרטיים</span>
+          <span>🛋️ ריהוט יד שנייה</span>
+          <span>💄 קוסמטיקה</span>
+          <span>🎂 עוגות לאירועים</span>
+          <span>🚗 השכרת רכב</span>
+          <span>📸 צלמים</span>
+        </div>
+        <div style="margin-top:10px;font-size:.95rem;color:#1e40af;font-weight:700;text-align:center">
+          בעלות של 100 ₪ בלבד לשבוע!
         </div>
       </div>
       <div style="display:flex;gap:8px">
         <button onclick="closeAd()" style="flex:1;padding:10px;border:1.5px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-size:.9rem">אולי אחר כך</button>
-        <a href="tel:03-6285809" style="flex:1;padding:10px;background:#2563eb;color:#fff;border-radius:10px;text-align:center;text-decoration:none;font-weight:700;font-size:.9rem;display:flex;align-items:center;justify-content:center;gap:4px">📞 צור קשר</a>
+        <a href="tel:+972527154435" style="flex:1;padding:10px;background:#2563eb;color:#fff;border-radius:10px;text-align:center;text-decoration:none;font-weight:700;font-size:.9rem;display:flex;align-items:center;justify-content:center;gap:4px">📞 צור קשר</a>
       </div>
     </div>`;
   el.addEventListener('click', e => { if (e.target === el) closeAd(); });
