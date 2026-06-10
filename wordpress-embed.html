@@ -75,6 +75,12 @@
 .mg-email-badge{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:8px;padding:4px 12px;font-weight:700;font-size:.85rem;word-break:break-all}
 textarea.mg-input{min-height:80px;resize:vertical;direction:rtl;text-align:right}
 @media(max-width:500px){.mg-feat{grid-template-columns:1fr 1fr}.mg-opt{flex-direction:column}}
+/* ── Ad popup ── */
+#mg-ad-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}
+#mg-ad-box{background:#fff;border-radius:18px;max-width:420px;width:100%;padding:28px 24px;direction:rtl;text-align:right;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.25);animation:mg-pop .3s ease}
+@keyframes mg-pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+#mg-ad-close{position:absolute;top:12px;left:14px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#9ca3af;line-height:1}
+#mg-ad-close:hover{color:#374151}
 </style>
 
 <script>
@@ -114,9 +120,9 @@ const FMAP = {
   wifi:'📶 WiFi', washing:'🫧 כביסה', dishwasher:'🍽️ מדיח', bathtub:'🛁 אמבטיה',
   shabbat_mode:'🕯️ שבת', crib:'👶 עריסה', synagogue:'🕍 ביהכ"נ', garden:'🌳 גינה',
   handicapped:'♿ נגיש', quiet:'🔇 שקט',
-  pool:'🏊 בריכה', jacuzzi:'🛁 ג׳קוזי', swings:'🎠 נדנדות', hammock:'🌴 ערסל',
-  ping_pong:'🏓 פינג פונג', bouncy_castle:'🎪 בימבות', snooker:'🎱 סנוקר',
-  table_tennis:'🏓 טניס שולחן'
+  pool:'🏊 בריכה', jacuzzi:'🪣 ג׳קוזי', swings:'🛝 נדנדות', hammock:'🌴〰️🌳 ערסל',
+  ping_pong:'🏓 פינג פונג', bouncy_castle:'🚗👦 בימבות', snooker:'🎱 סנוקר',
+  table_tennis:'🎾 טניס שולחן'
 };
 
 // ── API ──────────────────────────────────────────────────────
@@ -693,10 +699,44 @@ function updateNh() {
     Object.entries(nhs).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
 }
 
+// ── Ad popup ─────────────────────────────────────────────────
+function showAd() {
+  if (document.getElementById('mg-ad-overlay')) return;
+  const el = document.createElement('div');
+  el.id = 'mg-ad-overlay';
+  el.innerHTML = `
+    <div id="mg-ad-box">
+      <button id="mg-ad-close" onclick="closeAd()" title="סגור">✕</button>
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:3rem">🏡</div>
+        <h3 style="margin:8px 0 4px;color:#1e40af;font-size:1.25rem">פרסם דירה לשבת</h3>
+        <div style="font-size:.9rem;color:#6b7280">הגיעו לאלפי משפחות מחפשות</div>
+      </div>
+      <div style="background:#eff6ff;border-radius:12px;padding:16px;margin-bottom:16px;border:1.5px solid #bfdbfe">
+        <div style="font-size:1.05rem;font-weight:700;color:#1e40af;margin-bottom:6px">📢 רוצה לפרסם כאן?</div>
+        <div style="font-size:.95rem;color:#374151;line-height:1.6">
+          ניתן לפרסם הודעה קופצת כמו זו באתר<br>
+          <strong>בעלות של 100 ₪ בלבד לשבוע!</strong>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="closeAd()" style="flex:1;padding:10px;border:1.5px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;font-size:.9rem">אולי אחר כך</button>
+        <a href="tel:03-6285809" style="flex:1;padding:10px;background:#2563eb;color:#fff;border-radius:10px;text-align:center;text-decoration:none;font-weight:700;font-size:.9rem;display:flex;align-items:center;justify-content:center;gap:4px">📞 צור קשר</a>
+      </div>
+    </div>`;
+  el.addEventListener('click', e => { if (e.target === el) closeAd(); });
+  document.body.appendChild(el);
+}
+function closeAd() {
+  const el = document.getElementById('mg-ad-overlay');
+  if (el) el.remove();
+}
+
 // ── Init ─────────────────────────────────────────────────────
-Object.assign(window, {S,goHome,goLogin,goDash,goForm,goListings,doEmailLogin,doPublish,doDelete,doLogout,addImgs,removeImg,updateNh,toggleFeat,resetFilters});
+Object.assign(window, {S,goHome,goLogin,goDash,goForm,goListings,doEmailLogin,doPublish,doDelete,doLogout,addImgs,removeImg,updateNh,toggleFeat,resetFilters,closeAd});
 
 loadAllListings();
+setTimeout(showAd, 4000);
 
 })();
 </script>
