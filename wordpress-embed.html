@@ -190,10 +190,14 @@ function aptCard(a, fd) {
   const feats     = (a.features||[]).map(f=>`<span class="mg-badge mg-badge-blue">${FMAP[f]||f}</span>`).join('');
   const price     = a.price > 0 ? `<span class="mg-badge" style="background:#fef3c7;color:#92400e">₪${Number(a.price).toLocaleString()}</span>` : '';
   const roomsTxt  = a.bedrooms == 0 ? 'סטודיו' : a.bedrooms + " חד'";
-  const contact   = a.contact_phone
+  const contactLine = a.contact_phone
+    ? `📞 <a href="tel:${esc(a.contact_phone)}" style="color:#15803d;font-weight:700;text-decoration:none">${esc(a.contact_phone)}</a>`
+    : a.contact_email
+      ? `✉️ <a href="mailto:${esc(a.contact_email)}" style="color:#15803d;font-weight:700;text-decoration:none">${esc(a.contact_email)}</a>`
+      : '';
+  const contact = contactLine
     ? `<div style="margin-top:8px;padding:8px 12px;background:#f0fdf4;border-radius:8px;font-size:.9rem">
-         📞 <a href="tel:${esc(a.contact_phone)}" style="color:#15803d;font-weight:700;text-decoration:none">${esc(a.contact_phone)}</a>
-         ${a.contact_name ? ' · ' + esc(a.contact_name) : ''}
+         ${contactLine}${a.contact_name ? ' · <span style="color:#374151">' + esc(a.contact_name) + '</span>' : ''}
        </div>`
     : '';
   return `

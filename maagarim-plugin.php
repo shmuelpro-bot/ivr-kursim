@@ -433,6 +433,7 @@ function mg_post_to_listing( int $post_id ): array {
         'description'   => $get( '_maagarim_description', '' ),
         'contact_name'  => $get( '_maagarim_contact_name', '' ),
         'contact_phone' => $get( '_maagarim_contact_phone', '' ),
+        'contact_email' => $get( '_maagarim_email', '' ),
         'expires'       => (int) $get( '_maagarim_expires', 0 ),
         'images'        => $images,
     ];
