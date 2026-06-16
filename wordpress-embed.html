@@ -123,6 +123,8 @@ const S = {
   filterBeds:  0,
   filterFeats: [],
   showFilters: false,
+  customCities: JSON.parse(localStorage.getItem('mg_custom_cities') || '[]'),
+  customNhs:    JSON.parse(localStorage.getItem('mg_custom_nhs')    || '{}'),
 };
 
 // ── Feature labels ───────────────────────────────────────────
@@ -194,14 +196,15 @@ function alert_html() {
 
 // ── Public apartment card ─────────────────────────────────────
 function aptCard(a, fd) {
-  const cityName  = fd.cities?.[a.city]        || a.city;
+  const cityName  = a.city_name || fd.cities?.[a.city] || String(a.city);
   const typeName  = fd.apt_types?.[a.apt_type] || '';
   const rentName  = fd.rental_types?.[a.rental_type] || '';
   const img1      = a.images && a.images[0];
   const feats     = (a.features||[]).map(f=>`<span class="mg-badge mg-badge-blue">${FMAP[f]||f}</span>`).join('');
   const price     = a.price > 0 ? `<span class="mg-badge" style="background:#fef3c7;color:#92400e">₪${Number(a.price).toLocaleString()}</span>` : '';
   const roomsTxt  = a.bedrooms == 0 ? 'סטודיו' : a.bedrooms + " חד'";
-  const addrParts = [a.street, a.building_num ? 'מס׳ ' + a.building_num : ''].filter(Boolean);
+  const nhDisplay = a.neighborhood_name || '';
+  const addrParts = [nhDisplay, a.street, a.building_num ? 'מס׳ ' + a.building_num : ''].filter(Boolean);
   const addrLine  = addrParts.length
     ? `<div style="font-size:.82rem;color:#6b7280;margin-bottom:4px">📍 ${esc(addrParts.join(' '))}${a.floor ? ', קומה ' + esc(a.floor) : ''}</div>`
     : a.floor ? `<div style="font-size:.82rem;color:#6b7280;margin-bottom:4px">📍 קומה ${esc(a.floor)}</div>` : '';
@@ -242,7 +245,7 @@ function aptCard(a, fd) {
 
 // ── Wanted (apartment seeker) card ────────────────────────────
 function wantedCard(a, fd) {
-  const cityName = fd.cities?.[a.city]              || a.city;
+  const cityName = a.city_name || fd.cities?.[a.city] || String(a.city);
   const typeName = fd.apt_types?.[a.apt_type]       || '';
   const rentName = fd.rental_types?.[a.rental_type] || '';
   const feats    = (a.features||[]).map(f=>`<span class="mg-badge mg-badge-blue">${FMAP[f]||f}</span>`).join('');
@@ -280,6 +283,100 @@ function wantedCard(a, fd) {
       </div>
     </div>`;
 }
+
+// ── Custom city/neighborhood helpers ─────────────────────────
+function saveCustomCities() { localStorage.setItem('mg_custom_cities', JSON.stringify(S.customCities)); }
+function saveCustomNhs()    { localStorage.setItem('mg_custom_nhs',    JSON.stringify(S.customNhs));    }
+
+function nextCustomCityId() {
+  return S.customCities.length ? Math.max(...S.customCities.map(c=>c.id)) + 1 : 10001;
+}
+function nextCustomNhId(cityId) {
+  const ids = Object.keys(S.customNhs[cityId] || {}).map(Number);
+  return ids.length ? Math.max(...ids) + 1 : 10001;
+}
+
+function allCitiesOptions(selectedId) {
+  const cities = (S.fd || {}).cities || {};
+  const builtIn = Object.entries(cities).map(([id,n]) =>
+    `<option value="${id}" ${parseInt(id)===selectedId?'selected':''}>${esc(n)}</option>`).join('');
+  const custom = S.customCities.map(c =>
+    `<option value="${c.id}" ${c.id===selectedId?'selected':''}>${esc(c.name)}</option>`).join('');
+  return builtIn + custom + '<option value="add_city">➕ הוסף עיר חדשה...</option>';
+}
+
+function nhOptionsForCity(cityId) {
+  const builtInNhs = ((S.fd || {}).neighborhoods || {})[cityId] || {};
+  const customNhs  = S.customNhs[cityId] || {};
+  const builtin = Object.entries(builtInNhs).map(([id,n])=>`<option value="${id}">${esc(n)}</option>`).join('');
+  const custom  = Object.entries(customNhs).map(([id,n])=>`<option value="${id}">${esc(n)}</option>`).join('');
+  const addOpt  = cityId ? '<option value="add_nh">➕ הוסף שכונה...</option>' : '';
+  return `<option value="0">אופציונלי</option>${builtin}${custom}${addOpt}`;
+}
+
+function addCustomCity(prefix) {
+  const name = prompt('הקלד שם עיר חדשה:');
+  const sel = document.getElementById(prefix + '-city');
+  if (!name || !name.trim()) { if (sel) sel.value = ''; return; }
+  const trimmed = name.trim();
+  let city = S.customCities.find(c => c.name === trimmed);
+  if (!city) {
+    city = {id: nextCustomCityId(), name: trimmed};
+    S.customCities.push(city);
+    saveCustomCities();
+  }
+  if (sel) {
+    if (![...sel.options].find(o => parseInt(o.value) === city.id)) {
+      const addOpt = [...sel.options].find(o => o.value === 'add_city');
+      const opt = document.createElement('option');
+      opt.value = city.id; opt.textContent = city.name;
+      sel.insertBefore(opt, addOpt);
+    }
+    sel.value = city.id;
+  }
+  const nhSel = document.getElementById(prefix === 'mg' ? 'mg-nh' : 'wf-nh');
+  if (nhSel) nhSel.innerHTML = nhOptionsForCity(city.id);
+}
+
+function addCustomNh(prefix) {
+  const citySel = document.getElementById(prefix + '-city');
+  const cityId  = parseInt(citySel?.value) || 0;
+  const nhSel   = document.getElementById(prefix === 'mg' ? 'mg-nh' : 'wf-nh');
+  if (!cityId) { if (nhSel) nhSel.value = '0'; return; }
+  const name = prompt('הקלד שם שכונה חדשה:');
+  if (!name || !name.trim()) { if (nhSel) nhSel.value = '0'; return; }
+  const trimmed = name.trim();
+  if (!S.customNhs[cityId]) S.customNhs[cityId] = {};
+  const existing = Object.entries(S.customNhs[cityId]).find(([,n]) => n === trimmed);
+  let nhId;
+  if (existing) {
+    nhId = parseInt(existing[0]);
+  } else {
+    nhId = nextCustomNhId(cityId);
+    S.customNhs[cityId][nhId] = trimmed;
+    saveCustomNhs();
+  }
+  if (nhSel) {
+    if (![...nhSel.options].find(o => parseInt(o.value) === nhId)) {
+      const addOpt = [...nhSel.options].find(o => o.value === 'add_nh');
+      const opt = document.createElement('option');
+      opt.value = nhId; opt.textContent = trimmed;
+      nhSel.insertBefore(opt, addOpt);
+    }
+    nhSel.value = nhId;
+  }
+}
+
+function onCityChange()  {
+  if (document.getElementById('mg-city')?.value === 'add_city') { addCustomCity('mg'); return; }
+  updateNh();
+}
+function onCityChangeW() {
+  if (document.getElementById('wf-city')?.value === 'add_city') { addCustomCity('wf'); return; }
+  updateNhW();
+}
+function onNhChange()  { if (document.getElementById('mg-nh')?.value === 'add_nh') addCustomNh('mg'); }
+function onNhChangeW() { if (document.getElementById('wf-nh')?.value === 'add_nh') addCustomNh('wf'); }
 
 // ════ SCREENS ════════════════════════════════════════════════
 
@@ -486,7 +583,6 @@ function showForm() {
   const fd = S.fd;
   if (!fd) { (async()=>{ await loadFormData(); showForm(); })(); return; }
 
-  const cities  = Object.entries(fd.cities).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
   const types   = Object.entries(fd.apt_types).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
   const rentals = Object.entries(fd.rental_types).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
   const featHtml = Object.entries(FMAP).map(([k,v])=>
@@ -500,13 +596,13 @@ function showForm() {
       <div class="mg-row">
         <div class="mg-col">
           <label class="mg-label">עיר *</label>
-          <select id="mg-city" class="mg-select" onchange="updateNh()">
-            <option value="">בחר עיר...</option>${cities}
+          <select id="mg-city" class="mg-select" onchange="onCityChange()">
+            <option value="">בחר עיר...</option>${allCitiesOptions(0)}
           </select>
         </div>
         <div class="mg-col">
           <label class="mg-label">שכונה</label>
-          <select id="mg-nh" class="mg-select"><option value="0">אופציונלי</option></select>
+          <select id="mg-nh" class="mg-select" onchange="onNhChange()"><option value="0">אופציונלי</option></select>
         </div>
       </div>
       <div class="mg-row" style="margin-top:12px">
@@ -712,7 +808,6 @@ function showWantedForm() {
   if (!S.fd) { (async()=>{ await loadFormData(); showWantedForm(); })(); return; }
   const fd = S.fd;
 
-  const cities  = Object.entries(fd.cities).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
   const types   = Object.entries(fd.apt_types).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
   const rentals = Object.entries(fd.rental_types).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
   const featHtml = Object.entries(FMAP).map(([k,v])=>
@@ -727,13 +822,13 @@ function showWantedForm() {
       <div class="mg-row">
         <div class="mg-col">
           <label class="mg-label">עיר *</label>
-          <select id="wf-city" class="mg-select" onchange="updateNhW()">
-            <option value="">בחר עיר...</option>${cities}
+          <select id="wf-city" class="mg-select" onchange="onCityChangeW()">
+            <option value="">בחר עיר...</option>${allCitiesOptions(0)}
           </select>
         </div>
         <div class="mg-col">
           <label class="mg-label">שכונה</label>
-          <select id="wf-nh" class="mg-select"><option value="0">אופציונלי</option></select>
+          <select id="wf-nh" class="mg-select" onchange="onNhChangeW()"><option value="0">אופציונלי</option></select>
         </div>
       </div>
     </div>
@@ -844,13 +939,20 @@ async function loadMyWanted() {
 
 async function doPublishWanted() {
   S.error = '';
-  const city = document.getElementById('wf-city')?.value;
-  if (!city) { S.error='נא לבחור עיר'; showWantedForm(); return; }
+  const cityVal = document.getElementById('wf-city')?.value;
+  if (!cityVal || cityVal === 'add_city') { S.error='נא לבחור עיר'; showWantedForm(); return; }
+  const cityId     = parseInt(cityVal) || 0;
+  const customCity = S.customCities.find(c => c.id === cityId) || null;
+  const nhVal      = document.getElementById('wf-nh')?.value || '0';
+  const nhId       = parseInt(nhVal) || 0;
+  const customNhName = (nhId >= 10001 && S.customNhs[cityId]) ? (S.customNhs[cityId][nhId] || '') : '';
   const feats = [...document.querySelectorAll('input[name=feat]:checked')].map(i=>i.value);
   render(`<div class="mg-loading">⏳ שולח...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
   const r = await api('publish_wanted', {
-    city,
-    neighborhood: document.getElementById('wf-nh')?.value    || '0',
+    city:              customCity ? 0 : cityId,
+    city_name:         customCity ? customCity.name : '',
+    neighborhood:      customNhName ? 0 : nhId,
+    neighborhood_name: customNhName,
     apt_type:     document.getElementById('wf-type')?.value  || '0',
     rental_type:  document.getElementById('wf-rent')?.value  || '1',
     bedrooms:     document.getElementById('wf-rooms')?.value || '0',
@@ -879,12 +981,10 @@ async function doDeleteWanted(aptId) {
 }
 
 function updateNhW() {
-  const city = parseInt(document.getElementById('wf-city')?.value);
-  const sel  = document.getElementById('wf-nh');
-  if (!sel || !S.fd) return;
-  const nhs = S.fd.neighborhoods[city] || {};
-  sel.innerHTML = '<option value="0">אופציונלי</option>' +
-    Object.entries(nhs).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
+  const cityId = parseInt(document.getElementById('wf-city')?.value) || 0;
+  const sel = document.getElementById('wf-nh');
+  if (!sel) return;
+  sel.innerHTML = nhOptionsForCity(cityId);
 }
 
 async function loadFormData() {
@@ -928,18 +1028,26 @@ async function doEmailLogin() {
 
 async function doPublish() {
   S.error = '';
-  const city    = document.getElementById('mg-city')?.value;
+  const cityVal = document.getElementById('mg-city')?.value;
   const aptType = document.getElementById('mg-type')?.value;
-  if (!city)    { S.error='נא לבחור עיר';      showForm(); return; }
+  if (!cityVal || cityVal === 'add_city') { S.error='נא לבחור עיר'; showForm(); return; }
   if (!aptType) { S.error='נא לבחור סוג דירה'; showForm(); return; }
+
+  const cityId     = parseInt(cityVal) || 0;
+  const customCity = S.customCities.find(c => c.id === cityId) || null;
+  const nhVal      = document.getElementById('mg-nh')?.value || '0';
+  const nhId       = parseInt(nhVal) || 0;
+  const customNhName = (nhId >= 10001 && S.customNhs[cityId]) ? (S.customNhs[cityId][nhId] || '') : '';
 
   const feats = [...document.querySelectorAll('input[name=feat]:checked')].map(i=>i.value);
   render(`<div class="mg-loading">⏳ מעלה...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
   const images = await Promise.all(S.imgs.map(imgToB64));
 
   const r = await api('publish', {
-    city,
-    neighborhood:  document.getElementById('mg-nh')?.value       || '0',
+    city:              customCity ? 0 : cityId,
+    city_name:         customCity ? customCity.name : '',
+    neighborhood:      customNhName ? 0 : nhId,
+    neighborhood_name: customNhName,
     street:        document.getElementById('mg-street')?.value   || '',
     building_num:  document.getElementById('mg-building')?.value || '',
     apt_type:      aptType,
@@ -1004,12 +1112,10 @@ function refreshThumbs() {
 
 // ── Neighborhood update ──────────────────────────────────────
 function updateNh() {
-  const city = parseInt(document.getElementById('mg-city')?.value);
-  const sel  = document.getElementById('mg-nh');
-  if (!sel || !S.fd) return;
-  const nhs = S.fd.neighborhoods[city] || {};
-  sel.innerHTML = '<option value="0">אופציונלי</option>' +
-    Object.entries(nhs).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
+  const cityId = parseInt(document.getElementById('mg-city')?.value) || 0;
+  const sel = document.getElementById('mg-nh');
+  if (!sel) return;
+  sel.innerHTML = nhOptionsForCity(cityId);
 }
 
 // ── Ad popup ─────────────────────────────────────────────────
@@ -1061,7 +1167,7 @@ function closeAd() {
 }
 
 // ── Init ─────────────────────────────────────────────────────
-Object.assign(window, {S,goHome,goLogin,goDash,goForm,goListings,goWantedForm,goMyWanted,setTab,doEmailLogin,doPublish,doDelete,doPublishWanted,doDeleteWanted,doLogout,addImgs,removeImg,updateNh,updateNhW,toggleFeat,resetFilters,applyFilter,closeAd});
+Object.assign(window, {S,goHome,goLogin,goDash,goForm,goListings,goWantedForm,goMyWanted,setTab,doEmailLogin,doPublish,doDelete,doPublishWanted,doDeleteWanted,doLogout,addImgs,removeImg,updateNh,updateNhW,toggleFeat,resetFilters,applyFilter,closeAd,onCityChange,onCityChangeW,onNhChange,onNhChangeW,addCustomCity,addCustomNh});
 
 loadAllListings();
 setTimeout(showAd, 4000);
