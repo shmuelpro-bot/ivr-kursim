@@ -315,8 +315,9 @@ function showHome() {
 
   const hasFilter = S.filterCity||S.filterRent||S.filterType||S.filterBeds||S.filterFeats.length;
 
+  const isListings = S.tab !== 'wanted';
+
   let cards = '';
-  if (isListings) {
     if (!S.allLoaded) {
       cards = `<div class="mg-loading">⏳ טוען דירות...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`;
     } else if (S.allListings.length === 0) {
@@ -355,8 +356,6 @@ function showHome() {
         : `<div style="font-size:.85rem;color:#6b7280;margin-bottom:10px">${count} מחפשים נמצאו</div>` + filtered.map(a => wantedCard(a, fd)).join('');
     }
   }
-
-  const isListings = S.tab !== 'wanted';
 
   render(`
     <div class="mg-hero">
