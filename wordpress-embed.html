@@ -109,9 +109,14 @@ const S = {
   listings:    [],
   listingsLoaded: false,
   imgs:        [],
-  allListings: [],
-  allLoaded:   false,
-  allFd:       null,
+  allListings:    [],
+  allLoaded:      false,
+  allFd:          null,
+  tab:            'listings',
+  wantedListings: [],
+  wantedLoaded:   false,
+  myWanted:       [],
+  myWantedLoaded: false,
   filterCity:  0,
   filterRent:  0,
   filterType:  0,
@@ -196,6 +201,10 @@ function aptCard(a, fd) {
   const feats     = (a.features||[]).map(f=>`<span class="mg-badge mg-badge-blue">${FMAP[f]||f}</span>`).join('');
   const price     = a.price > 0 ? `<span class="mg-badge" style="background:#fef3c7;color:#92400e">₪${Number(a.price).toLocaleString()}</span>` : '';
   const roomsTxt  = a.bedrooms == 0 ? 'סטודיו' : a.bedrooms + " חד'";
+  const addrParts = [a.street, a.building_num ? 'מס׳ ' + a.building_num : ''].filter(Boolean);
+  const addrLine  = addrParts.length
+    ? `<div style="font-size:.82rem;color:#6b7280;margin-bottom:4px">📍 ${esc(addrParts.join(' '))}${a.floor ? ', קומה ' + esc(a.floor) : ''}</div>`
+    : a.floor ? `<div style="font-size:.82rem;color:#6b7280;margin-bottom:4px">📍 קומה ${esc(a.floor)}</div>` : '';
   const contactLine = a.contact_phone
     ? `📞 <a href="tel:${esc(a.contact_phone)}" style="color:#15803d;font-weight:700;text-decoration:none">${esc(a.contact_phone)}</a>`
     : a.contact_email
@@ -210,10 +219,11 @@ function aptCard(a, fd) {
     <div class="mg-listing">
       <div class="mg-listing-img">${img1 ? `<img src="${esc(img1)}" loading="lazy">` : '🏠'}</div>
       <div class="mg-listing-body">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
           <strong style="font-size:1.05rem">${esc(cityName)}</strong>
           <span class="mg-badge mg-badge-green" style="white-space:nowrap">${esc(rentName)}</span>
         </div>
+        ${addrLine}
         <div style="margin-bottom:6px">
           <span class="mg-badge mg-badge-gray">${esc(typeName)}</span>
           <span class="mg-badge mg-badge-gray">${roomsTxt}</span>
@@ -223,6 +233,50 @@ function aptCard(a, fd) {
         ${feats ? `<div style="margin-bottom:6px;line-height:1.8">${feats}</div>` : ''}
         ${a.description ? `<p style="font-size:.87rem;color:#4b5563;margin:0 0 6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(a.description)}</p>` : ''}
         ${contact}
+        <div style="margin-top:8px;padding:6px 12px;background:#fefce8;border:1px solid #fde047;border-radius:8px;font-size:.78rem;color:#854d0e">
+          ⚠️ חובה ליידע את המפרסם שהגעת דרך <strong>אתר מאגרים</strong>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Wanted (apartment seeker) card ────────────────────────────
+function wantedCard(a, fd) {
+  const cityName = fd.cities?.[a.city]              || a.city;
+  const typeName = fd.apt_types?.[a.apt_type]       || '';
+  const rentName = fd.rental_types?.[a.rental_type] || '';
+  const feats    = (a.features||[]).map(f=>`<span class="mg-badge mg-badge-blue">${FMAP[f]||f}</span>`).join('');
+  const roomsTxt = a.bedrooms == 0 ? 'ללא דרישה' : 'מינ׳ ' + a.bedrooms + " חד'";
+  const contactLine = a.contact_phone
+    ? `📞 <a href="tel:${esc(a.contact_phone)}" style="color:#1d4ed8;font-weight:700;text-decoration:none">${esc(a.contact_phone)}</a>`
+    : a.contact_email
+      ? `✉️ <a href="mailto:${esc(a.contact_email)}" style="color:#1d4ed8;font-weight:700;text-decoration:none">${esc(a.contact_email)}</a>`
+      : '';
+  const contact = contactLine
+    ? `<div style="margin-top:8px;padding:8px 12px;background:#eff6ff;border-radius:8px;font-size:.9rem">
+         ${contactLine}${a.contact_name ? ' · <span style="color:#374151">' + esc(a.contact_name) + '</span>' : ''}
+       </div>`
+    : '';
+  return `
+    <div class="mg-listing" style="border-color:#bfdbfe">
+      <div style="background:#dbeafe;padding:8px 14px;font-size:.82rem;font-weight:700;color:#1e40af">🔍 מחפש דירה</div>
+      <div class="mg-listing-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <strong style="font-size:1.05rem">${esc(cityName)}</strong>
+          <span class="mg-badge mg-badge-green" style="white-space:nowrap">${esc(rentName)}</span>
+        </div>
+        <div style="margin-bottom:6px">
+          ${typeName ? `<span class="mg-badge mg-badge-gray">מעדיף: ${esc(typeName)}</span>` : ''}
+          <span class="mg-badge mg-badge-gray">${roomsTxt}</span>
+          <span class="mg-badge mg-badge-gray">מינ׳ ${a.beds} 🛏</span>
+          ${a.price > 0 ? `<span class="mg-badge" style="background:#fef3c7;color:#92400e">עד ₪${Number(a.price).toLocaleString()}</span>` : ''}
+        </div>
+        ${feats ? `<div style="margin-bottom:6px;line-height:1.8">${feats}</div>` : ''}
+        ${a.description ? `<p style="font-size:.87rem;color:#4b5563;margin:0 0 6px">${esc(a.description)}</p>` : ''}
+        ${contact}
+        <div style="margin-top:8px;padding:6px 12px;background:#fefce8;border:1px solid #fde047;border-radius:8px;font-size:.78rem;color:#854d0e">
+          ⚠️ חובה ליידע את המפרסם שהגעת דרך <strong>אתר מאגרים</strong>
+        </div>
       </div>
     </div>`;
 }
@@ -262,24 +316,47 @@ function showHome() {
   const hasFilter = S.filterCity||S.filterRent||S.filterType||S.filterBeds||S.filterFeats.length;
 
   let cards = '';
-  if (!S.allLoaded) {
-    cards = `<div class="mg-loading">⏳ טוען דירות...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`;
-  } else if (S.allListings.length === 0) {
-    cards = `<div class="mg-empty"><div style="font-size:3rem">🏚️</div><h4>אין דירות פעילות כרגע</h4><p style="color:#6b7280">היה הראשון לפרסם!</p></div>`;
+  if (isListings) {
+    if (!S.allLoaded) {
+      cards = `<div class="mg-loading">⏳ טוען דירות...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`;
+    } else if (S.allListings.length === 0) {
+      cards = `<div class="mg-empty"><div style="font-size:3rem">🏚️</div><h4>אין דירות פעילות כרגע</h4><p style="color:#6b7280">היה הראשון לפרסם!</p></div>`;
+    } else {
+      let filtered = S.allListings;
+      if (S.filterCity) filtered = filtered.filter(a => parseInt(a.city)         === S.filterCity);
+      if (S.filterRent) filtered = filtered.filter(a => parseInt(a.rental_type)  === S.filterRent);
+      if (S.filterType) filtered = filtered.filter(a => parseInt(a.apt_type)     === S.filterType);
+      if (S.filterBeds) filtered = filtered.filter(a => parseInt(a.beds)         >= S.filterBeds);
+      if (S.filterFeats.length) filtered = filtered.filter(a =>
+        S.filterFeats.every(f => (a.features||[]).includes(f))
+      );
+      const count = filtered.length;
+      cards = count === 0
+        ? `<div class="mg-empty"><div style="font-size:2rem">🔍</div><p>לא נמצאו דירות לפי הסינון</p><button class="mg-btn mg-btn-outline" onclick="resetFilters()">נקה סינון</button></div>`
+        : `<div style="font-size:.85rem;color:#6b7280;margin-bottom:10px">${count} דירות נמצאו</div>` + filtered.map(a => aptCard(a, fd)).join('');
+    }
   } else {
-    let filtered = S.allListings;
-    if (S.filterCity) filtered = filtered.filter(a => parseInt(a.city)  === S.filterCity);
-    if (S.filterRent) filtered = filtered.filter(a => parseInt(a.rental_type) === S.filterRent);
-    if (S.filterType) filtered = filtered.filter(a => parseInt(a.apt_type)    === S.filterType);
-    if (S.filterBeds) filtered = filtered.filter(a => parseInt(a.beds) >= S.filterBeds);
-    if (S.filterFeats.length) filtered = filtered.filter(a =>
-      S.filterFeats.every(f => (a.features||[]).includes(f))
-    );
-    const count = filtered.length;
-    cards = count === 0
-      ? `<div class="mg-empty"><div style="font-size:2rem">🔍</div><p>לא נמצאו דירות לפי הסינון</p><button class="mg-btn mg-btn-outline" onclick="resetFilters()">נקה סינון</button></div>`
-      : `<div style="font-size:.85rem;color:#6b7280;margin-bottom:10px">${count} דירות נמצאו</div>` + filtered.map(a => aptCard(a, fd)).join('');
+    if (!S.wantedLoaded) {
+      cards = `<div class="mg-loading">⏳ טוען מחפשים...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`;
+    } else if (S.wantedListings.length === 0) {
+      cards = `<div class="mg-empty"><div style="font-size:3rem">🔍</div><h4>אין מחפשי דירה כרגע</h4><p style="color:#6b7280">פרסם את מה שאתה מחפש!</p></div>`;
+    } else {
+      let filtered = S.wantedListings;
+      if (S.filterCity) filtered = filtered.filter(a => parseInt(a.city)        === S.filterCity);
+      if (S.filterRent) filtered = filtered.filter(a => parseInt(a.rental_type) === S.filterRent);
+      if (S.filterType) filtered = filtered.filter(a => parseInt(a.apt_type)    === S.filterType);
+      if (S.filterBeds) filtered = filtered.filter(a => parseInt(a.beds)        >= S.filterBeds);
+      if (S.filterFeats.length) filtered = filtered.filter(a =>
+        S.filterFeats.every(f => (a.features||[]).includes(f))
+      );
+      const count = filtered.length;
+      cards = count === 0
+        ? `<div class="mg-empty"><div style="font-size:2rem">🔍</div><p>לא נמצאו תוצאות לפי הסינון</p><button class="mg-btn mg-btn-outline" onclick="resetFilters()">נקה סינון</button></div>`
+        : `<div style="font-size:.85rem;color:#6b7280;margin-bottom:10px">${count} מחפשים נמצאו</div>` + filtered.map(a => wantedCard(a, fd)).join('');
+    }
   }
+
+  const isListings = S.tab !== 'wanted';
 
   render(`
     <div class="mg-hero">
@@ -288,11 +365,15 @@ function showHome() {
       <p>כל הדירות הזמינות לשבת הקרובה</p>
     </div>
     ${alert_html()}
+    <div style="display:flex;margin-bottom:14px;border:2px solid #e2e8f0;border-radius:12px;overflow:hidden">
+      <button onclick="setTab('listings')" style="flex:1;padding:11px;border:none;cursor:pointer;font-weight:700;font-size:.9rem;background:${isListings?'#2563eb':'#fff'};color:${isListings?'#fff':'#374151'}">🏠 דירות להשכרה</button>
+      <button onclick="setTab('wanted')" style="flex:1;padding:11px;border:none;cursor:pointer;font-weight:700;font-size:.9rem;background:${!isListings?'#2563eb':'#fff'};color:${!isListings?'#fff':'#374151'}">🔍 מחפשי דירה</button>
+    </div>
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-      <button class="mg-btn mg-btn-primary" onclick="goLogin()" style="flex:1">📢 פרסם דירה</button>
+      <button class="mg-btn mg-btn-primary" onclick="goLogin(${isListings?'':'\'wanted_form\''})" style="flex:1">${isListings?'📢 פרסם דירה':'🔍 פרסם חיפוש'}</button>
       ${S.token ? `<button class="mg-btn mg-btn-outline" onclick="goDash()" style="flex:1">👤 הפרסומים שלי</button>` : ''}
     </div>
-    ${S.allLoaded && Object.keys(cities).length ? `
+    ${(isListings ? S.allLoaded : S.wantedLoaded) && Object.keys(cities).length ? `
     <div class="mg-card" style="padding:14px;margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <strong style="font-size:.95rem">🔍 חיפוש וסינון</strong>
@@ -374,13 +455,25 @@ function showDashboard() {
     <div class="mg-opt">
       <a onclick="goForm()">
         <span class="oi">➕</span>
-        <strong>פרסם דירה חדשה</strong>
-        <small>לשבת הקרובה</small>
+        <strong>פרסם דירה</strong>
+        <small>להשכרה לשבת</small>
       </a>
+      <a onclick="goWantedForm()">
+        <span class="oi">🔍</span>
+        <strong>פרסם חיפוש</strong>
+        <small>מחפש דירה לשבת</small>
+      </a>
+    </div>
+    <div class="mg-opt" style="margin-top:0">
       <a onclick="goListings()">
         <span class="oi">📋</span>
-        <strong>הפרסומים שלי</strong>
-        <small>צפה ונהל</small>
+        <strong>הדירות שלי</strong>
+        <small>נהל פרסומים</small>
+      </a>
+      <a onclick="goMyWanted()">
+        <span class="oi">📝</span>
+        <strong>החיפושים שלי</strong>
+        <small>נהל חיפושים</small>
       </a>
     </div>
     <div style="text-align:center;margin-top:8px">
@@ -391,7 +484,7 @@ function showDashboard() {
 
 function showForm() {
   const fd = S.fd;
-  if (!fd) { loadFormData(); return; }
+  if (!fd) { (async()=>{ await loadFormData(); showForm(); })(); return; }
 
   const cities  = Object.entries(fd.cities).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
   const types   = Object.entries(fd.apt_types).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
@@ -416,9 +509,27 @@ function showForm() {
           <select id="mg-nh" class="mg-select"><option value="0">אופציונלי</option></select>
         </div>
       </div>
-      <div style="margin-top:12px">
-        <label class="mg-label">קומה</label>
-        <input id="mg-floor" class="mg-input mg-input-rtl" placeholder="קרקע / 3 / גג..." style="text-align:right">
+      <div class="mg-row" style="margin-top:12px">
+        <div class="mg-col">
+          <label class="mg-label">רחוב</label>
+          <input id="mg-street" class="mg-input mg-input-rtl" placeholder="שם הרחוב (אופציונלי)">
+        </div>
+        <div class="mg-col" style="max-width:130px">
+          <label class="mg-label">מספר בניין</label>
+          <input id="mg-building" class="mg-input" type="number" min="1" max="9999" placeholder="מס׳">
+        </div>
+        <div class="mg-col" style="max-width:130px">
+          <label class="mg-label">קומה</label>
+          <select id="mg-floor" class="mg-select">
+            <option value="">בחר...</option>
+            <option value="מינוס 2">מינוס 2</option>
+            <option value="מינוס 1">מינוס 1</option>
+            <option value="קרקע">קרקע</option>
+            ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(n=>`<option value="${n}">${n}</option>`).join('')}
+            <option value="גג">גג</option>
+            <option value="פנטהאוז">פנטהאוז</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -563,14 +674,22 @@ function showListings() {
 
 // ════ ACTIONS ════════════════════════════════════════════════
 
-function goHome()     { S.error='';S.success='';S.step='home'; if (!S.allLoaded) loadAllListings(); else showHome(); }
-function goLogin(to)  { S._afterLogin=to||'form'; S.error='';S.success=''; showLogin(to); }
-function goDash()     { S.error='';S.success='';S.step='dashboard'; showDashboard(); }
-function goForm()     { S.error='';S.success='';S.step='form'; S.imgs=[]; showForm(); }
-function goListings() { S.error='';S.success='';S.step='listings'; S.listingsLoaded=false; showListings(); }
+function goHome()       { S.error='';S.success='';S.step='home'; if (!S.allLoaded) loadAllListings(); else showHome(); }
+function goLogin(to)    { S._afterLogin=to||'form'; S.error='';S.success=''; showLogin(to); }
+function goDash()       { S.error='';S.success='';S.step='dashboard'; showDashboard(); }
+function goForm()       { S.error='';S.success='';S.step='form'; S.imgs=[]; showForm(); }
+function goListings()   { S.error='';S.success='';S.step='listings'; S.listingsLoaded=false; showListings(); }
+function goWantedForm() { S.error='';S.success='';S.step='wanted_form'; showWantedForm(); }
+function goMyWanted()   { S.error='';S.success='';S.step='my_wanted'; showMyWanted(); }
+
+function setTab(tab) {
+  S.tab = tab;
+  if (tab === 'wanted' && !S.wantedLoaded) { loadWantedListings(); return; }
+  showHome();
+}
 
 async function loadAllListings() {
-  showHome(); // shows loading spinner
+  showHome();
   const r = await api('all_listings');
   if (!r.ok) { S.allListings=[]; S.allLoaded=true; S.allFd={}; showHome(); return; }
   S.allListings = r.listings || [];
@@ -579,12 +698,200 @@ async function loadAllListings() {
   showHome();
 }
 
+async function loadWantedListings() {
+  showHome();
+  const r = await api('all_wanted');
+  if (!r.ok) { S.wantedListings=[]; S.wantedLoaded=true; showHome(); return; }
+  S.wantedListings = r.listings || [];
+  if (!S.allFd) S.allFd = {cities: r.cities, apt_types: r.apt_types, rental_types: r.rental_types};
+  S.wantedLoaded = true;
+  showHome();
+}
+
+function showWantedForm() {
+  if (!S.fd) { (async()=>{ await loadFormData(); showWantedForm(); })(); return; }
+  const fd = S.fd;
+
+  const cities  = Object.entries(fd.cities).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
+  const types   = Object.entries(fd.apt_types).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
+  const rentals = Object.entries(fd.rental_types).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
+  const featHtml = Object.entries(FMAP).map(([k,v])=>
+    `<label><input type="checkbox" name="feat" value="${k}"> <span>${v}</span></label>`).join('');
+
+  render(`
+    <button class="mg-back" onclick="goDash()">← חזרה</button>
+    <div class="mg-card">
+      <div class="mg-section-title">🔍 פרסם חיפוש דירה לשבת</div>
+      <p style="color:#6b7280;font-size:.88rem;margin:0 0 14px">מלא מה אתה מחפש — בעלי דירות יפנו אליך</p>
+      ${alert_html()}
+      <div class="mg-row">
+        <div class="mg-col">
+          <label class="mg-label">עיר *</label>
+          <select id="wf-city" class="mg-select" onchange="updateNhW()">
+            <option value="">בחר עיר...</option>${cities}
+          </select>
+        </div>
+        <div class="mg-col">
+          <label class="mg-label">שכונה</label>
+          <select id="wf-nh" class="mg-select"><option value="0">אופציונלי</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="mg-card">
+      <div class="mg-section-title">🏠 מה אתה מחפש?</div>
+      <div class="mg-row">
+        <div class="mg-col">
+          <label class="mg-label">סוג דירה</label>
+          <select id="wf-type" class="mg-select"><option value="0">לא משנה</option>${types}</select>
+        </div>
+        <div class="mg-col">
+          <label class="mg-label">סוג השכרה *</label>
+          <select id="wf-rent" class="mg-select">${rentals}</select>
+        </div>
+      </div>
+      <div class="mg-row" style="margin-top:12px">
+        <div class="mg-col">
+          <label class="mg-label">מינ׳ חדרי שינה</label>
+          <select id="wf-rooms" class="mg-select">
+            <option value="0">לא משנה</option>
+            ${[1,2,3,4,5,6,7,8].map(i=>`<option value="${i}">${i} חד'</option>`).join('')}
+          </select>
+        </div>
+        <div class="mg-col">
+          <label class="mg-label">מינ׳ מיטות</label>
+          <select id="wf-beds" class="mg-select">
+            ${[1,2,3,4,5,6,7,8,10,12].map(i=>`<option value="${i}" ${i===2?'selected':''}>${i} מיטות</option>`).join('')}
+          </select>
+        </div>
+        <div class="mg-col">
+          <label class="mg-label">תקציב מקסימלי (₪)</label>
+          <input id="wf-price" class="mg-input" type="number" min="0" max="99999" value="0" placeholder="0 = לא מגביל">
+        </div>
+      </div>
+    </div>
+    <div class="mg-card">
+      <div class="mg-section-title">✨ מה חשוב לך שיהיה?</div>
+      <div class="mg-feat">${featHtml}</div>
+    </div>
+    <div class="mg-card">
+      <div class="mg-section-title">📝 תיאור</div>
+      <textarea id="wf-desc" class="mg-input" maxlength="500" placeholder="פרט מה אתה מחפש, תאריכים, מספר אנשים..."></textarea>
+    </div>
+    <div class="mg-card">
+      <div class="mg-section-title">📞 פרטי קשר</div>
+      <div class="mg-row">
+        <div class="mg-col">
+          <label class="mg-label">שם</label>
+          <input id="wf-cname" class="mg-input mg-input-rtl" placeholder="שם מלא">
+        </div>
+        <div class="mg-col">
+          <label class="mg-label">טלפון</label>
+          <input id="wf-cphone" class="mg-input" placeholder="050-000-0000" type="tel">
+        </div>
+      </div>
+    </div>
+    <button class="mg-btn mg-btn-success mg-btn-full" style="font-size:1.1rem;padding:14px" onclick="doPublishWanted()">
+      🔍 פרסם חיפוש
+    </button>
+    <div style="height:20px"></div>
+  `);
+}
+
+function showMyWanted() {
+  if (!S.myWantedLoaded) { loadMyWanted(); return; }
+  const fd = S.allFd || {};
+  const cityName = id => esc(fd.cities?.[id] || id);
+  const rentName = id => esc(fd.rental_types?.[id] || id);
+
+  const cards = (S.myWanted||[]).length === 0
+    ? `<div class="mg-empty"><h4>אין חיפושים פעילים</h4><button class="mg-btn mg-btn-primary" onclick="goWantedForm()">פרסם חיפוש</button></div>`
+    : (S.myWanted).map(a => `
+      <div class="mg-listing" style="border-color:#bfdbfe">
+        <div style="background:#dbeafe;padding:8px 14px;font-size:.82rem;font-weight:700;color:#1e40af">🔍 מחפש דירה</div>
+        <div class="mg-listing-body">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <strong>${cityName(a.city)}</strong>
+            <span class="mg-badge mg-badge-green">${rentName(a.rental_type)}</span>
+          </div>
+          ${a.description?`<p style="font-size:.85rem;color:#6b7280;margin:0 0 8px">${esc(a.description)}</p>`:''}
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <small style="color:#9ca3af">תקף עד ${new Date(a.expires*1000).toLocaleDateString('he-IL')}</small>
+            <button class="mg-btn mg-btn-danger" onclick="doDeleteWanted('${esc(a.id)}')">הסר</button>
+          </div>
+        </div>
+      </div>`).join('');
+
+  render(`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0">📝 החיפושים שלי</h3>
+      <button class="mg-btn mg-btn-primary" onclick="goWantedForm()">+ פרסם חיפוש</button>
+    </div>
+    <button class="mg-back" onclick="goDash()">← חזרה לדשבורד</button>
+    ${alert_html()}
+    ${cards}
+  `);
+}
+
+async function loadMyWanted() {
+  render(`<div class="mg-loading">⏳ טוען חיפושים...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
+  const r = await api('my_wanted');
+  if (r.ok===false && r.error?.includes('מאומת')) { doLogout(); return; }
+  S.myWanted = r.listings || [];
+  if (!S.allFd) S.allFd = {cities: r.cities, apt_types: r.apt_types, rental_types: r.rental_types};
+  S.myWantedLoaded = true;
+  showMyWanted();
+}
+
+async function doPublishWanted() {
+  S.error = '';
+  const city = document.getElementById('wf-city')?.value;
+  if (!city) { S.error='נא לבחור עיר'; showWantedForm(); return; }
+  const feats = [...document.querySelectorAll('input[name=feat]:checked')].map(i=>i.value);
+  render(`<div class="mg-loading">⏳ שולח...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
+  const r = await api('publish_wanted', {
+    city,
+    neighborhood: document.getElementById('wf-nh')?.value    || '0',
+    apt_type:     document.getElementById('wf-type')?.value  || '0',
+    rental_type:  document.getElementById('wf-rent')?.value  || '1',
+    bedrooms:     document.getElementById('wf-rooms')?.value || '0',
+    beds:         document.getElementById('wf-beds')?.value  || '2',
+    price:        document.getElementById('wf-price')?.value || '0',
+    description:  document.getElementById('wf-desc')?.value  || '',
+    contact_name: document.getElementById('wf-cname')?.value || '',
+    contact_phone:document.getElementById('wf-cphone')?.value|| '',
+    features:     feats,
+  });
+  if (!r.ok) { S.error=r.error; showWantedForm(); return; }
+  S.success='החיפוש פורסם! 🎉';
+  S.myWantedLoaded=false;
+  S.wantedLoaded=false;
+  goDash();
+}
+
+async function doDeleteWanted(aptId) {
+  if (!confirm('להסיר חיפוש זה?')) return;
+  const r = await api('delete_wanted', {apt_id: aptId});
+  if (!r.ok) { S.error=r.error; showMyWanted(); return; }
+  S.success='החיפוש הוסר.';
+  S.myWantedLoaded=false;
+  S.wantedLoaded=false;
+  goMyWanted();
+}
+
+function updateNhW() {
+  const city = parseInt(document.getElementById('wf-city')?.value);
+  const sel  = document.getElementById('wf-nh');
+  if (!sel || !S.fd) return;
+  const nhs = S.fd.neighborhoods[city] || {};
+  sel.innerHTML = '<option value="0">אופציונלי</option>' +
+    Object.entries(nhs).map(([id,n])=>`<option value="${id}">${n}</option>`).join('');
+}
+
 async function loadFormData() {
   render(`<div class="mg-loading">⏳ טוען נתונים...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`);
   const r = await api('form_data');
   if (!r.ok) { S.error=r.error; showForm(); return; }
   S.fd = r;
-  showForm();
 }
 
 async function loadListings() {
@@ -614,7 +921,8 @@ async function doEmailLogin() {
   localStorage.setItem(TK, r.token);
   localStorage.setItem(EM, r.email);
   S.success = 'ברוך הבא! 👋';
-  if (S._afterLogin === 'listings') goListings();
+  if (S._afterLogin === 'listings')      goListings();
+  else if (S._afterLogin === 'wanted_form') goWantedForm();
   else goDash();
 }
 
@@ -631,13 +939,15 @@ async function doPublish() {
 
   const r = await api('publish', {
     city,
-    neighborhood:  document.getElementById('mg-nh')?.value    || '0',
+    neighborhood:  document.getElementById('mg-nh')?.value       || '0',
+    street:        document.getElementById('mg-street')?.value   || '',
+    building_num:  document.getElementById('mg-building')?.value || '',
     apt_type:      aptType,
-    bedrooms:      document.getElementById('mg-rooms')?.value || '1',
-    beds:          document.getElementById('mg-beds')?.value  || '4',
-    rental_type:   document.getElementById('mg-rent')?.value  || '1',
-    price:         document.getElementById('mg-price')?.value || '0',
-    floor:         document.getElementById('mg-floor')?.value || '',
+    bedrooms:      document.getElementById('mg-rooms')?.value    || '1',
+    beds:          document.getElementById('mg-beds')?.value     || '4',
+    rental_type:   document.getElementById('mg-rent')?.value     || '1',
+    price:         document.getElementById('mg-price')?.value    || '0',
+    floor:         document.getElementById('mg-floor')?.value    || '',
     features:      feats,
     description:   document.getElementById('mg-desc')?.value  || '',
     contact_name:  document.getElementById('mg-cname')?.value || '',
@@ -751,7 +1061,7 @@ function closeAd() {
 }
 
 // ── Init ─────────────────────────────────────────────────────
-Object.assign(window, {S,goHome,goLogin,goDash,goForm,goListings,doEmailLogin,doPublish,doDelete,doLogout,addImgs,removeImg,updateNh,toggleFeat,resetFilters,applyFilter,closeAd});
+Object.assign(window, {S,goHome,goLogin,goDash,goForm,goListings,goWantedForm,goMyWanted,setTab,doEmailLogin,doPublish,doDelete,doPublishWanted,doDeleteWanted,doLogout,addImgs,removeImg,updateNh,updateNhW,toggleFeat,resetFilters,applyFilter,closeAd});
 
 loadAllListings();
 setTimeout(showAd, 4000);

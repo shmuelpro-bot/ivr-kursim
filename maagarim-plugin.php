@@ -294,6 +294,18 @@ function mg_api_handler( WP_REST_Request $request ): WP_REST_Response {
         case 'all_listings':
             return mg_action_all_listings( $body );
 
+        case 'all_wanted':
+            return mg_action_all_wanted();
+
+        case 'my_wanted':
+            return mg_action_my_wanted( $token );
+
+        case 'publish_wanted':
+            return mg_action_publish_wanted( $body, $token );
+
+        case 'delete_wanted':
+            return mg_action_delete_apt( $body, $token ); // reuse same ownership check
+
         default:
             return mg_err( 'פעולה לא מוכרת' );
     }
@@ -314,34 +326,56 @@ function mg_action_form_data(): WP_REST_Response {
 // ── Action: all_listings ──────────────────────────────────────────────────────
 
 function mg_action_all_listings( array $body ): WP_REST_Response {
-    $args = [
+    // Always exclude wanted listings
+    $meta_query = [
+        'relation' => 'AND',
+        [
+            'relation' => 'OR',
+            [ 'key' => '_maagarim_listing_type', 'value' => 'apt' ],
+            [ 'key' => '_maagarim_listing_type', 'compare' => 'NOT EXISTS' ],
+        ],
+    ];
+
+    $city        = (int) ( $body['city']        ?? 0 );
+    $rental_type = (int) ( $body['rental_type'] ?? 0 );
+
+    if ( $city && array_key_exists( $city, MG_CITIES ) ) {
+        $meta_query[] = [ 'key' => '_maagarim_city', 'value' => $city, 'type' => 'NUMERIC' ];
+    }
+    if ( $rental_type && array_key_exists( $rental_type, MG_RENTAL_TYPES ) ) {
+        $meta_query[] = [ 'key' => '_maagarim_rental_type', 'value' => $rental_type, 'type' => 'NUMERIC' ];
+    }
+
+    $posts    = get_posts( [
         'post_type'      => 'maagarim_apt',
         'post_status'    => 'publish',
         'posts_per_page' => 100,
         'orderby'        => 'date',
         'order'          => 'DESC',
-    ];
+        'meta_query'     => $meta_query,
+    ] );
+    $listings = array_map( fn( $p ) => mg_post_to_listing( $p->ID ), $posts );
 
-    // Optional city filter
-    $city = (int) ( $body['city'] ?? 0 );
-    // Optional rental_type filter
-    $rental_type = (int) ( $body['rental_type'] ?? 0 );
+    return mg_json( [
+        'ok'           => true,
+        'listings'     => $listings,
+        'cities'       => MG_CITIES,
+        'apt_types'    => MG_APT_TYPES,
+        'rental_types' => MG_RENTAL_TYPES,
+    ] );
+}
 
-    if ( $city || $rental_type ) {
-        $clauses = [];
-        if ( $city && array_key_exists( $city, MG_CITIES ) ) {
-            $clauses[] = [ 'key' => '_maagarim_city', 'value' => $city, 'type' => 'NUMERIC' ];
-        }
-        if ( $rental_type && array_key_exists( $rental_type, MG_RENTAL_TYPES ) ) {
-            $clauses[] = [ 'key' => '_maagarim_rental_type', 'value' => $rental_type, 'type' => 'NUMERIC' ];
-        }
-        if ( $clauses ) {
-            $args['meta_query'] = array_merge( [ 'relation' => 'AND' ], $clauses );
-        }
-    }
+// ── Action: all_wanted ────────────────────────────────────────────────────────
 
-    $posts = get_posts( $args );
-
+function mg_action_all_wanted(): WP_REST_Response {
+    $posts    = get_posts( [
+        'post_type'      => 'maagarim_apt',
+        'post_status'    => 'publish',
+        'posts_per_page' => 100,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'meta_query'     => [ [ 'key' => '_maagarim_listing_type', 'value' => 'wanted' ] ],
+    ] );
     $listings = array_map( fn( $p ) => mg_post_to_listing( $p->ID ), $posts );
 
     return mg_json( [
@@ -383,17 +417,44 @@ function mg_action_my_listings( string $token ): WP_REST_Response {
         'post_status'    => [ 'publish', 'draft' ],
         'posts_per_page' => 50,
         'meta_query'     => [
+            'relation' => 'AND',
+            [ 'key' => '_maagarim_email', 'value' => $email ],
             [
-                'key'   => '_maagarim_email',
-                'value' => $email,
+                'relation' => 'OR',
+                [ 'key' => '_maagarim_listing_type', 'value' => 'apt' ],
+                [ 'key' => '_maagarim_listing_type', 'compare' => 'NOT EXISTS' ],
             ],
         ],
     ] );
 
-    $listings = [];
-    foreach ( $posts as $post ) {
-        $listings[] = mg_post_to_listing( $post->ID );
-    }
+    $listings = array_map( fn( $p ) => mg_post_to_listing( $p->ID ), $posts );
+
+    return mg_json( [
+        'ok'           => true,
+        'listings'     => $listings,
+        'cities'       => MG_CITIES,
+        'apt_types'    => MG_APT_TYPES,
+        'rental_types' => MG_RENTAL_TYPES,
+    ] );
+}
+
+// ── Action: my_wanted ─────────────────────────────────────────────────────────
+
+function mg_action_my_wanted( string $token ): WP_REST_Response {
+    $email = mg_email_from_token( $token );
+    if ( ! $email ) return mg_err( 'טוקן לא מאומת – נא להתחבר מחדש', 401 );
+
+    $posts    = get_posts( [
+        'post_type'      => 'maagarim_apt',
+        'post_status'    => [ 'publish', 'draft' ],
+        'posts_per_page' => 50,
+        'meta_query'     => [
+            'relation' => 'AND',
+            [ 'key' => '_maagarim_email',        'value' => $email   ],
+            [ 'key' => '_maagarim_listing_type', 'value' => 'wanted' ],
+        ],
+    ] );
+    $listings = array_map( fn( $p ) => mg_post_to_listing( $p->ID ), $posts );
 
     return mg_json( [
         'ok'           => true,
@@ -421,8 +482,11 @@ function mg_post_to_listing( int $post_id ): array {
 
     return [
         'id'            => (string) $post_id,
+        'listing_type'  => $get( '_maagarim_listing_type', 'apt' ),
         'city'          => (int) $get( '_maagarim_city', 0 ),
         'neighborhood'  => (int) $get( '_maagarim_neighborhood', 0 ),
+        'street'        => $get( '_maagarim_street', '' ),
+        'building_num'  => $get( '_maagarim_building_num', '' ),
         'apt_type'      => (int) $get( '_maagarim_apt_type', 1 ),
         'rental_type'   => (int) $get( '_maagarim_rental_type', 1 ),
         'beds'          => (int) $get( '_maagarim_beds', 1 ),
@@ -464,6 +528,8 @@ function mg_action_publish( array $body, string $token ): WP_REST_Response {
     $bedrooms     = (int) ( $body['bedrooms']     ?? 1 );
     $price        = (int) ( $body['price']        ?? 0 );
     $floor        = sanitize_text_field( $body['floor']         ?? '' );
+    $street       = sanitize_text_field( $body['street']        ?? '' );
+    $building_num = sanitize_text_field( $body['building_num']  ?? '' );
     $description  = sanitize_textarea_field( $body['description']  ?? '' );
     $contact_name = sanitize_text_field( $body['contact_name']  ?? '' );
     $contact_phone= sanitize_text_field( $body['contact_phone'] ?? '' );
@@ -504,9 +570,12 @@ function mg_action_publish( array $body, string $token ): WP_REST_Response {
 
     // Save meta
     $meta_fields = [
+        '_maagarim_listing_type' => 'apt',
         '_maagarim_email'        => $email,
         '_maagarim_city'         => $city,
         '_maagarim_neighborhood' => $neighborhood,
+        '_maagarim_street'       => $street,
+        '_maagarim_building_num' => $building_num,
         '_maagarim_apt_type'     => $apt_type,
         '_maagarim_rental_type'  => $rental_type,
         '_maagarim_beds'         => $beds,
@@ -602,6 +671,60 @@ function mg_save_images( $images_input, string $email ): array {
     }
 
     return $urls;
+}
+
+// ── Action: publish_wanted ────────────────────────────────────────────────────
+
+function mg_action_publish_wanted( array $body, string $token ): WP_REST_Response {
+    $email = mg_email_from_token( $token );
+    if ( ! $email ) return mg_err( 'טוקן לא מאומת – נא להתחבר מחדש', 401 );
+
+    $city = (int) ( $body['city'] ?? 0 );
+    if ( ! array_key_exists( $city, MG_CITIES ) ) return mg_err( 'עיר לא תקינה' );
+
+    $neighborhood  = (int) ( $body['neighborhood']  ?? 0 );
+    $apt_type      = (int) ( $body['apt_type']      ?? 0 );
+    $rental_type   = (int) ( $body['rental_type']   ?? 1 );
+    $beds          = max( 1, min( 99, (int) ( $body['beds']      ?? 1 ) ) );
+    $bedrooms      = max( 0, min( 20, (int) ( $body['bedrooms']  ?? 0 ) ) );
+    $price_max     = max( 0, min( 99999, (int) ( $body['price']  ?? 0 ) ) );
+    $description   = sanitize_textarea_field( $body['description']  ?? '' );
+    $contact_name  = sanitize_text_field( $body['contact_name']  ?? '' );
+    $contact_phone = sanitize_text_field( $body['contact_phone'] ?? '' );
+
+    if ( ! array_key_exists( $rental_type, MG_RENTAL_TYPES ) ) $rental_type = 1;
+
+    $raw_features = is_array( $body['features'] ?? null ) ? $body['features'] : [];
+    $features     = array_values( array_filter( $raw_features, fn( $f ) => in_array( $f, MG_VALID_FEATURES, true ) ) );
+
+    $post_id = wp_insert_post( [
+        'post_type'   => 'maagarim_apt',
+        'post_title'  => 'מחפש: ' . MG_CITIES[ $city ],
+        'post_status' => 'publish',
+    ], true );
+
+    if ( is_wp_error( $post_id ) ) return mg_err( 'שגיאה ביצירת הפרסום' );
+
+    foreach ( [
+        '_maagarim_listing_type' => 'wanted',
+        '_maagarim_email'        => $email,
+        '_maagarim_city'         => $city,
+        '_maagarim_neighborhood' => $neighborhood,
+        '_maagarim_apt_type'     => $apt_type,
+        '_maagarim_rental_type'  => $rental_type,
+        '_maagarim_beds'         => $beds,
+        '_maagarim_bedrooms'     => $bedrooms,
+        '_maagarim_price'        => $price_max,
+        '_maagarim_features'     => json_encode( $features, JSON_UNESCAPED_UNICODE ),
+        '_maagarim_description'  => $description,
+        '_maagarim_contact_name' => $contact_name,
+        '_maagarim_contact_phone'=> $contact_phone,
+        '_maagarim_expires'      => mg_next_shabbat_end(),
+    ] as $key => $value ) {
+        update_post_meta( $post_id, $key, $value );
+    }
+
+    return mg_json( [ 'ok' => true, 'id' => (string) $post_id ] );
 }
 
 // ── CORS for REST OPTIONS preflight ──────────────────────────────────────────
