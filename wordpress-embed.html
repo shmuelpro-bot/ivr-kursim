@@ -318,6 +318,7 @@ function showHome() {
   const isListings = S.tab !== 'wanted';
 
   let cards = '';
+  if (isListings) {
     if (!S.allLoaded) {
       cards = `<div class="mg-loading">⏳ טוען דירות...<br><span id="mg-status-msg" style="font-size:.82rem;color:#9ca3af"></span></div>`;
     } else if (S.allListings.length === 0) {
