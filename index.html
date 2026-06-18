@@ -2177,6 +2177,138 @@
     <i class="fas fa-arrow-up"></i>
   </button>
 
+  <!-- Floating button to open bid popup -->
+  <button onclick="openBidPopup()" aria-label="הצעת מחיר" style="
+    position:fixed;
+    bottom:90px;
+    left:28px;
+    z-index:998;
+    background:#c9a84c;
+    color:#1a3a5c;
+    border:none;
+    border-radius:50px;
+    padding:12px 20px;
+    font-family:'Heebo',sans-serif;
+    font-size:0.9rem;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:0 4px 20px rgba(201,168,76,0.5);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    transition:all 0.3s;
+  " onmouseover="this.style.background='#e8c97a';this.style.transform='translateY(-2px)'"
+     onmouseout="this.style.background='#c9a84c';this.style.transform=''">
+    <i class="fas fa-file-invoice"></i>
+    הצעת מחיר
+  </button>
+
+  <!-- ============================================================
+       PRICE QUOTE POPUP
+       ============================================================ -->
+  <div id="bidPopupOverlay" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.65);
+    z-index:9999;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+  ">
+    <div style="
+      background:#fff;
+      border-radius:16px;
+      max-width:720px;
+      width:100%;
+      max-height:90vh;
+      display:flex;
+      flex-direction:column;
+      box-shadow:0 20px 60px rgba(0,0,0,0.35);
+      overflow:hidden;
+    ">
+      <!-- Header -->
+      <div style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:18px 24px;
+        border-bottom:1px solid #e8e8e8;
+        background:linear-gradient(135deg,#1a3a5c,#2a5080);
+        flex-shrink:0;
+      ">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fas fa-file-invoice" style="color:#c9a84c;font-size:1.3rem;"></i>
+          <span style="color:#fff;font-weight:700;font-size:1.05rem;">הצעת מחיר – HotelDecor</span>
+        </div>
+        <button onclick="closeBidPopup()" style="
+          background:rgba(255,255,255,0.15);
+          border:none;
+          color:#fff;
+          width:34px;height:34px;
+          border-radius:50%;
+          cursor:pointer;
+          font-size:1rem;
+          display:flex;align-items:center;justify-content:center;
+          transition:background 0.2s;
+        " onmouseover="this.style.background='rgba(255,255,255,0.28)'"
+           onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- PDF embed -->
+      <div style="flex:1;overflow:auto;min-height:0;">
+        <iframe
+          src="Bid_202636.pdf"
+          style="width:100%;height:520px;border:none;display:block;"
+          title="הצעת מחיר 202636">
+        </iframe>
+      </div>
+
+      <!-- Footer with WhatsApp button -->
+      <div style="
+        padding:16px 24px;
+        border-top:1px solid #e8e8e8;
+        background:#fdf8ef;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        flex-wrap:wrap;
+        gap:12px;
+        flex-shrink:0;
+      ">
+        <span style="font-size:0.88rem;color:#718096;">
+          <i class="fas fa-phone" style="color:#c9a84c;margin-left:6px;"></i>
+          HotelDecor · 054-7526354
+        </span>
+        <a
+          href="https://wa.me/972547526354?text=%D7%A9%D7%9C%D7%95%D7%9D%2C%20%D7%A8%D7%90%D7%99%D7%AA%D7%99%20%D7%90%D7%AA%20%D7%94%D7%A6%D7%A2%D7%AA%20%D7%94%D7%9E%D7%97%D7%99%D7%A8%20202636%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A9%D7%9E%D7%95%D7%A2%20%D7%A4%D7%A8%D7%98%D7%99%D7%9D%20%D7%A0%D7%95%D7%A1%D7%A4%D7%99%D7%9D"
+          target="_blank"
+          rel="noopener"
+          style="
+            display:inline-flex;
+            align-items:center;
+            gap:10px;
+            background:#25D366;
+            color:#fff;
+            font-weight:700;
+            font-size:1rem;
+            padding:12px 28px;
+            border-radius:50px;
+            text-decoration:none;
+            box-shadow:0 4px 16px rgba(37,211,102,0.4);
+            transition:all 0.2s;
+          "
+          onmouseover="this.style.background='#1ebe5b';this.style.transform='translateY(-2px)'"
+          onmouseout="this.style.background='#25D366';this.style.transform=''">
+          <i class="fab fa-whatsapp" style="font-size:1.25rem;"></i>
+          שלח הודעה ב-WhatsApp
+        </a>
+      </div>
+    </div>
+  </div>
+
   <!-- ============================================================
        JAVASCRIPT
        ============================================================ -->
@@ -2275,6 +2407,24 @@
         }, 5000);
       }, 1200);
     }
+
+    // --- Bid popup ---
+    function openBidPopup() {
+      const overlay = document.getElementById('bidPopupOverlay');
+      overlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+    function closeBidPopup() {
+      const overlay = document.getElementById('bidPopupOverlay');
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+    document.getElementById('bidPopupOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeBidPopup();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeBidPopup();
+    });
 
     // --- Smooth active nav link highlight ---
     const sections = document.querySelectorAll('section[id]');
