@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRM דירות</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #2563eb;
+      --dark: #1a3a6b;
+      --green: #059669;
+      --orange: #d97706;
+      --red: #dc2626;
+      --gray: #6b7280;
+      --light: #f0f4f8;
+      --border: #e5e7eb;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: var(--light);
+      color: #1f2937;
+      min-height: 100vh;
+      direction: rtl;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: linear-gradient(135deg, var(--dark), var(--blue));
+      color: white;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .topbar-brand { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .topbar-nav { display: flex; gap: 4px; }
+    .nav-btn {
+      background: rgba(255,255,255,0.12);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: inherit;
+      transition: background 0.18s;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.22); }
+    .nav-btn.active { background: rgba(255,255,255,0.28); box-shadow: 0 0 0 2px rgba(255,255,255,0.4); }
+
+    /* ── MAIN CONTENT ── */
+    .page { display: none; padding: 24px; max-width: 1300px; margin: 0 auto; }
+    .page.active { display: block; }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .stat-icon { font-size: 1.8rem; }
+    .stat-num { font-size: 1.7rem; font-weight: 800; color: var(--dark); line-height: 1; }
+    .stat-label { font-size: 0.8rem; color: var(--gray); margin-top: 2px; }
+
+    /* ── SEARCH & FILTER ── */
+    .filter-bar {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .filter-bar input, .filter-bar select {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      background: #fafafa;
+      transition: border-color 0.2s;
+      direction: rtl;
+    }
+    .filter-bar input:focus, .filter-bar select:focus { border-color: var(--blue); }
+    .filter-search { flex: 1; min-width: 200px; }
+    .view-toggle { margin-right: auto; display: flex; gap: 6px; }
+    .view-btn {
+      background: var(--light);
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.18s;
+    }
+    .view-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+
+    /* ── CARDS GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 18px;
+    }
+    .apt-card {
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      transition: transform 0.18s, box-shadow 0.18s;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+    }
+    .apt-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      border-color: var(--blue);
+    }
+    .card-header {
+      background: linear-gradient(135deg, var(--dark), var(--blue));
+      color: white;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .card-city { font-size: 1.05rem; font-weight: 700; }
+    .card-address { font-size: 0.82rem; opacity: 0.85; margin-top: 2px; }
+    .status-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .status-זמין { background: #d1fae5; color: #065f46; }
+    .status-ממתין { background: #fef3c7; color: #92400e; }
+    .status-הושכר { background: #dbeafe; color: #1e40af; }
+    .status-נמכר  { background: #ede9fe; color: #5b21b6; }
+    .status-לא\ זמין { background: #fee2e2; color: #991b1b; }
+
+    .card-body { padding: 16px 18px; }
+    .card-props {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .card-prop { font-size: 0.83rem; color: #374151; }
+    .card-prop span { color: var(--dark); font-weight: 700; }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+    .card-tag {
+      font-size: 0.72rem;
+      background: #eff6ff;
+      color: var(--blue);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .card-contact {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-phone { font-size: 0.85rem; font-weight: 600; color: var(--dark); direction: ltr; text-align: right; }
+    .card-actions { display: flex; gap: 6px; }
+    .card-action-btn {
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.18s;
+      font-weight: 600;
+    }
+    .card-action-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .card-action-btn.delete:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── TABLE VIEW ── */
+    .apt-table-wrap { overflow-x: auto; }
+    .apt-table {
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      border-collapse: collapse;
+      overflow: hidden;
+    }
+    .apt-table th {
+      background: var(--dark);
+      color: white;
+      padding: 12px 16px;
+      text-align: right;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .apt-table td {
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.87rem;
+      vertical-align: middle;
+    }
+    .apt-table tr:last-child td { border-bottom: none; }
+    .apt-table tr:hover td { background: #f8faff; }
+    .apt-table .tbl-actions { display: flex; gap: 6px; }
+
+    /* ── EMPTY / LOADING ── */
+    .placeholder {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray);
+    }
+    .placeholder .ph-icon { font-size: 3rem; margin-bottom: 12px; }
+    .placeholder p { font-size: 1rem; }
+
+    /* ── FORM PAGE ── */
+    .form-wrap { max-width: 760px; margin: 0 auto; }
+    .form-card {
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+    .form-card-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #f0f7ff, #e8f0fe);
+    }
+    .form-card-body { padding: 20px 24px; }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .form-row.single { grid-template-columns: 1fr; }
+    .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .field-label { font-size: 0.855rem; font-weight: 600; color: #374151; }
+    .required { color: var(--red); margin-right: 2px; }
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    input[type="date"],
+    input[type="password"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      background: #fafafa;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      direction: rtl;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+      background: white;
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 9px;
+    }
+    .cb-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.18s;
+      background: #fafafa;
+      user-select: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #374151;
+    }
+    .cb-item:hover { border-color: #93c5fd; background: #eff6ff; }
+    .cb-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); flex-shrink: 0; }
+    .cb-item:has(input:checked) { border-color: var(--blue); background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+
+    .features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .feat-box {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: #fafafa;
+      transition: all 0.18s;
+      overflow: hidden;
+    }
+    .feat-box:has(input:checked) { border-color: var(--blue); background: #eff6ff; }
+    .feat-box label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 14px 8px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .feat-box input { display: none; }
+    .feat-icon { font-size: 1.5rem; }
+    .feat-name { font-size: 0.82rem; font-weight: 600; color: #374151; }
+    .feat-box:has(input:checked) .feat-name { color: var(--blue); }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--dark), var(--blue));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      margin-top: 6px;
+    }
+    .submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(37,99,235,0.35); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .alert {
+      padding: 13px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      margin-top: 14px;
+      display: none;
+    }
+    .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .alert-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+    /* ── SETTINGS PAGE ── */
+    .settings-wrap { max-width: 600px; margin: 0 auto; }
+    .settings-card {
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+    .settings-header {
+      background: linear-gradient(135deg, var(--dark), var(--blue));
+      color: white;
+      padding: 16px 24px;
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .settings-body { padding: 22px 24px; }
+    .settings-row { margin-bottom: 18px; }
+    .settings-label { font-size: 0.9rem; font-weight: 700; color: #374151; margin-bottom: 6px; }
+    .settings-desc { font-size: 0.8rem; color: var(--gray); margin-bottom: 6px; }
+    .settings-save-btn {
+      background: var(--blue);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.18s;
+    }
+    .settings-save-btn:hover { background: #1d4ed8; }
+    .conn-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      margin-top: 10px;
+      font-weight: 600;
+    }
+    .conn-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .conn-ok { color: var(--green); }
+    .conn-ok .conn-dot { background: var(--green); }
+    .conn-fail { color: var(--red); }
+    .conn-fail .conn-dot { background: var(--red); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      display: none;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      max-width: 660px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .modal-head {
+      background: linear-gradient(135deg, var(--dark), var(--blue));
+      color: white;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 16px 16px 0 0;
+    }
+    .modal-title { font-size: 1.1rem; font-weight: 700; }
+    .modal-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-body { padding: 22px 24px; }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .detail-item { }
+    .detail-item .d-label { font-size: 0.78rem; color: var(--gray); font-weight: 600; margin-bottom: 3px; }
+    .detail-item .d-val { font-size: 0.93rem; font-weight: 600; color: #1f2937; }
+    .detail-sep { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+    /* ── NO API KEY NOTICE ── */
+    .no-key-notice {
+      background: white;
+      border-radius: 14px;
+      padding: 40px 30px;
+      text-align: center;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    }
+    .no-key-notice .nk-icon { font-size: 3rem; margin-bottom: 14px; }
+    .no-key-notice h3 { font-size: 1.2rem; color: var(--dark); margin-bottom: 8px; }
+    .no-key-notice p { color: var(--gray); font-size: 0.92rem; margin-bottom: 20px; }
+    .no-key-btn {
+      background: var(--blue);
+      color: white;
+      border: none;
+      border-radius: 9px;
+      padding: 11px 26px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    @media (max-width: 700px) {
+      .stats-bar { grid-template-columns: 1fr 1fr; }
+      .form-row, .form-row.triple { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .detail-grid { grid-template-columns: 1fr; }
+      .topbar-brand span:last-child { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="topbar">
+  <div class="topbar-brand">🏠 <span>CRM דירות</span></div>
+  <div class="topbar-nav">
+    <button class="nav-btn active" onclick="showPage('list')">📋 רשימת דירות</button>
+    <button class="nav-btn" onclick="showPage('add')">➕ הוספת דירה</button>
+    <button class="nav-btn" onclick="showPage('settings')">⚙️ הגדרות</button>
+  </div>
+</div>
+
+<!-- LIST PAGE -->
+<div class="page active" id="page-list">
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card"><div class="stat-icon">🏠</div><div><div class="stat-num" id="statTotal">—</div><div class="stat-label">סה"כ דירות</div></div></div>
+    <div class="stat-card"><div class="stat-icon">✅</div><div><div class="stat-num" id="statAvail">—</div><div class="stat-label">זמינות</div></div></div>
+    <div class="stat-card"><div class="stat-icon">⏳</div><div><div class="stat-num" id="statWait">—</div><div class="stat-label">ממתינות</div></div></div>
+    <div class="stat-card"><div class="stat-icon">🔑</div><div><div class="stat-num" id="statRented">—</div><div class="stat-label">הושכרו/נמכרו</div></div></div>
+  </div>
+
+  <div class="filter-bar">
+    <input type="text" class="filter-search" id="searchInput" placeholder="🔍 חיפוש לפי עיר, כתובת..." oninput="applyFilters()">
+    <select id="filterStatus" onchange="applyFilters()">
+      <option value="">כל הסטטוסים</option>
+      <option value="זמין">זמין</option>
+      <option value="ממתין">ממתין</option>
+      <option value="הושכר">הושכר</option>
+      <option value="נמכר">נמכר</option>
+      <option value="לא זמין">לא זמין</option>
+    </select>
+    <select id="filterRooms" onchange="applyFilters()">
+      <option value="">כל החדרים</option>
+      <option value="1">1 חדר</option>
+      <option value="2">2 חדרים</option>
+      <option value="3">3 חדרים</option>
+      <option value="4">4 חדרים</option>
+      <option value="5">5+ חדרים</option>
+    </select>
+    <button class="nav-btn" style="background:var(--blue);border-radius:8px;padding:8px 16px;" onclick="loadApartments()">🔄 רענן</button>
+    <div class="view-toggle">
+      <button class="view-btn active" id="viewCards" onclick="setView('cards')" title="תצוגת כרטיסיות">⊞</button>
+      <button class="view-btn" id="viewTable" onclick="setView('table')" title="תצוגת טבלה">☰</button>
+    </div>
+  </div>
+
+  <div id="listContent">
+    <div class="placeholder"><div class="ph-icon">⚙️</div><p>טוען...</p></div>
+  </div>
+</div>
+
+<!-- ADD PAGE -->
+<div class="page" id="page-add">
+<div class="form-wrap">
+
+  <div class="form-card">
+    <div class="form-card-header">📍 מיקום</div>
+    <div class="form-card-body">
+      <div class="form-row triple">
+        <div class="form-group">
+          <label class="field-label">עיר / יישוב <span class="required">*</span></label>
+          <input type="text" id="f_city" placeholder="לדוגמה: תל אביב">
+        </div>
+        <div class="form-group">
+          <label class="field-label">שכונה</label>
+          <input type="text" id="f_nbhd" placeholder="שם השכונה">
+        </div>
+        <div class="form-group">
+          <label class="field-label">כתובת מלאה <span class="required">*</span></label>
+          <input type="text" id="f_addr" placeholder="רחוב ומספר בית">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-header">🏠 סוג דירה</div>
+    <div class="form-card-body">
+      <div class="checkbox-grid" id="prop_type_grid">
+        <label class="cb-item"><input type="checkbox" name="apt_type" value="מגורים"> 🏢 מגורים</label>
+        <label class="cb-item"><input type="checkbox" name="apt_type" value="יוקרה/משופצת"> ✨ יוקרה / משופצת</label>
+        <label class="cb-item"><input type="checkbox" name="apt_type" value="דירת אירוח שלא גרים בה"> 🛎️ דירת אירוח</label>
+        <label class="cb-item"><input type="checkbox" name="apt_type" value="דירת נופש"> 🏖️ דירת נופש</label>
+        <label class="cb-item"><input type="checkbox" name="apt_type" value="מושבים"> 🌾 מושבים</label>
+        <label class="cb-item"><input type="checkbox" name="apt_type" value="צימרים ובתי הארחה"> 🏡 צימרים / בתי הארחה</label>
+        <label class="cb-item"><input type="checkbox" name="apt_type" value="מתחם נופש גדול"> 🏕️ מתחם נופש גדול</label>
+        <label class="cb-item"><input type="checkbox" name="apt_type" value='דירת גמ"ח עד 150 ש"ח'> 💙 דירת גמ"ח</label>
+        <label class="cb-item"><input type="checkbox" name="apt_type" value="מלונות"> 🏨 מלונות</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-header">🎯 מיועד ל</div>
+    <div class="form-card-body">
+      <div class="checkbox-grid">
+        <label class="cb-item"><input type="checkbox" name="purpose" value="השכרה"> 🔑 השכרה</label>
+        <label class="cb-item"><input type="checkbox" name="purpose" value="מכירה"> 💰 מכירה</label>
+        <label class="cb-item"><input type="checkbox" name="purpose" value="שבתות"> 🕯️ שבתות</label>
+        <label class="cb-item"><input type="checkbox" name="purpose" value="חגים"> 🎉 חגים</label>
+        <label class="cb-item"><input type="checkbox" name="purpose" value="בין הזמנים"> 📅 בין הזמנים</label>
+        <label class="cb-item"><input type="checkbox" name="purpose" value="אירוח גם לימי חול"> ☀️ ימי חול</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-header">📐 פרטי הנכס</div>
+    <div class="form-card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">מספר חדרים</label>
+          <input type="number" id="f_rooms" placeholder="לדוגמה: 3.5" min="1" max="20" step="0.5">
+        </div>
+        <div class="form-group">
+          <label class="field-label">קומה</label>
+          <input type="text" id="f_floor" placeholder="לדוגמה: 4 (ללא מעלית)">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">מטר מרובע</label>
+          <input type="number" id="f_sqm" placeholder="שטח הדירה במ״ר" min="1">
+        </div>
+        <div class="form-group">
+          <label class="field-label">מחיר הנכס (₪)</label>
+          <input type="number" id="f_price" placeholder="מחיר בשקלים" min="0">
+        </div>
+      </div>
+      <div class="form-row triple">
+        <div class="form-group">
+          <label class="field-label">מספר מיטות</label>
+          <input type="text" id="f_beds" placeholder="לדוגמה: 4">
+        </div>
+        <div class="form-group">
+          <label class="field-label">מספר מזרנים</label>
+          <input type="text" id="f_mattresses" placeholder="לדוגמה: 2">
+        </div>
+        <div class="form-group">
+          <label class="field-label">מספר עריסות / לולים</label>
+          <input type="text" id="f_cribs" placeholder="לדוגמה: 1">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-header">✨ מאפיינים</div>
+    <div class="form-card-body">
+      <div class="features-grid">
+        <div class="feat-box"><label><input type="checkbox" id="f_balcony"><div class="feat-icon">🏗️</div><div class="feat-name">מרפסת</div></label></div>
+        <div class="feat-box"><label><input type="checkbox" id="f_yard"><div class="feat-icon">🌿</div><div class="feat-name">חצר</div></label></div>
+        <div class="feat-box"><label><input type="checkbox" id="f_view"><div class="feat-icon">🌄</div><div class="feat-name">נוף</div></label></div>
+        <div class="feat-box"><label><input type="checkbox" id="f_access"><div class="feat-icon">♿</div><div class="feat-name">נגישות</div></label></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-header">📝 תיאור ואטרקציות</div>
+    <div class="form-card-body">
+      <div class="form-row single" style="margin-bottom:12px">
+        <div class="form-group">
+          <label class="field-label">תיאור הנכס</label>
+          <textarea id="f_desc" placeholder="תארו את הנכס: מצב הדירה, ריהוט, מיזוג, מה כלול במחיר..."></textarea>
+        </div>
+      </div>
+      <div class="form-row single">
+        <div class="form-group">
+          <label class="field-label">אטרקציות / מה קרוב לנכס</label>
+          <input type="text" id="f_attr" placeholder="לדוגמה: קרוב לים, שוק, מרכז קניות, בית כנסת...">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-header">📞 יצירת קשר</div>
+    <div class="form-card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">טלפון <span class="required">*</span></label>
+          <input type="tel" id="f_phone" placeholder="050-0000000">
+        </div>
+        <div class="form-group">
+          <label class="field-label">ווטספ</label>
+          <input type="tel" id="f_wa" placeholder="050-0000000">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">דוא"ל</label>
+          <input type="email" id="f_email" placeholder="example@mail.com">
+        </div>
+        <div class="form-group">
+          <label class="field-label">אתר אינטרנט</label>
+          <input type="url" id="f_site" placeholder="https://...">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-header">📌 סטטוס ותאריך</div>
+    <div class="form-card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">סטטוס</label>
+          <select id="f_status">
+            <option value="זמין">זמין</option>
+            <option value="ממתין">ממתין</option>
+            <option value="לא זמין">לא זמין</option>
+            <option value="הושכר">הושכר</option>
+            <option value="נמכר">נמכר</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="field-label">תאריך פרסום</label>
+          <input type="date" id="f_date">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-body">
+      <button class="submit-btn" id="submitBtn" onclick="submitForm()">✅ שמירה ל-Airtable</button>
+      <div class="alert alert-success" id="successAlert">🎉 הדירה נוספה בהצלחה ל-Airtable!</div>
+      <div class="alert alert-error" id="errorAlert">❌ שגיאה בשמירה. בדקו את מפתח ה-API בהגדרות.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div class="page" id="page-settings">
+<div class="settings-wrap">
+
+  <div class="settings-card">
+    <div class="settings-header">🔑 חיבור ל-Airtable</div>
+    <div class="settings-body">
+      <div class="settings-row">
+        <div class="settings-label">מפתח API של Airtable</div>
+        <div class="settings-desc">ניתן למצוא בחשבון Airtable תחת Account → API → Create a token</div>
+        <input type="password" id="s_apiKey" placeholder="pat...">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">מזהה Base</div>
+        <div class="settings-desc">הזהה ה-Base שמכיל את טבלת הדירות</div>
+        <input type="text" id="s_baseId" placeholder="appXXXXXXXXXXXXXX">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">מזהה Table</div>
+        <div class="settings-desc">מזהה הטבלה בתוך ה-Base</div>
+        <input type="text" id="s_tableId" placeholder="tblXXXXXXXXXXXXXX">
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="settings-save-btn" onclick="saveSettings()">💾 שמירה</button>
+        <button class="settings-save-btn" style="background:#059669" onclick="testConnection()">🔍 בדיקת חיבור</button>
+      </div>
+      <div id="connStatus" style="margin-top:12px;display:none;"></div>
+    </div>
+  </div>
+
+  <div class="settings-card">
+    <div class="settings-header">ℹ️ מידע על השדות</div>
+    <div class="settings-body" style="font-size:0.88rem;color:#374151;line-height:1.7;">
+      <p><strong>Base:</strong> <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">appHp5qRmLqh3CL9X</code> — מאגרים דירות</p>
+      <p><strong>Table:</strong> <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">tblgn9xGLKXaW0nyy</code> — דירות</p>
+      <p style="margin-top:10px;color:var(--gray);">הכניסו את הערכים הנ"ל בשדות למעלה.</p>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">פרטי דירה</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const FIELD = {
+  city:     'fld7tbtjrXKi7IllQ',
+  nbhd:     'fldftsexmXhe69L0q',
+  addr:     'fld5ZKQLD7FsvhKdl',
+  status:   'fldow8LeB2ss9JPdw',
+  desc:     'fldlHirOZiuMvPlGy',
+  pubDate:  'fldUxUiVtf7aU6lha',
+  rooms:    'fldd3pY5OkdoFdYJe',
+  beds:     'fldHC6ZblBHVwpcsq',
+  mattress: 'fldsXARQ0l2moLpZe',
+  cribs:    'fldXc8YrXeSyMWgNj',
+  aptType:  'fldAo5G0OB8BPlPKi',
+  floor:    'fldX7Dw5AvO2zj7vB',
+  balcony:  'fldChcH9KauDamxII',
+  yard:     'fld5e1JLBCFBoX0B6',
+  view:     'fldujRJufFc843ygK',
+  access:   'fld5s6rPfnQU0NzQX',
+  price:    'fldzSwq8T3UZMeGyk',
+  email:    'fldW75ElervNZ4ZW9',
+  phone:    'fldQ7S4sGxIAfz25S',
+  whatsapp: 'fldYaSNcCZ0hbClkj',
+  website:  'fldiFfIbH557MhoZx',
+  sqm:      'fldchuZ9WvI7Okfam',
+  purpose:  'fld7Y6iaz7g9qfBt8',
+  attr:     'fldMINrMOwvKu3phk',
+};
+
+let allRecords = [];
+let currentView = 'cards';
+
+function cfg() {
+  return {
+    apiKey:  localStorage.getItem('at_apiKey')  || '',
+    baseId:  localStorage.getItem('at_baseId')  || 'appHp5qRmLqh3CL9X',
+    tableId: localStorage.getItem('at_tableId') || 'tblgn9xGLKXaW0nyy',
+  };
+}
+
+function apiUrl(path) {
+  const c = cfg();
+  return `https://api.airtable.com/v0/${c.baseId}/${c.tableId}${path}`;
+}
+
+function authHeaders() {
+  return { 'Authorization': `Bearer ${cfg().apiKey}`, 'Content-Type': 'application/json' };
+}
+
+// ── NAV ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'list') loadApartments();
+  if (name === 'settings') loadSettingsForm();
+  if (name === 'add') { setTodayDate(); }
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('viewCards').classList.toggle('active', v === 'cards');
+  document.getElementById('viewTable').classList.toggle('active', v === 'table');
+  renderList(allRecords);
+}
+
+// ── SETTINGS ──
+function loadSettingsForm() {
+  const c = cfg();
+  document.getElementById('s_apiKey').value  = c.apiKey;
+  document.getElementById('s_baseId').value  = c.baseId;
+  document.getElementById('s_tableId').value = c.tableId;
+}
+
+function saveSettings() {
+  localStorage.setItem('at_apiKey',  document.getElementById('s_apiKey').value.trim());
+  localStorage.setItem('at_baseId',  document.getElementById('s_baseId').value.trim());
+  localStorage.setItem('at_tableId', document.getElementById('s_tableId').value.trim());
+  alert('✅ ההגדרות נשמרו בהצלחה!');
+}
+
+async function testConnection() {
+  const el = document.getElementById('connStatus');
+  el.style.display = 'block';
+  el.innerHTML = '<span>⏳ בודק חיבור...</span>';
+  try {
+    const res = await fetch(apiUrl('?maxRecords=1'), { headers: authHeaders() });
+    if (res.ok) {
+      el.innerHTML = '<div class="conn-status conn-ok"><div class="conn-dot"></div>חיבור תקין! ✅</div>';
+    } else {
+      const err = await res.json();
+      el.innerHTML = `<div class="conn-status conn-fail"><div class="conn-dot"></div>שגיאה: ${err.error?.message || res.status}</div>`;
+    }
+  } catch(e) {
+    el.innerHTML = '<div class="conn-status conn-fail"><div class="conn-dot"></div>שגיאת רשת. בדקו את מפתח ה-API.</div>';
+  }
+}
+
+// ── LOAD LIST ──
+async function loadApartments() {
+  const el = document.getElementById('listContent');
+  if (!cfg().apiKey) {
+    el.innerHTML = `<div class="no-key-notice">
+      <div class="nk-icon">🔑</div>
+      <h3>נדרש מפתח API</h3>
+      <p>כדי להציג ולנהל דירות, הכניסו את מפתח ה-API של Airtable בהגדרות</p>
+      <button class="no-key-btn" onclick="document.querySelectorAll('.nav-btn')[2].click()">עבור להגדרות</button>
+    </div>`;
+    return;
+  }
+  el.innerHTML = '<div class="placeholder"><div class="ph-icon">⏳</div><p>טוען דירות מ-Airtable...</p></div>';
+  try {
+    let records = [], offset = '';
+    do {
+      const url = apiUrl('?pageSize=100' + (offset ? '&offset=' + offset : ''));
+      const res = await fetch(url, { headers: authHeaders() });
+      if (!res.ok) throw new Error('API error ' + res.status);
+      const data = await res.json();
+      records = records.concat(data.records || []);
+      offset = data.offset || '';
+    } while (offset);
+    allRecords = records;
+    updateStats(records);
+    applyFilters();
+  } catch(e) {
+    el.innerHTML = `<div class="placeholder"><div class="ph-icon">❌</div><p>שגיאה בטעינה. בדקו את מפתח ה-API וה-Base ID בהגדרות.</p></div>`;
+  }
+}
+
+function updateStats(records) {
+  document.getElementById('statTotal').textContent = records.length;
+  document.getElementById('statAvail').textContent = records.filter(r => r.fields[FIELD.status] === 'זמין').length;
+  document.getElementById('statWait').textContent  = records.filter(r => r.fields[FIELD.status] === 'ממתין').length;
+  document.getElementById('statRented').textContent= records.filter(r => ['הושכר','נמכר'].includes(r.fields[FIELD.status])).length;
+}
+
+function applyFilters() {
+  const q      = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('filterStatus').value;
+  const rooms  = document.getElementById('filterRooms').value;
+  let filtered = allRecords.filter(r => {
+    const f = r.fields;
+    const city = (f[FIELD.city]  || '').toLowerCase();
+    const addr = (f[FIELD.addr]  || '').toLowerCase();
+    const nbhd = (f[FIELD.nbhd]  || '').toLowerCase();
+    const matchSearch = !q || city.includes(q) || addr.includes(q) || nbhd.includes(q);
+    const matchStatus = !status || f[FIELD.status] === status;
+    const r2 = parseFloat(f[FIELD.rooms]);
+    let matchRooms = true;
+    if (rooms) {
+      const n = parseInt(rooms);
+      matchRooms = n === 5 ? r2 >= 5 : r2 === n || r2 === n + 0.5;
+    }
+    return matchSearch && matchStatus && matchRooms;
+  });
+  renderList(filtered);
+}
+
+function renderList(records) {
+  const el = document.getElementById('listContent');
+  if (!records.length) {
+    el.innerHTML = '<div class="placeholder"><div class="ph-icon">🏠</div><p>לא נמצאו דירות התואמות את הסינון</p></div>';
+    return;
+  }
+  if (currentView === 'cards') renderCards(records, el);
+  else renderTable(records, el);
+}
+
+function statusBadge(s) {
+  const cls = 'status-' + (s || '');
+  return `<span class="status-badge ${cls}">${s || '—'}</span>`;
+}
+
+function renderCards(records, el) {
+  const html = records.map(r => {
+    const f = r.fields;
+    const types = (f[FIELD.aptType] || []).map(t => `<span class="card-tag">${t}</span>`).join('');
+    const feats = [
+      f[FIELD.balcony] ? '🏗️' : '',
+      f[FIELD.yard]    ? '🌿' : '',
+      f[FIELD.view]    ? '🌄' : '',
+      f[FIELD.access]  ? '♿' : '',
+    ].filter(Boolean).join(' ');
+    return `<div class="apt-card" onclick="openDetail('${r.id}')">
+      <div class="card-header">
+        <div>
+          <div class="card-city">${f[FIELD.city] || '—'} ${f[FIELD.nbhd] ? '· ' + f[FIELD.nbhd] : ''}</div>
+          <div class="card-address">${f[FIELD.addr] || ''}</div>
+        </div>
+        ${statusBadge(f[FIELD.status])}
+      </div>
+      <div class="card-body">
+        <div class="card-props">
+          <div class="card-prop">חדרים: <span>${f[FIELD.rooms] || '—'}</span></div>
+          <div class="card-prop">מחיר: <span>${f[FIELD.price] ? '₪' + f[FIELD.price].toLocaleString() : '—'}</span></div>
+          <div class="card-prop">קומה: <span>${f[FIELD.floor] || '—'}</span></div>
+          <div class="card-prop">מ"ר: <span>${f[FIELD.sqm] || '—'}</span></div>
+        </div>
+        ${types ? `<div class="card-tags">${types}</div>` : ''}
+        ${feats ? `<div style="font-size:1.1rem;margin-bottom:10px;">${feats}</div>` : ''}
+        <div class="card-contact">
+          <div class="card-phone">${f[FIELD.phone] || '—'}</div>
+          <div class="card-actions">
+            <button class="card-action-btn" onclick="event.stopPropagation();openDetail('${r.id}')">👁 פרטים</button>
+            <button class="card-action-btn delete" onclick="event.stopPropagation();deleteRecord('${r.id}')">🗑</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="cards-grid">${html}</div>`;
+}
+
+function renderTable(records, el) {
+  const rows = records.map(r => {
+    const f = r.fields;
+    return `<tr>
+      <td>${f[FIELD.city] || '—'}</td>
+      <td>${f[FIELD.addr] || '—'}</td>
+      <td>${f[FIELD.rooms] || '—'}</td>
+      <td>${f[FIELD.price] ? '₪' + f[FIELD.price].toLocaleString() : '—'}</td>
+      <td>${f[FIELD.sqm] || '—'}</td>
+      <td>${statusBadge(f[FIELD.status])}</td>
+      <td>${f[FIELD.phone] || '—'}</td>
+      <td>
+        <div class="tbl-actions">
+          <button class="card-action-btn" onclick="openDetail('${r.id}')">👁</button>
+          <button class="card-action-btn delete" onclick="deleteRecord('${r.id}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `<div class="apt-table-wrap"><table class="apt-table">
+    <thead><tr>
+      <th>עיר</th><th>כתובת</th><th>חדרים</th><th>מחיר</th><th>מ"ר</th><th>סטטוס</th><th>טלפון</th><th>פעולות</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+// ── DETAIL MODAL ──
+function openDetail(id) {
+  const rec = allRecords.find(r => r.id === id);
+  if (!rec) return;
+  const f = rec.fields;
+  const feats = [
+    f[FIELD.balcony] && 'מרפסת 🏗️',
+    f[FIELD.yard]    && 'חצר 🌿',
+    f[FIELD.view]    && 'נוף 🌄',
+    f[FIELD.access]  && 'נגישות ♿',
+  ].filter(Boolean).join(', ');
+  document.getElementById('modalTitle').textContent = `${f[FIELD.city] || ''} · ${f[FIELD.addr] || ''}`;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-item"><div class="d-label">עיר / שכונה</div><div class="d-val">${f[FIELD.city] || '—'} ${f[FIELD.nbhd] ? '/ ' + f[FIELD.nbhd] : ''}</div></div>
+      <div class="detail-item"><div class="d-label">כתובת</div><div class="d-val">${f[FIELD.addr] || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">סטטוס</div><div class="d-val">${statusBadge(f[FIELD.status])}</div></div>
+      <div class="detail-item"><div class="d-label">תאריך פרסום</div><div class="d-val">${f[FIELD.pubDate] || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">חדרים</div><div class="d-val">${f[FIELD.rooms] || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">קומה</div><div class="d-val">${f[FIELD.floor] || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">מ"ר</div><div class="d-val">${f[FIELD.sqm] || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">מחיר</div><div class="d-val">${f[FIELD.price] ? '₪' + f[FIELD.price].toLocaleString() : '—'}</div></div>
+      <div class="detail-item"><div class="d-label">מיטות / מזרנים / עריסות</div><div class="d-val">${f[FIELD.beds] || '—'} / ${f[FIELD.mattress] || '—'} / ${f[FIELD.cribs] || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">מאפיינים</div><div class="d-val">${feats || '—'}</div></div>
+    </div>
+    <hr class="detail-sep">
+    <div class="detail-grid">
+      <div class="detail-item"><div class="d-label">טלפון</div><div class="d-val" style="direction:ltr;text-align:right">${f[FIELD.phone] || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">ווטספ</div><div class="d-val" style="direction:ltr;text-align:right">${f[FIELD.whatsapp] || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">דוא"ל</div><div class="d-val">${f[FIELD.email] || '—'}</div></div>
+      <div class="detail-item"><div class="d-label">אתר</div><div class="d-val">${f[FIELD.website] ? `<a href="${f[FIELD.website]}" target="_blank">${f[FIELD.website]}</a>` : '—'}</div></div>
+    </div>
+    ${(f[FIELD.aptType]||[]).length ? `<hr class="detail-sep"><div class="d-label">סוג דירה</div><div class="card-tags" style="margin-top:6px">${(f[FIELD.aptType]||[]).map(t=>`<span class="card-tag">${t}</span>`).join('')}</div>` : ''}
+    ${(f[FIELD.purpose]||[]).length ? `<div style="margin-top:10px"><div class="d-label">מיועד ל</div><div class="card-tags" style="margin-top:6px">${(f[FIELD.purpose]||[]).map(t=>`<span class="card-tag">${t}</span>`).join('')}</div></div>` : ''}
+    ${f[FIELD.desc] ? `<hr class="detail-sep"><div class="d-label">תיאור</div><p style="margin-top:6px;font-size:0.9rem;line-height:1.6;white-space:pre-line">${f[FIELD.desc]}</p>` : ''}
+    ${f[FIELD.attr] ? `<div style="margin-top:10px"><div class="d-label">אטרקציות</div><p style="margin-top:4px;font-size:0.9rem">${f[FIELD.attr]}</p></div>` : ''}
+    <hr class="detail-sep">
+    <div style="display:flex;gap:10px;">
+      <button class="submit-btn" style="margin-top:0;flex:1" onclick="changeStatus('${id}')">✏️ שנה סטטוס</button>
+      <button class="submit-btn" style="margin-top:0;flex:0.4;background:linear-gradient(135deg,#dc2626,#b91c1c)" onclick="deleteRecord('${id}');closeModal()">🗑️ מחק</button>
+    </div>`;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('open');
+}
+
+async function changeStatus(id) {
+  const status = prompt('סטטוס חדש (זמין / ממתין / לא זמין / הושכר / נמכר):');
+  if (!status) return;
+  try {
+    const res = await fetch(apiUrl('/' + id), {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ fields: { [FIELD.status]: status } })
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      const idx = allRecords.findIndex(r => r.id === id);
+      if (idx > -1) allRecords[idx] = updated;
+      closeModal();
+      applyFilters();
+      updateStats(allRecords);
+    }
+  } catch(e) { alert('שגיאה בעדכון סטטוס'); }
+}
+
+async function deleteRecord(id) {
+  if (!confirm('למחוק דירה זו מ-Airtable?')) return;
+  try {
+    const res = await fetch(apiUrl('/' + id), { method: 'DELETE', headers: authHeaders() });
+    if (res.ok) {
+      allRecords = allRecords.filter(r => r.id !== id);
+      applyFilters();
+      updateStats(allRecords);
+    }
+  } catch(e) { alert('שגיאה במחיקה'); }
+}
+
+// ── ADD FORM ──
+function setTodayDate() {
+  const d = document.getElementById('f_date');
+  if (!d.value) d.value = new Date().toISOString().slice(0,10);
+}
+
+async function submitForm() {
+  const city  = document.getElementById('f_city').value.trim();
+  const addr  = document.getElementById('f_addr').value.trim();
+  const phone = document.getElementById('f_phone').value.trim();
+  if (!city || !addr || !phone) { alert('נא למלא שדות חובה: עיר, כתובת, טלפון'); return; }
+  if (!cfg().apiKey) { alert('נא להגדיר מפתח API בהגדרות'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  const succ = document.getElementById('successAlert');
+  const err  = document.getElementById('errorAlert');
+  btn.disabled = true;
+  btn.textContent = '⏳ שומר...';
+  succ.style.display = err.style.display = 'none';
+
+  const fields = {};
+  fields[FIELD.city]   = city;
+  fields[FIELD.addr]   = addr;
+  fields[FIELD.phone]  = phone;
+
+  const nbhd = document.getElementById('f_nbhd').value.trim();
+  if (nbhd) fields[FIELD.nbhd] = nbhd;
+  const desc = document.getElementById('f_desc').value.trim();
+  if (desc) fields[FIELD.desc] = desc;
+  const floor = document.getElementById('f_floor').value.trim();
+  if (floor) fields[FIELD.floor] = floor;
+  const wa = document.getElementById('f_wa').value.trim();
+  if (wa) fields[FIELD.whatsapp] = wa;
+  const email = document.getElementById('f_email').value.trim();
+  if (email) fields[FIELD.email] = email;
+  const site = document.getElementById('f_site').value.trim();
+  if (site) fields[FIELD.website] = site;
+  const attr = document.getElementById('f_attr').value.trim();
+  if (attr) fields[FIELD.attr] = attr;
+  const beds = document.getElementById('f_beds').value.trim();
+  if (beds) fields[FIELD.beds] = beds;
+  const matt = document.getElementById('f_mattresses').value.trim();
+  if (matt) fields[FIELD.mattress] = matt;
+  const cribs = document.getElementById('f_cribs').value.trim();
+  if (cribs) fields[FIELD.cribs] = cribs;
+
+  const rooms = parseFloat(document.getElementById('f_rooms').value);
+  if (!isNaN(rooms) && rooms > 0) fields[FIELD.rooms] = rooms;
+  const sqm = parseFloat(document.getElementById('f_sqm').value);
+  if (!isNaN(sqm) && sqm > 0) fields[FIELD.sqm] = sqm;
+  const price = parseFloat(document.getElementById('f_price').value);
+  if (!isNaN(price) && price > 0) fields[FIELD.price] = price;
+
+  if (document.getElementById('f_balcony').checked) fields[FIELD.balcony] = true;
+  if (document.getElementById('f_yard').checked)    fields[FIELD.yard]    = true;
+  if (document.getElementById('f_view').checked)    fields[FIELD.view]    = true;
+  if (document.getElementById('f_access').checked)  fields[FIELD.access]  = true;
+
+  const types = [...document.querySelectorAll('[name="apt_type"]:checked')].map(c => c.value);
+  if (types.length) fields[FIELD.aptType] = types;
+  const purposes = [...document.querySelectorAll('[name="purpose"]:checked')].map(c => c.value);
+  if (purposes.length) fields[FIELD.purpose] = purposes;
+
+  fields[FIELD.status] = document.getElementById('f_status').value;
+  const dt = document.getElementById('f_date').value;
+  if (dt) fields[FIELD.pubDate] = dt;
+
+  try {
+    const res = await fetch(apiUrl(''), {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ records: [{ fields }] })
+    });
+    if (res.ok) {
+      succ.style.display = 'block';
+      resetForm();
+      succ.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      const e = await res.json();
+      document.getElementById('errorAlert').textContent = '❌ שגיאה: ' + (e.error?.message || res.status);
+      err.style.display = 'block';
+    }
+  } catch(e) {
+    err.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = '✅ שמירה ל-Airtable';
+}
+
+function resetForm() {
+  ['f_city','f_nbhd','f_addr','f_desc','f_floor','f_wa','f_email','f_site',
+   'f_attr','f_beds','f_mattresses','f_cribs','f_rooms','f_sqm','f_price'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  ['f_balcony','f_yard','f_view','f_access'].forEach(id => {
+    document.getElementById(id).checked = false;
+  });
+  document.querySelectorAll('[name="apt_type"],[name="purpose"]').forEach(c => c.checked = false);
+  document.getElementById('f_status').value = 'זמין';
+  setTodayDate();
+}
+
+// close modal on overlay click
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  loadSettingsForm();
+  loadApartments();
+});
+</script>
+</body>
+</html>
