@@ -7,12 +7,16 @@
 
      "פעם אחת לכל משתמש" ממומש באמצעות localStorage בדפדפן -
      אם המשתמש ינקה נתוני גלישה, הפופאפ יוכל להופיע שוב.
+
+     הערה: התמונה נטענת ע"י JavaScript רק כשהפופאפ נפתח (ולא כתגית
+     img קבועה בעמוד), כדי לעקוף תוספי "lazy load" של תמונות
+     (כמו Smush) שעלולים למנוע מהתמונה להיטען כל עוד היא מוסתרת.
 ════════════════════════════════════════════════════ -->
 <div id="vp-pdf-popup-overlay" class="vp-pdf-overlay" dir="rtl" hidden>
   <div class="vp-pdf-modal" role="dialog" aria-modal="true">
     <button type="button" class="vp-pdf-close" id="vp-pdf-close" aria-label="סגור">✕</button>
-    <a href="https://maagarim-dirot.co.il/wp-content/uploads/2026/07/%D7%A4%D7%9C%D7%99%D7%99%D7%A8_%D7%95%D7%99%D7%9C%D7%94_%D7%A2%D7%9C_%D7%94%D7%A4%D7%90%D7%A8%D7%A7_%D7%9E%D7%95%D7%9B%D7%9F_%D7%9C%D7%94%D7%93%D7%A4%D7%A1%D7%94.jpg" target="_blank" rel="noopener">
-      <img class="vp-pdf-img" src="https://maagarim-dirot.co.il/wp-content/uploads/2026/07/%D7%A4%D7%9C%D7%99%D7%99%D7%A8_%D7%95%D7%99%D7%9C%D7%94_%D7%A2%D7%9C_%D7%94%D7%A4%D7%90%D7%A8%D7%A7_%D7%9E%D7%95%D7%9B%D7%9F_%D7%9C%D7%94%D7%93%D7%A4%D7%A1%D7%94.jpg" alt="פלייר וילה על הפארק">
+    <a id="vp-pdf-link" href="#" target="_blank" rel="noopener">
+      <div id="vp-pdf-img-wrap"></div>
     </a>
   </div>
 </div>
@@ -32,6 +36,7 @@
   'use strict';
 
   // ── הגדרות ─────────────────────────────────
+  var IMG_URL     = 'https://maagarim-dirot.co.il/wp-content/uploads/2026/07/%D7%A4%D7%9C%D7%99%D7%99%D7%A8_%D7%95%D7%99%D7%9C%D7%94_%D7%A2%D7%9C_%D7%94%D7%A4%D7%90%D7%A8%D7%A7_%D7%9E%D7%95%D7%9B%D7%9F_%D7%9C%D7%94%D7%93%D7%A4%D7%A1%D7%94.jpg';
   var DELAY_MS    = 10000; // 10 שניות
   var STORAGE_KEY = 'vpPdfPopupShown_villaPark';
 
@@ -39,6 +44,15 @@
 
   function showPopup(){
     var overlay = document.getElementById('vp-pdf-popup-overlay');
+    var link    = document.getElementById('vp-pdf-link');
+    var wrap    = document.getElementById('vp-pdf-img-wrap');
+
+    link.href = IMG_URL;
+    var img = document.createElement('img');
+    img.className = 'vp-pdf-img';
+    img.alt = 'פלייר וילה על הפארק';
+    img.src = IMG_URL;
+    wrap.appendChild(img);
 
     overlay.hidden = false;
     localStorage.setItem(STORAGE_KEY, '1');
