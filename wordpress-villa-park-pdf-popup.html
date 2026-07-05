@@ -1,0 +1,77 @@
+<!-- ════════════════════════════════════════════════════
+     פופאפ פלייר "וילה על הפארק" (PDF)
+     עולה פעם אחת בלבד לכל מבקר, 10 שניות אחרי כניסתו לאתר.
+
+     איך מתקינים:
+     1. בוורדפרס: מדיה ← הוסף חדש ← העלה את קובץ ה-PDF.
+        לאחר ההעלאה, העתיקו את כתובת ה-URL של הקובץ.
+     2. למטה, במשתנה PDF_URL, הדביקו את הכתובת במקום הפלייסהולדר.
+     3. (אופציונלי) אם יש לכם תמונת תצוגה מקדימה של הפלייר
+        (JPG/PNG), העלו גם אותה למדיה והדביקו את הכתובת שלה
+        במשתנה THUMBNAIL_URL. אם משאירים ריק, יוצג אייקון PDF פשוט.
+     4. הדביקו את כל הקוד הזה (מהתגית הראשונה ועד הסוף) בעמוד/תבנית
+        שרוצים שהפופאפ יופיע בה - לדוגמה בבלוק "HTML מותאם אישית"
+        באלמנטור, או ב-Footer הגלובלי דרך תוסף כמו WPCode /
+        Insert Headers and Footers כדי שיופיע בכל האתר.
+     5. "פעם אחת לכל משתמש" ממומש באמצעות localStorage בדפדפן -
+        אם המשתמש ינקה נתוני גלישה, הפופאפ יוכל להופיע שוב.
+════════════════════════════════════════════════════ -->
+<div id="vp-pdf-popup-overlay" class="vp-pdf-overlay" dir="rtl" hidden>
+  <div class="vp-pdf-modal" role="dialog" aria-modal="true" aria-labelledby="vp-pdf-title">
+    <button type="button" class="vp-pdf-close" id="vp-pdf-close" aria-label="סגור">✕</button>
+    <div class="vp-pdf-thumb" id="vp-pdf-thumb">📄</div>
+    <h3 id="vp-pdf-title" class="vp-pdf-title">וילה על הפארק</h3>
+    <p class="vp-pdf-text">הורידו את הפלייר המלא של הפרויקט לכל הפרטים</p>
+    <a id="vp-pdf-open" class="vp-pdf-btn" href="#" target="_blank" rel="noopener">צפייה בפלייר (PDF)</a>
+  </div>
+</div>
+
+<style>
+.vp-pdf-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px;font-family:Arial,sans-serif;animation:vp-pdf-fade .25s ease}
+.vp-pdf-overlay[hidden]{display:none}
+.vp-pdf-modal{position:relative;background:#fff;border-radius:16px;max-width:360px;width:100%;padding:28px 22px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);direction:rtl}
+.vp-pdf-close{position:absolute;top:10px;left:10px;width:30px;height:30px;border:none;border-radius:50%;background:#f1f5f9;color:#475569;font-size:1rem;cursor:pointer;line-height:1;transition:background .15s}
+.vp-pdf-close:hover{background:#e2e8f0}
+.vp-pdf-thumb{width:100%;height:180px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:3.2rem;margin-bottom:16px;overflow:hidden;color:#94a3b8}
+.vp-pdf-thumb img{width:100%;height:100%;object-fit:cover}
+.vp-pdf-title{margin:0 0 8px;font-size:1.25rem;font-weight:800;color:#1e293b}
+.vp-pdf-text{margin:0 0 18px;color:#64748b;font-size:.95rem;line-height:1.5}
+.vp-pdf-btn{display:inline-block;width:100%;box-sizing:border-box;padding:12px 20px;background:#2563eb;color:#fff;border-radius:10px;font-weight:700;text-decoration:none;font-size:1rem;transition:opacity .15s}
+.vp-pdf-btn:hover{opacity:.9}
+@keyframes vp-pdf-fade{from{opacity:0}to{opacity:1}}
+</style>
+
+<script>
+(function(){
+  'use strict';
+
+  // ── הגדרות - עדכנו כאן ─────────────────────────────────
+  var PDF_URL       = 'https://YOUR-SITE.co.il/wp-content/uploads/PASTE-YOUR-PDF-FILENAME-HERE.pdf';
+  var THUMBNAIL_URL = ''; // אופציונלי, אפשר להשאיר ריק
+  var DELAY_MS      = 10000; // 10 שניות
+  var STORAGE_KEY   = 'vpPdfPopupShown_villaPark';
+
+  if (localStorage.getItem(STORAGE_KEY)) return;
+
+  function showPopup(){
+    var overlay = document.getElementById('vp-pdf-popup-overlay');
+    var link    = document.getElementById('vp-pdf-open');
+    var thumb   = document.getElementById('vp-pdf-thumb');
+
+    link.href = PDF_URL;
+    if (THUMBNAIL_URL) {
+      thumb.innerHTML = '<img src="' + THUMBNAIL_URL + '" alt="פלייר וילה על הפארק">';
+    }
+
+    overlay.hidden = false;
+    localStorage.setItem(STORAGE_KEY, '1');
+
+    function close(){ overlay.hidden = true; }
+    document.getElementById('vp-pdf-close').addEventListener('click', close);
+    overlay.addEventListener('click', function(e){ if (e.target === overlay) close(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); }, { once: true });
+  }
+
+  setTimeout(showPopup, DELAY_MS);
+})();
+</script>
