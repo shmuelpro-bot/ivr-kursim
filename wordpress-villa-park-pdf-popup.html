@@ -1,6 +1,7 @@
 <!-- ════════════════════════════════════════════════════
      פופאפ פלייר "וילה על הפארק"
      עולה פעם אחת בלבד לכל מבקר, 10 שניות אחרי כניסתו לאתר.
+     מציג רק את תמונת הפלייר עצמה, בלי כיתוב נוסף.
      כתובת התמונה כבר מוגדרת בקוד (מ-maagarim-dirot.co.il).
      פשוט מדביקים את כל הקוד הזה בבלוק HTML באלמנטור.
 
@@ -8,29 +9,21 @@
      אם המשתמש ינקה נתוני גלישה, הפופאפ יוכל להופיע שוב.
 ════════════════════════════════════════════════════ -->
 <div id="vp-pdf-popup-overlay" class="vp-pdf-overlay" dir="rtl" hidden>
-  <div class="vp-pdf-modal" role="dialog" aria-modal="true" aria-labelledby="vp-pdf-title">
+  <div class="vp-pdf-modal" role="dialog" aria-modal="true">
     <button type="button" class="vp-pdf-close" id="vp-pdf-close" aria-label="סגור">✕</button>
-    <div class="vp-pdf-thumb" id="vp-pdf-thumb">
-      <img src="https://maagarim-dirot.co.il/wp-content/uploads/2026/07/%D7%A4%D7%9C%D7%99%D7%99%D7%A8_%D7%95%D7%99%D7%9C%D7%94_%D7%A2%D7%9C_%D7%94%D7%A4%D7%90%D7%A8%D7%A7_%D7%9E%D7%95%D7%9B%D7%9F_%D7%9C%D7%94%D7%93%D7%A4%D7%A1%D7%94.jpg" alt="פלייר וילה על הפארק">
-    </div>
-    <h3 id="vp-pdf-title" class="vp-pdf-title">וילה על הפארק</h3>
-    <p class="vp-pdf-text">הורידו את הפלייר המלא של הפרויקט לכל הפרטים</p>
-    <a id="vp-pdf-open" class="vp-pdf-btn" href="https://maagarim-dirot.co.il/wp-content/uploads/2026/07/%D7%A4%D7%9C%D7%99%D7%99%D7%A8_%D7%95%D7%99%D7%9C%D7%94_%D7%A2%D7%9C_%D7%94%D7%A4%D7%90%D7%A8%D7%A7_%D7%9E%D7%95%D7%9B%D7%9F_%D7%9C%D7%94%D7%93%D7%A4%D7%A1%D7%94.jpg" target="_blank" rel="noopener">צפייה בפלייר</a>
+    <a href="https://maagarim-dirot.co.il/wp-content/uploads/2026/07/%D7%A4%D7%9C%D7%99%D7%99%D7%A8_%D7%95%D7%99%D7%9C%D7%94_%D7%A2%D7%9C_%D7%94%D7%A4%D7%90%D7%A8%D7%A7_%D7%9E%D7%95%D7%9B%D7%9F_%D7%9C%D7%94%D7%93%D7%A4%D7%A1%D7%94.jpg" target="_blank" rel="noopener">
+      <img class="vp-pdf-img" src="https://maagarim-dirot.co.il/wp-content/uploads/2026/07/%D7%A4%D7%9C%D7%99%D7%99%D7%A8_%D7%95%D7%99%D7%9C%D7%94_%D7%A2%D7%9C_%D7%94%D7%A4%D7%90%D7%A8%D7%A7_%D7%9E%D7%95%D7%9B%D7%9F_%D7%9C%D7%94%D7%93%D7%A4%D7%A1%D7%94.jpg" alt="פלייר וילה על הפארק">
+    </a>
   </div>
 </div>
 
 <style>
-.vp-pdf-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px;font-family:Arial,sans-serif;animation:vp-pdf-fade .25s ease}
+.vp-pdf-overlay{position:fixed;inset:0;background:rgba(15,23,42,.7);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px;animation:vp-pdf-fade .25s ease}
 .vp-pdf-overlay[hidden]{display:none}
-.vp-pdf-modal{position:relative;background:#fff;border-radius:16px;max-width:360px;width:100%;padding:28px 22px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);direction:rtl}
-.vp-pdf-close{position:absolute;top:10px;left:10px;width:30px;height:30px;border:none;border-radius:50%;background:#f1f5f9;color:#475569;font-size:1rem;cursor:pointer;line-height:1;transition:background .15s}
-.vp-pdf-close:hover{background:#e2e8f0}
-.vp-pdf-thumb{width:100%;height:180px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:3.2rem;margin-bottom:16px;overflow:hidden;color:#94a3b8}
-.vp-pdf-thumb img{width:100%;height:100%;object-fit:cover}
-.vp-pdf-title{margin:0 0 8px;font-size:1.25rem;font-weight:800;color:#1e293b}
-.vp-pdf-text{margin:0 0 18px;color:#64748b;font-size:.95rem;line-height:1.5}
-.vp-pdf-btn{display:inline-block;width:100%;box-sizing:border-box;padding:12px 20px;background:#2563eb;color:#fff;border-radius:10px;font-weight:700;text-decoration:none;font-size:1rem;transition:opacity .15s}
-.vp-pdf-btn:hover{opacity:.9}
+.vp-pdf-modal{position:relative;max-width:420px;width:100%;max-height:90vh}
+.vp-pdf-img{display:block;width:100%;height:auto;max-height:90vh;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.vp-pdf-close{position:absolute;top:-14px;left:-14px;width:32px;height:32px;border:none;border-radius:50%;background:#fff;color:#1e293b;font-size:1rem;cursor:pointer;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.vp-pdf-close:hover{background:#f1f5f9}
 @keyframes vp-pdf-fade{from{opacity:0}to{opacity:1}}
 </style>
 
