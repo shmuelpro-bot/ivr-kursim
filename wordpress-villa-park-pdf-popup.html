@@ -1,28 +1,21 @@
 <!-- ════════════════════════════════════════════════════
-     פופאפ פלייר "וילה על הפארק" (PDF)
+     פופאפ פלייר "וילה על הפארק"
      עולה פעם אחת בלבד לכל מבקר, 10 שניות אחרי כניסתו לאתר.
+     כתובת התמונה כבר מוגדרת בקוד (מ-maagarim-dirot.co.il).
+     פשוט מדביקים את כל הקוד הזה בבלוק HTML באלמנטור.
 
-     איך מתקינים:
-     1. בוורדפרס: מדיה ← הוסף חדש ← העלה את קובץ ה-PDF.
-        לאחר ההעלאה, העתיקו את כתובת ה-URL של הקובץ.
-     2. למטה, במשתנה PDF_URL, הדביקו את הכתובת במקום הפלייסהולדר.
-     3. (אופציונלי) אם יש לכם תמונת תצוגה מקדימה של הפלייר
-        (JPG/PNG), העלו גם אותה למדיה והדביקו את הכתובת שלה
-        במשתנה THUMBNAIL_URL. אם משאירים ריק, יוצג אייקון PDF פשוט.
-     4. הדביקו את כל הקוד הזה (מהתגית הראשונה ועד הסוף) בעמוד/תבנית
-        שרוצים שהפופאפ יופיע בה - לדוגמה בבלוק "HTML מותאם אישית"
-        באלמנטור, או ב-Footer הגלובלי דרך תוסף כמו WPCode /
-        Insert Headers and Footers כדי שיופיע בכל האתר.
-     5. "פעם אחת לכל משתמש" ממומש באמצעות localStorage בדפדפן -
-        אם המשתמש ינקה נתוני גלישה, הפופאפ יוכל להופיע שוב.
+     "פעם אחת לכל משתמש" ממומש באמצעות localStorage בדפדפן -
+     אם המשתמש ינקה נתוני גלישה, הפופאפ יוכל להופיע שוב.
 ════════════════════════════════════════════════════ -->
 <div id="vp-pdf-popup-overlay" class="vp-pdf-overlay" dir="rtl" hidden>
   <div class="vp-pdf-modal" role="dialog" aria-modal="true" aria-labelledby="vp-pdf-title">
     <button type="button" class="vp-pdf-close" id="vp-pdf-close" aria-label="סגור">✕</button>
-    <div class="vp-pdf-thumb" id="vp-pdf-thumb">📄</div>
+    <div class="vp-pdf-thumb" id="vp-pdf-thumb">
+      <img src="https://maagarim-dirot.co.il/wp-content/uploads/2026/07/%D7%A4%D7%9C%D7%99%D7%99%D7%A8_%D7%95%D7%99%D7%9C%D7%94_%D7%A2%D7%9C_%D7%94%D7%A4%D7%90%D7%A8%D7%A7_%D7%9E%D7%95%D7%9B%D7%9F_%D7%9C%D7%94%D7%93%D7%A4%D7%A1%D7%94.jpg" alt="פלייר וילה על הפארק">
+    </div>
     <h3 id="vp-pdf-title" class="vp-pdf-title">וילה על הפארק</h3>
     <p class="vp-pdf-text">הורידו את הפלייר המלא של הפרויקט לכל הפרטים</p>
-    <a id="vp-pdf-open" class="vp-pdf-btn" href="#" target="_blank" rel="noopener">צפייה בפלייר (PDF)</a>
+    <a id="vp-pdf-open" class="vp-pdf-btn" href="https://maagarim-dirot.co.il/wp-content/uploads/2026/07/%D7%A4%D7%9C%D7%99%D7%99%D7%A8_%D7%95%D7%99%D7%9C%D7%94_%D7%A2%D7%9C_%D7%94%D7%A4%D7%90%D7%A8%D7%A7_%D7%9E%D7%95%D7%9B%D7%9F_%D7%9C%D7%94%D7%93%D7%A4%D7%A1%D7%94.jpg" target="_blank" rel="noopener">צפייה בפלייר</a>
   </div>
 </div>
 
@@ -45,23 +38,14 @@
 (function(){
   'use strict';
 
-  // ── הגדרות - עדכנו כאן ─────────────────────────────────
-  var PDF_URL       = 'https://YOUR-SITE.co.il/wp-content/uploads/PASTE-YOUR-PDF-FILENAME-HERE.pdf';
-  var THUMBNAIL_URL = ''; // אופציונלי, אפשר להשאיר ריק
-  var DELAY_MS      = 10000; // 10 שניות
-  var STORAGE_KEY   = 'vpPdfPopupShown_villaPark';
+  // ── הגדרות ─────────────────────────────────
+  var DELAY_MS    = 10000; // 10 שניות
+  var STORAGE_KEY = 'vpPdfPopupShown_villaPark';
 
   if (localStorage.getItem(STORAGE_KEY)) return;
 
   function showPopup(){
     var overlay = document.getElementById('vp-pdf-popup-overlay');
-    var link    = document.getElementById('vp-pdf-open');
-    var thumb   = document.getElementById('vp-pdf-thumb');
-
-    link.href = PDF_URL;
-    if (THUMBNAIL_URL) {
-      thumb.innerHTML = '<img src="' + THUMBNAIL_URL + '" alt="פלייר וילה על הפארק">';
-    }
 
     overlay.hidden = false;
     localStorage.setItem(STORAGE_KEY, '1');
