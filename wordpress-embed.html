@@ -328,70 +328,54 @@ function saveCustomNhs()    { localStorage.setItem('mg_custom_nhs',    JSON.stri
 function nextCustomCityId() { return S.customCities.length ? Math.max(...S.customCities.map(c=>c.id))+1 : 10001; }
 function nextCustomNhId(cid){ const ids=Object.keys(S.customNhs[cid]||{}).map(Number); return ids.length?Math.max(...ids)+1:10001; }
 
-function allCitiesOptions(sel) {
-  const cities = (S.fd||{}).cities||{};
-  const bi = Object.entries(cities).map(([id,n])=>`<option value="${id}" ${parseInt(id)===sel?'selected':''}>${esc(n)}</option>`).join('');
-  const cu = S.customCities.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.name)}</option>`).join('');
-  return bi+cu+'<option value="add_city">➕ הוסף עיר חדשה...</option>';
+function allCitiesDatalist(dlId) {
+  const fd = S.fd || S.allFd || {};
+  const bi = Object.values(fd.cities||{}).map(n=>`<option value="${esc(n)}">`).join('');
+  const cu = S.customCities.map(c=>`<option value="${esc(c.name)}">`).join('');
+  return `<datalist id="${dlId}">${bi}${cu}</datalist>`;
 }
 
-function nhOptionsForCity(cid) {
-  const bi = ((S.fd||{}).neighborhoods||{})[cid]||{};
-  const cu = S.customNhs[cid]||{};
-  const bOpts = Object.entries(bi).map(([id,n])=>`<option value="${id}">${esc(n)}</option>`).join('');
-  const cOpts = Object.entries(cu).map(([id,n])=>`<option value="${id}">${esc(n)}</option>`).join('');
-  const add   = cid?'<option value="add_nh">➕ הוסף שכונה...</option>':'';
-  return `<option value="0">אופציונלי</option>${bOpts}${cOpts}${add}`;
+function updateNhDatalist(prefix) {
+  const cityVal = (document.getElementById(prefix+'-city')?.value||'').trim();
+  const dl = document.getElementById(prefix+'-nh-dl');
+  if (!dl) return;
+  const fd = S.fd || S.allFd || {};
+  const entry = Object.entries(fd.cities||{}).find(([,n])=>n===cityVal);
+  const builtInId = entry ? parseInt(entry[0]) : 0;
+  const customCity = S.customCities.find(c=>c.name===cityVal);
+  const cityId = builtInId || (customCity?.id||0);
+  const bi = (fd.neighborhoods||{})[cityId]||{};
+  const cu = S.customNhs[cityId]||{};
+  dl.innerHTML = [...Object.values(bi),...Object.values(cu)].map(n=>`<option value="${esc(n)}">`).join('');
 }
 
-function addCustomCity(prefix) {
-  const name = prompt('הקלד שם עיר חדשה:');
-  const sel  = document.getElementById(prefix+'-city');
-  if (!name||!name.trim()){ if(sel) sel.value=''; return; }
-  const trimmed = name.trim();
+function resolveCityByName(name) {
+  const trimmed = (name||'').trim();
+  if (!trimmed) return {cityId:0, cityName:'', customCity:null};
+  const fd = S.fd || S.allFd || {};
+  const entry = Object.entries(fd.cities||{}).find(([,n])=>n===trimmed);
+  if (entry) return {cityId:parseInt(entry[0]), cityName:'', customCity:null};
   let city = S.customCities.find(c=>c.name===trimmed);
-  if (!city){ city={id:nextCustomCityId(),name:trimmed}; S.customCities.push(city); saveCustomCities(); }
-  if (sel){
-    if (![...sel.options].find(o=>parseInt(o.value)===city.id)){
-      const addOpt=[...sel.options].find(o=>o.value==='add_city');
-      const opt=document.createElement('option'); opt.value=city.id; opt.textContent=city.name;
-      sel.insertBefore(opt,addOpt);
-    }
-    sel.value=city.id;
-  }
-  const nhSel=document.getElementById(prefix+'-nh');
-  if(nhSel) nhSel.innerHTML=nhOptionsForCity(city.id);
+  if (!city) { city={id:nextCustomCityId(),name:trimmed}; S.customCities.push(city); saveCustomCities(); }
+  return {cityId:0, cityName:city.name, customCity:city};
 }
 
-function addCustomNh(prefix) {
-  const citySel=document.getElementById(prefix+'-city');
-  const cid=parseInt(citySel?.value)||0;
-  const nhSel=document.getElementById(prefix+'-nh');
-  if(!cid){ if(nhSel) nhSel.value='0'; return; }
-  const name=prompt('הקלד שם שכונה חדשה:');
-  if(!name||!name.trim()){ if(nhSel) nhSel.value='0'; return; }
-  const trimmed=name.trim();
-  if(!S.customNhs[cid]) S.customNhs[cid]={};
-  const existing=Object.entries(S.customNhs[cid]).find(([,n])=>n===trimmed);
-  let nhId;
-  if(existing){ nhId=parseInt(existing[0]); }
-  else{ nhId=nextCustomNhId(cid); S.customNhs[cid][nhId]=trimmed; saveCustomNhs(); }
-  if(nhSel){
-    if(![...nhSel.options].find(o=>parseInt(o.value)===nhId)){
-      const addOpt=[...nhSel.options].find(o=>o.value==='add_nh');
-      const opt=document.createElement('option'); opt.value=nhId; opt.textContent=trimmed;
-      nhSel.insertBefore(opt,addOpt);
-    }
-    nhSel.value=nhId;
-  }
+function resolveNhByName(cityId, name) {
+  const trimmed = (name||'').trim();
+  if (!trimmed || !cityId) return {nhId:0, nhName:''};
+  const bi = ((S.fd||{}).neighborhoods||{})[cityId]||{};
+  const entry = Object.entries(bi).find(([,n])=>n===trimmed);
+  if (entry) return {nhId:parseInt(entry[0]), nhName:''};
+  const cu = S.customNhs[cityId]||{};
+  const exist = Object.entries(cu).find(([,n])=>n===trimmed);
+  if (exist) return {nhId:0, nhName:trimmed};
+  const nhId = nextCustomNhId(cityId);
+  if (!S.customNhs[cityId]) S.customNhs[cityId]={};
+  S.customNhs[cityId][nhId]=trimmed;
+  saveCustomNhs();
+  return {nhId:0, nhName:trimmed};
 }
 
-function onCityChange()   { if(document.getElementById('mg-city')?.value==='add_city'){addCustomCity('mg');return;} updateNh(); }
-function onCityChangeW()  { if(document.getElementById('wf-city')?.value==='add_city'){addCustomCity('wf');return;} updateNhW(); }
-function onCityChangeSF() { if(document.getElementById('sf-city')?.value==='add_city'){addCustomCity('sf');return;} updateNhSF(); }
-function onNhChange()     { if(document.getElementById('mg-nh')?.value==='add_nh') addCustomNh('mg'); }
-function onNhChangeW()    { if(document.getElementById('wf-nh')?.value==='add_nh') addCustomNh('wf'); }
-function onNhChangeSF()   { if(document.getElementById('sf-nh')?.value==='add_nh') addCustomNh('sf'); }
 
 /* ════ SCREENS ════════════════════════════════════════════════ */
 
@@ -631,11 +615,11 @@ function showForm() {
       ${alert_html()}
       <div class="mg-row">
         <div class="mg-col"><label class="mg-label">עיר *</label>
-          <select id="mg-city" class="mg-select" onchange="onCityChange()">
-            <option value="">בחר עיר…</option>${allCitiesOptions(0)}
-          </select></div>
+          <input id="mg-city" class="mg-input mg-input-rtl" list="mg-city-dl" placeholder="הקלד שם עיר…" oninput="updateNhDatalist('mg')">
+          ${allCitiesDatalist('mg-city-dl')}</div>
         <div class="mg-col"><label class="mg-label">שכונה</label>
-          <select id="mg-nh" class="mg-select" onchange="onNhChange()"><option value="0">אופציונלי</option></select></div>
+          <input id="mg-nh" class="mg-input mg-input-rtl" list="mg-nh-dl" placeholder="שכונה (אופציונלי)">
+          <datalist id="mg-nh-dl"></datalist></div>
       </div>
       <div class="mg-row" style="margin-top:12px">
         <div class="mg-col"><label class="mg-label">רחוב</label>
@@ -820,11 +804,11 @@ function showWantedForm() {
       ${alert_html()}
       <div class="mg-row">
         <div class="mg-col"><label class="mg-label">עיר *</label>
-          <select id="wf-city" class="mg-select" onchange="onCityChangeW()">
-            <option value="">בחר עיר…</option>${allCitiesOptions(0)}
-          </select></div>
+          <input id="wf-city" class="mg-input mg-input-rtl" list="wf-city-dl" placeholder="הקלד שם עיר…" oninput="updateNhDatalist('wf')">
+          ${allCitiesDatalist('wf-city-dl')}</div>
         <div class="mg-col"><label class="mg-label">שכונה</label>
-          <select id="wf-nh" class="mg-select" onchange="onNhChangeW()"><option value="0">אופציונלי</option></select></div>
+          <input id="wf-nh" class="mg-input mg-input-rtl" list="wf-nh-dl" placeholder="שכונה (אופציונלי)">
+          <datalist id="wf-nh-dl"></datalist></div>
       </div>
     </div>
     <div class="mg-card">
@@ -884,11 +868,11 @@ function showSwapForm() {
       ${alert_html()}
       <div class="mg-row">
         <div class="mg-col"><label class="mg-label">עיר *</label>
-          <select id="sf-city" class="mg-select" onchange="onCityChangeSF()">
-            <option value="">בחר עיר…</option>${allCitiesOptions(0)}
-          </select></div>
+          <input id="sf-city" class="mg-input mg-input-rtl" list="sf-city-dl" placeholder="הקלד שם עיר…" oninput="updateNhDatalist('sf')">
+          ${allCitiesDatalist('sf-city-dl')}</div>
         <div class="mg-col"><label class="mg-label">שכונה</label>
-          <select id="sf-nh" class="mg-select" onchange="onNhChangeSF()"><option value="0">אופציונלי</option></select></div>
+          <input id="sf-nh" class="mg-input mg-input-rtl" list="sf-nh-dl" placeholder="שכונה (אופציונלי)">
+          <datalist id="sf-nh-dl"></datalist></div>
       </div>
       <div class="mg-row" style="margin-top:12px">
         <div class="mg-col"><label class="mg-label">רחוב</label>
@@ -1052,18 +1036,17 @@ async function loadMySwap() {
 
 async function doPublishWanted() {
   S.error='';
-  const cityVal=document.getElementById('wf-city')?.value;
-  if(!cityVal||cityVal==='add_city'){ S.error='נא לבחור עיר'; showWantedForm(); return; }
-  const cityId=parseInt(cityVal)||0;
-  const customCity=S.customCities.find(c=>c.id===cityId)||null;
-  const nhVal=document.getElementById('wf-nh')?.value||'0';
-  const nhId=parseInt(nhVal)||0;
-  const customNhName=(nhId>=10001&&S.customNhs[cityId])?(S.customNhs[cityId][nhId]||''):'';
+  const cityVal=(document.getElementById('wf-city')?.value||'').trim();
+  if(!cityVal){ S.error='נא להזין שם עיר'; showWantedForm(); return; }
+  const rc=resolveCityByName(cityVal);
+  const effCityId=rc.customCity?rc.customCity.id:rc.cityId;
+  const nhVal=(document.getElementById('wf-nh')?.value||'').trim();
+  const rn=resolveNhByName(effCityId, nhVal);
   const feats=[...document.querySelectorAll('input[name=feat]:checked')].map(i=>i.value);
   render(`<div class="mg-loading">שולח…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
   const r=await api('publish_wanted',{
-    city:customCity?0:cityId, city_name:customCity?customCity.name:'',
-    neighborhood:customNhName?0:nhId, neighborhood_name:customNhName,
+    city:rc.cityId, city_name:rc.cityName,
+    neighborhood:rn.nhId, neighborhood_name:rn.nhName,
     apt_type:document.getElementById('wf-type')?.value||'0',
     rental_type:document.getElementById('wf-rent')?.value||'1',
     bedrooms:document.getElementById('wf-rooms')?.value||'0',
@@ -1087,21 +1070,20 @@ async function doDeleteWanted(aptId) {
 
 async function doPublishSwap() {
   S.error='';
-  const cityVal=document.getElementById('sf-city')?.value;
+  const cityVal=(document.getElementById('sf-city')?.value||'').trim();
   const aptType=document.getElementById('sf-type')?.value;
-  if(!cityVal||cityVal==='add_city'){ S.error='נא לבחור עיר'; showSwapForm(); return; }
+  if(!cityVal){ S.error='נא להזין שם עיר'; showSwapForm(); return; }
   if(!aptType){ S.error='נא לבחור סוג דירה'; showSwapForm(); return; }
-  const cityId=parseInt(cityVal)||0;
-  const customCity=S.customCities.find(c=>c.id===cityId)||null;
-  const nhVal=document.getElementById('sf-nh')?.value||'0';
-  const nhId=parseInt(nhVal)||0;
-  const customNhName=(nhId>=10001&&S.customNhs[cityId])?(S.customNhs[cityId][nhId]||''):'';
+  const rc=resolveCityByName(cityVal);
+  const effCityId=rc.customCity?rc.customCity.id:rc.cityId;
+  const nhVal=(document.getElementById('sf-nh')?.value||'').trim();
+  const rn=resolveNhByName(effCityId, nhVal);
   const feats=[...document.querySelectorAll('input[name=feat]:checked')].map(i=>i.value);
   render(`<div class="mg-loading">מעלה…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
   const images=await Promise.all(S.imgs.map(imgToB64));
   const r=await api('publish_swap',{
-    city:customCity?0:cityId, city_name:customCity?customCity.name:'',
-    neighborhood:customNhName?0:nhId, neighborhood_name:customNhName,
+    city:rc.cityId, city_name:rc.cityName,
+    neighborhood:rn.nhId, neighborhood_name:rn.nhName,
     street:document.getElementById('sf-street')?.value||'',
     building_num:document.getElementById('sf-building')?.value||'',
     apt_type:aptType,
@@ -1125,9 +1107,6 @@ async function doDeleteSwap(aptId) {
   S.success='ההחלפה הוסרה.'; S.mySwapLoaded=false; S.swapLoaded=false; goMySwap();
 }
 
-function updateNh()  { const id=parseInt(document.getElementById('mg-city')?.value)||0; const s=document.getElementById('mg-nh'); if(s) s.innerHTML=nhOptionsForCity(id); }
-function updateNhW() { const id=parseInt(document.getElementById('wf-city')?.value)||0; const s=document.getElementById('wf-nh'); if(s) s.innerHTML=nhOptionsForCity(id); }
-function updateNhSF(){ const id=parseInt(document.getElementById('sf-city')?.value)||0; const s=document.getElementById('sf-nh'); if(s) s.innerHTML=nhOptionsForCity(id); }
 
 async function loadFormData() {
   render(`<div class="mg-loading">טוען נתונים…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
@@ -1165,21 +1144,20 @@ async function doEmailLogin() {
 
 async function doPublish() {
   S.error='';
-  const cityVal=document.getElementById('mg-city')?.value;
+  const cityVal=(document.getElementById('mg-city')?.value||'').trim();
   const aptType=document.getElementById('mg-type')?.value;
-  if(!cityVal||cityVal==='add_city'){ S.error='נא לבחור עיר'; showForm(); return; }
+  if(!cityVal){ S.error='נא להזין שם עיר'; showForm(); return; }
   if(!aptType){ S.error='נא לבחור סוג דירה'; showForm(); return; }
-  const cityId=parseInt(cityVal)||0;
-  const customCity=S.customCities.find(c=>c.id===cityId)||null;
-  const nhVal=document.getElementById('mg-nh')?.value||'0';
-  const nhId=parseInt(nhVal)||0;
-  const customNhName=(nhId>=10001&&S.customNhs[cityId])?(S.customNhs[cityId][nhId]||''):'';
+  const rc=resolveCityByName(cityVal);
+  const effCityId=rc.customCity?rc.customCity.id:rc.cityId;
+  const nhVal=(document.getElementById('mg-nh')?.value||'').trim();
+  const rn=resolveNhByName(effCityId, nhVal);
   const feats=[...document.querySelectorAll('input[name=feat]:checked')].map(i=>i.value);
   render(`<div class="mg-loading">מעלה…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
   const images=await Promise.all(S.imgs.map(imgToB64));
   const r=await api('publish',{
-    city:customCity?0:cityId, city_name:customCity?customCity.name:'',
-    neighborhood:customNhName?0:nhId, neighborhood_name:customNhName,
+    city:rc.cityId, city_name:rc.cityName,
+    neighborhood:rn.nhId, neighborhood_name:rn.nhName,
     street:document.getElementById('mg-street')?.value||'',
     building_num:document.getElementById('mg-building')?.value||'',
     apt_type:aptType,
@@ -1270,8 +1248,7 @@ function closeAd() { const el=document.getElementById('mg-ad-overlay'); if(el) e
 /* ── Init ── */
 Object.assign(window,{S,goHome,goLogin,goDash,goForm,goListings,goWantedForm,goMyWanted,goSwapForm,goMySwap,setTab,
   doEmailLogin,doPublish,doDelete,doPublishWanted,doDeleteWanted,doPublishSwap,doDeleteSwap,doLogout,
-  addImgs,removeImg,updateNh,updateNhW,updateNhSF,toggleFeat,resetFilters,applyFilter,closeAd,
-  onCityChange,onCityChangeW,onCityChangeSF,onNhChange,onNhChangeW,onNhChangeSF,addCustomCity,addCustomNh,loadSwapListings});
+  addImgs,removeImg,updateNhDatalist,toggleFeat,resetFilters,applyFilter,closeAd,loadSwapListings});
 
 loadAllListings();
 setTimeout(showAd, 4000);
