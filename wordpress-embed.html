@@ -269,7 +269,7 @@ function wantedCard(a, fd) {
   return `
     <div class="mg-listing" style="border-right-color:#1a3a6c">
       <div style="padding:7px 18px;background:#f0f4fa;border-bottom:1px solid #ddd8d0">
-        <span style="font-size:.68rem;font-weight:700;color:#1a3a6c;letter-spacing:.6px;text-transform:uppercase">🔍 מחפש דירה</span>
+        <span style="font-size:.68rem;font-weight:700;color:#1a3a6c;letter-spacing:.6px;text-transform:uppercase">🔍 ביקוש דירה</span>
       </div>
       <div class="mg-listing-body">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
@@ -398,12 +398,13 @@ function showHome() {
   }).join('');
 
   const hasFilter = S.filterCity||S.filterRent||S.filterType||S.filterBeds||S.filterFeats.length;
+  const activeCount = (S.filterCity?1:0)+(S.filterRent?1:0)+(S.filterType?1:0)+(S.filterBeds?1:0)+S.filterFeats.length;
 
   const isListings = S.tab==='listings';
   const isSwap     = S.tab==='swap';
   const isWanted   = S.tab==='wanted';
   const pubLoginArg  = isSwap?"'swap_form'":isWanted?"'wanted_form'":'';
-  const pubLabel     = isListings?'פרסם דירה':isSwap?'פרסם להחלפה':'פרסם חיפוש';
+  const pubLabel     = isListings?'פרסם דירה':isSwap?'פרסם להחלפה':'פרסם ביקוש';
   const pubBtnStyle  = isSwap?'background:#5c1a9a':'';
   const currentLoaded= isListings?S.allLoaded:isSwap?S.swapLoaded:S.wantedLoaded;
 
@@ -441,9 +442,9 @@ function showHome() {
     }
   } else {
     if (!S.wantedLoaded) {
-      cards=`<div class="mg-loading">טוען מחפשים…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`;
+      cards=`<div class="mg-loading">טוען ביקושים…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`;
     } else if (!S.wantedListings.length) {
-      cards=`<div class="mg-empty"><div style="font-size:2.4rem;margin-bottom:12px">🔍</div><div style="font-weight:700;color:#1a1a2e;margin-bottom:6px">אין מחפשי דירה</div><p>פרסם את מה שאתה מחפש!</p></div>`;
+      cards=`<div class="mg-empty"><div style="font-size:2.4rem;margin-bottom:12px">🔍</div><div style="font-weight:700;color:#1a1a2e;margin-bottom:6px">אין ביקושים</div><p>פרסם ביקוש!</p></div>`;
     } else {
       let f=S.wantedListings;
       if(S.filterCity) f=f.filter(a=>parseInt(a.city)===S.filterCity);
@@ -453,65 +454,87 @@ function showHome() {
       if(S.filterFeats.length) f=f.filter(a=>S.filterFeats.every(ft=>(a.features||[]).includes(ft)));
       cards = f.length===0
         ? `<div class="mg-empty"><p>לא נמצאו תוצאות לפי הסינון</p><button class="mg-btn mg-btn-outline" onclick="resetFilters()">נקה סינון</button></div>`
-        : `<div style="font-size:.75rem;color:#8a8075;margin-bottom:10px;letter-spacing:.3px">${f.length} מחפשים</div>`+f.map(a=>wantedCard(a,fd)).join('');
+        : `<div style="font-size:.75rem;color:#8a8075;margin-bottom:10px;letter-spacing:.3px">${f.length} ביקושים</div>`+f.map(a=>wantedCard(a,fd)).join('');
     }
   }
 
   render(`
-    <div style="background:#1a1a2e;border-radius:12px;padding:36px 24px 30px;text-align:center;margin-bottom:18px;position:relative;overflow:hidden">
+    <div style="background:#1a1a2e;border-radius:12px;padding:30px 24px 26px;text-align:center;margin-bottom:18px;position:relative;overflow:hidden">
       <div style="position:absolute;inset:0;background:radial-gradient(ellipse 90% 60% at 50% 110%,rgba(200,162,86,.13) 0%,transparent 65%)"></div>
       <div style="position:relative">
-        <div style="font-size:1.55rem;font-weight:800;color:#fff;letter-spacing:.3px;line-height:1.3">מתחמים, צימרים, נופש דירות לשבת</div>
-        <div style="width:36px;height:2px;background:#c8a256;margin:14px auto 0;border-radius:1px"></div>
+        <div style="font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:.3px;line-height:1.3">מתחמים, צימרים, נופש דירות לשבת</div>
+        <div style="width:36px;height:2px;background:#c8a256;margin:12px auto 16px;border-radius:1px"></div>
+        <div style="display:flex;justify-content:center;align-items:stretch;gap:0">
+          <div style="text-align:center;padding:0 22px">
+            <div style="font-size:1.9rem;font-weight:900;color:#c8a256;line-height:1">${S.allLoaded?S.allListings.length:'—'}</div>
+            <div style="font-size:.63rem;color:rgba(255,255,255,.45);letter-spacing:.6px;margin-top:5px;text-transform:uppercase">נכסים</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,.12);margin:4px 0"></div>
+          <div style="text-align:center;padding:0 22px">
+            <div style="font-size:1.9rem;font-weight:900;color:#c8a256;line-height:1">${S.wantedLoaded?S.wantedListings.length:'—'}</div>
+            <div style="font-size:.63rem;color:rgba(255,255,255,.45);letter-spacing:.6px;margin-top:5px;text-transform:uppercase">ביקושים</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,.12);margin:4px 0"></div>
+          <div style="text-align:center;padding:0 22px">
+            <div style="font-size:1.9rem;font-weight:900;color:#c8a256;line-height:1">${S.swapLoaded?S.swapListings.length:'—'}</div>
+            <div style="font-size:.63rem;color:rgba(255,255,255,.45);letter-spacing:.6px;margin-top:5px;text-transform:uppercase">החלפות</div>
+          </div>
+        </div>
       </div>
     </div>
     ${alert_html()}
     <div class="mg-tabs">
       <button class="mg-tab ${isListings?'act':''}" onclick="setTab('listings')">להשכרה</button>
       <button class="mg-tab ${isSwap?'act-p':''}" onclick="setTab('swap')">החלפות</button>
-      <button class="mg-tab ${isWanted?'act':''}" onclick="setTab('wanted')">מחפשים</button>
+      <button class="mg-tab ${isWanted?'act':''}" onclick="setTab('wanted')">ביקושים</button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:16px">
       <button class="mg-btn mg-btn-primary" onclick="goLogin(${pubLoginArg})" style="flex:1;${pubBtnStyle}">${pubLabel}</button>
       ${S.token?`<button class="mg-btn mg-btn-outline" onclick="goDash()" style="flex:1">הפרסומים שלי</button>`:''}
     </div>
     ${currentLoaded&&Object.keys(cities).length?`
-    <div class="mg-card" style="padding:14px 18px;margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <span style="font-size:.68rem;font-weight:700;color:#8a8075;letter-spacing:.7px;text-transform:uppercase">סינון תוצאות</span>
-        ${hasFilter?`<button class="mg-btn-link" onclick="resetFilters()" style="font-size:.78rem;color:#b52a1c;font-weight:600">✕ נקה הכל</button>`:''}
-      </div>
-      <div class="mg-row" style="margin-bottom:10px">
-        <div class="mg-col">
-          <label class="mg-label">עיר</label>
-          <select class="mg-select" onchange="applyFilter('filterCity',this.value)">
-            <option value="0">כל הערים</option>${sel(S.filterCity,cities)}
-          </select>
+    <div style="border-radius:var(--r);overflow:hidden;margin-bottom:16px;border:2px solid ${hasFilter?'#1a1a2e':'#ddd8d0'};background:#fff;transition:border-color .2s">
+      <div style="background:${hasFilter?'#1a1a2e':'#f3f0ea'};padding:13px 18px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:.95rem">⚡</span>
+          <span style="font-size:.88rem;font-weight:700;color:${hasFilter?'#fff':'#1a1a2e'};letter-spacing:.2px">סינון תוצאות</span>
+          ${hasFilter?`<span style="background:#c8a256;color:#1a1a2e;font-size:.66rem;font-weight:800;padding:2px 9px;border-radius:20px;letter-spacing:.2px">${activeCount} פעיל</span>`:''}
         </div>
-        ${!isSwap?`<div class="mg-col">
-          <label class="mg-label">סוג השכרה</label>
-          <select class="mg-select" onchange="applyFilter('filterRent',this.value)">
-            <option value="0">הכל</option>${sel(S.filterRent,rentals)}
-          </select>
-        </div>`:''}
+        ${hasFilter?`<button class="mg-btn-link" onclick="resetFilters()" style="font-size:.8rem;color:${hasFilter?'rgba(255,255,255,.65)':'#b52a1c'};font-weight:700">✕ נקה הכל</button>`:''}
       </div>
-      <div class="mg-row" style="margin-bottom:10px">
-        <div class="mg-col">
-          <label class="mg-label">סוג דירה</label>
-          <select class="mg-select" onchange="applyFilter('filterType',this.value)">
-            <option value="0">הכל</option>${sel(S.filterType,types)}
-          </select>
+      <div style="padding:14px 18px">
+        <div class="mg-row" style="margin-bottom:10px">
+          <div class="mg-col">
+            <label class="mg-label">עיר</label>
+            <select class="mg-select" onchange="applyFilter('filterCity',this.value)">
+              <option value="0">כל הערים</option>${sel(S.filterCity,cities)}
+            </select>
+          </div>
+          ${!isSwap?`<div class="mg-col">
+            <label class="mg-label">סוג השכרה</label>
+            <select class="mg-select" onchange="applyFilter('filterRent',this.value)">
+              <option value="0">הכל</option>${sel(S.filterRent,rentals)}
+            </select>
+          </div>`:''}
         </div>
-        <div class="mg-col">
-          <label class="mg-label">מינימום מיטות</label>
-          <select class="mg-select" onchange="applyFilter('filterBeds',this.value)">
-            <option value="0">ללא מגבלה</option>
-            ${[2,3,4,5,6,8,10].map(n=>`<option value="${n}" ${S.filterBeds===n?'selected':''}>${n}+</option>`).join('')}
-          </select>
+        <div class="mg-row" style="margin-bottom:10px">
+          <div class="mg-col">
+            <label class="mg-label">סוג דירה</label>
+            <select class="mg-select" onchange="applyFilter('filterType',this.value)">
+              <option value="0">הכל</option>${sel(S.filterType,types)}
+            </select>
+          </div>
+          <div class="mg-col">
+            <label class="mg-label">מינימום מיטות</label>
+            <select class="mg-select" onchange="applyFilter('filterBeds',this.value)">
+              <option value="0">ללא מגבלה</option>
+              ${[2,3,4,5,6,8,10].map(n=>`<option value="${n}" ${S.filterBeds===n?'selected':''}>${n}+</option>`).join('')}
+            </select>
+          </div>
         </div>
+        <div style="font-size:.68rem;font-weight:700;color:#8a8075;letter-spacing:.7px;text-transform:uppercase;margin-bottom:7px">מתקנים ומאפיינים</div>
+        <div style="display:flex;flex-wrap:wrap">${filterFeatBtns}</div>
       </div>
-      <div style="font-size:.68rem;font-weight:700;color:#8a8075;letter-spacing:.7px;text-transform:uppercase;margin-bottom:7px">מתקנים ומאפיינים</div>
-      <div style="display:flex;flex-wrap:wrap">${filterFeatBtns}</div>
     </div>`:''}
     ${cards}
   `);
@@ -559,7 +582,7 @@ function showDashboard() {
       </a>
       <a onclick="goWantedForm()">
         <span class="oi">🔍</span>
-        <strong>פרסם חיפוש</strong>
+        <strong>פרסם ביקוש</strong>
         <small>מחפש דירה לשבת</small>
       </a>
     </div>
@@ -578,8 +601,8 @@ function showDashboard() {
     <div class="mg-opt" style="margin-top:0">
       <a onclick="goMyWanted()">
         <span class="oi">📝</span>
-        <strong>החיפושים שלי</strong>
-        <small>נהל חיפושים</small>
+        <strong>הביקושים שלי</strong>
+        <small>נהל ביקושים</small>
       </a>
       <a onclick="goMySwap()">
         <span class="oi">📂</span>
@@ -799,7 +822,7 @@ function showWantedForm() {
   render(`
     <button class="mg-back" onclick="goDash()">← חזרה</button>
     <div class="mg-card">
-      <div class="mg-section-title">פרסם חיפוש דירה לשבת</div>
+      <div class="mg-section-title">פרסם ביקוש דירה לשבת</div>
       <p style="color:#8a8075;font-size:.85rem;margin:0 0 16px;line-height:1.55">מלא מה אתה מחפש — בעלי דירות יפנו אליך</p>
       ${alert_html()}
       <div class="mg-row">
@@ -850,7 +873,7 @@ function showWantedForm() {
           <input id="wf-cphone" class="mg-input" placeholder="050-000-0000" type="tel"></div>
       </div>
     </div>
-    <button class="mg-btn mg-btn-primary mg-btn-full" style="font-size:.95rem;padding:14px;background:#1a3a6c" onclick="doPublishWanted()">פרסם חיפוש</button>
+    <button class="mg-btn mg-btn-primary mg-btn-full" style="font-size:.95rem;padding:14px;background:#1a3a6c" onclick="doPublishWanted()">פרסם ביקוש</button>
     <div style="height:24px"></div>
   `);
 }
@@ -943,11 +966,11 @@ function showMyWanted() {
   const cN = a => esc(a.city_name||fd.cities?.[a.city]||String(a.city));
   const rN = id => esc(fd.rental_types?.[id]||id);
   const cards = !(S.myWanted||[]).length
-    ? `<div class="mg-empty"><div style="font-weight:700;color:#1a1a2e;margin-bottom:10px">אין חיפושים פעילים</div><button class="mg-btn mg-btn-primary" style="background:#1a3a6c" onclick="goWantedForm()">פרסם חיפוש</button></div>`
+    ? `<div class="mg-empty"><div style="font-weight:700;color:#1a1a2e;margin-bottom:10px">אין ביקושים פעילים</div><button class="mg-btn mg-btn-primary" style="background:#1a3a6c" onclick="goWantedForm()">פרסם ביקוש</button></div>`
     : S.myWanted.map(a=>`
       <div class="mg-listing" style="border-right-color:#1a3a6c">
         <div style="padding:7px 18px;background:#f0f4fa;border-bottom:1px solid #ddd8d0">
-          <span style="font-size:.68rem;font-weight:700;color:#1a3a6c;letter-spacing:.6px;text-transform:uppercase">🔍 מחפש דירה</span>
+          <span style="font-size:.68rem;font-weight:700;color:#1a3a6c;letter-spacing:.6px;text-transform:uppercase">🔍 ביקוש דירה</span>
         </div>
         <div class="mg-listing-body">
           <div style="display:flex;justify-content:space-between;margin-bottom:6px">
@@ -963,8 +986,8 @@ function showMyWanted() {
       </div>`).join('');
   render(`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="font-size:1.05rem;font-weight:700;color:#1a1a2e">החיפושים שלי</div>
-      <button class="mg-btn mg-btn-primary" style="padding:8px 18px;font-size:.83rem;background:#1a3a6c" onclick="goWantedForm()">+ פרסם חיפוש</button>
+      <div style="font-size:1.05rem;font-weight:700;color:#1a1a2e">הביקושים שלי</div>
+      <button class="mg-btn mg-btn-primary" style="padding:8px 18px;font-size:.83rem;background:#1a3a6c" onclick="goWantedForm()">+ פרסם ביקוש</button>
     </div>
     <button class="mg-back" onclick="goDash()">← חזרה לדשבורד</button>
     ${alert_html()}${cards}
@@ -1017,7 +1040,7 @@ function showMySwap() {
 }
 
 async function loadMyWanted() {
-  render(`<div class="mg-loading">טוען חיפושים…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
+  render(`<div class="mg-loading">טוען ביקושים…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
   const r=await api('my_wanted');
   if(r.ok===false&&r.error?.includes('מאומת')){ doLogout(); return; }
   S.myWanted=r.listings||[];
@@ -1058,14 +1081,14 @@ async function doPublishWanted() {
     features:feats,
   });
   if(!r.ok){ S.error=r.error; showWantedForm(); return; }
-  S.success='החיפוש פורסם! 🎉'; S.myWantedLoaded=false; S.wantedLoaded=false; goDash();
+  S.success='הביקוש פורסם! 🎉'; S.myWantedLoaded=false; S.wantedLoaded=false; goDash();
 }
 
 async function doDeleteWanted(aptId) {
-  if(!confirm('להסיר חיפוש זה?')) return;
+  if(!confirm('להסיר ביקוש זה?')) return;
   const r=await api('delete_wanted',{apt_id:aptId});
   if(!r.ok){ S.error=r.error; showMyWanted(); return; }
-  S.success='החיפוש הוסר.'; S.myWantedLoaded=false; S.wantedLoaded=false; goMyWanted();
+  S.success='הביקוש הוסר.'; S.myWantedLoaded=false; S.wantedLoaded=false; goMyWanted();
 }
 
 async function doPublishSwap() {
@@ -1251,6 +1274,7 @@ Object.assign(window,{S,goHome,goLogin,goDash,goForm,goListings,goWantedForm,goM
   addImgs,removeImg,updateNhDatalist,toggleFeat,resetFilters,applyFilter,closeAd,loadSwapListings});
 
 loadAllListings();
+loadWantedListings();
 setTimeout(showAd, 4000);
 
 })();
