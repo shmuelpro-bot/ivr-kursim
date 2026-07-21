@@ -675,9 +675,7 @@ function showForm() {
             ${[1,2,3,4,5,6,7,8].map(i=>`<option value="${i}" ${i===3?'selected':''}>${i} חד'</option>`).join('')}
           </select></div>
         <div class="mg-col"><label class="mg-label">מיטות</label>
-          <select id="mg-beds" class="mg-select">
-            ${[1,2,3,4,5,6,7,8,10,12].map(i=>`<option value="${i}" ${i===4?'selected':''}>${i} מיטות</option>`).join('')}
-          </select></div>
+          <input id="mg-beds" class="mg-input" type="number" min="1" max="99" value="4" placeholder="מספר מיטות"></div>
       </div>
     </div>
     <div class="mg-card">
@@ -860,9 +858,7 @@ function showWantedForm() {
             ${[1,2,3,4,5,6,7,8].map(i=>`<option value="${i}">${i} חד'</option>`).join('')}
           </select></div>
         <div class="mg-col"><label class="mg-label">מינ׳ מיטות</label>
-          <select id="wf-beds" class="mg-select">
-            ${[1,2,3,4,5,6,7,8,10,12].map(i=>`<option value="${i}" ${i===2?'selected':''}>${i} מיטות</option>`).join('')}
-          </select></div>
+          <input id="wf-beds" class="mg-input" type="number" min="1" max="99" value="2" placeholder="מינימום מיטות"></div>
         <div class="mg-col"><label class="mg-label">תקציב מקסימלי (₪)</label>
           <input id="wf-price" class="mg-input" type="number" min="0" max="99999" value="0" placeholder="0 = לא מגביל"></div>
       </div>
@@ -928,9 +924,7 @@ function showSwapForm() {
             ${[1,2,3,4,5,6,7,8].map(i=>`<option value="${i}" ${i===3?'selected':''}>${i} חד'</option>`).join('')}
           </select></div>
         <div class="mg-col"><label class="mg-label">מיטות</label>
-          <select id="sf-beds" class="mg-select">
-            ${[1,2,3,4,5,6,7,8,10,12].map(i=>`<option value="${i}" ${i===4?'selected':''}>${i} מיטות</option>`).join('')}
-          </select></div>
+          <input id="sf-beds" class="mg-input" type="number" min="1" max="99" value="4" placeholder="מספר מיטות"></div>
       </div>
     </div>
     <div class="mg-card">
