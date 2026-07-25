@@ -244,7 +244,8 @@ function aptCard(a, fd) {
   const img1    = a.images?.[0];
   const feats   = (a.features||[]).map(f=>`<span class="mg-badge mg-badge-blue">${FMAP[f]||f}</span>`).join('');
   const price   = a.price > 0 ? `<div style="font-size:1rem;font-weight:700;color:#c8a256;margin-top:3px">₪${Number(a.price).toLocaleString()}<span style="font-size:.68rem;color:#8a8075;font-weight:400"> ל-24ש'</span></div>` : '';
-  const roomsLbl = a.bedrooms==0 ? 'סטודיו' : (a.beds>0 ? a.beds+' חדרים, מתוכם '+a.bedrooms+' חדרי שינה' : a.bedrooms+' חדרי שינה');
+  const roomsLbl = a.bedrooms==0 ? 'סטודיו' : (a.total_rooms>0 ? a.total_rooms+' חדרים, מתוכם '+a.bedrooms+' חדרי שינה' : a.bedrooms+' חדרי שינה');
+  const bedsLbl  = a.beds>0 ? a.beds+' מיטות' : '';
   return `
     <div class="mg-listing" style="border-right-color:#1a5c40">
       <div class="mg-listing-img">${img1?`<img src="${esc(img1)}" loading="lazy">`:'<span style="color:#c0bbb4">🏠</span>'}</div>
@@ -258,6 +259,7 @@ function aptCard(a, fd) {
             ${price}
             <div style="margin-top:6px;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
               <span style="font-size:.92rem;font-weight:800;color:#1a1a2e">🚪 ${esc(roomsLbl)}</span>
+              ${bedsLbl?`<span style="font-size:.82rem;font-weight:600;color:#1a5c40">🛏 ${esc(bedsLbl)}</span>`:''}
             </div>
           </div>
         </div>
@@ -310,7 +312,8 @@ function swapCard(a, fd) {
   const type    = fd.apt_types?.[a.apt_type] || '';
   const img1    = a.images?.[0];
   const feats   = (a.features||[]).map(f=>`<span class="mg-badge mg-badge-blue">${FMAP[f]||f}</span>`).join('');
-  const roomsLbl = a.bedrooms==0 ? 'סטודיו' : (a.beds>0 ? a.beds+' חדרים, מתוכם '+a.bedrooms+' חדרי שינה' : a.bedrooms+' חדרי שינה');
+  const roomsLbl = a.bedrooms==0 ? 'סטודיו' : (a.total_rooms>0 ? a.total_rooms+' חדרים, מתוכם '+a.bedrooms+' חדרי שינה' : a.bedrooms+' חדרי שינה');
+  const bedsLbl  = a.beds>0 ? a.beds+' מיטות' : '';
   return `
     <div class="mg-listing" style="border-right-color:#5c1a9a">
       <div style="padding:7px 18px;background:#f5f0fc;border-bottom:1px solid #ddd8d0">
@@ -326,6 +329,7 @@ function swapCard(a, fd) {
           <div style="text-align:left;flex-shrink:0;padding-right:8px">
             <div style="margin-top:6px;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
               <span style="font-size:.92rem;font-weight:800;color:#1a1a2e">🚪 ${esc(roomsLbl)}</span>
+              ${bedsLbl?`<span style="font-size:.82rem;font-weight:600;color:#5c1a9a">🛏 ${esc(bedsLbl)}</span>`:''}
             </div>
           </div>
         </div>
@@ -674,13 +678,15 @@ function showForm() {
       <div class="mg-row">
         <div class="mg-col"><label class="mg-label">סוג דירה *</label>
           <select id="mg-type" class="mg-select"><option value="">בחר…</option>${types}</select></div>
-        <div class="mg-col"><label class="mg-label">מספר חדרי שינה</label>
+        <div class="mg-col"><label class="mg-label">מספר חדרים (סה״כ)</label>
+          <input id="mg-total-rooms" class="mg-input" type="number" min="1" max="99" value="4" placeholder="סה״כ חדרים בדירה"></div>
+        <div class="mg-col"><label class="mg-label">חדרי שינה</label>
           <select id="mg-rooms" class="mg-select">
             <option value="0">סטודיו</option>
-            ${[1,2,3,4,5,6,7,8].map(i=>`<option value="${i}" ${i===3?'selected':''}>${i} חד'</option>`).join('')}
+            ${[1,2,3,4,5,6,7,8].map(i=>`<option value="${i}" ${i===2?'selected':''}>${i} חדרי שינה</option>`).join('')}
           </select></div>
-        <div class="mg-col"><label class="mg-label">מספר חדרים</label>
-          <input id="mg-beds" class="mg-input" type="number" min="1" max="99" value="4" placeholder="סה״כ חדרים בדירה"></div>
+        <div class="mg-col"><label class="mg-label">מספר מיטות</label>
+          <input id="mg-beds" class="mg-input" type="number" min="1" max="99" value="4" placeholder="מספר מיטות"></div>
       </div>
     </div>
     <div class="mg-card">
@@ -856,13 +862,15 @@ function showWantedForm() {
           <select id="wf-rent" class="mg-select">${rentals}</select></div>
       </div>
       <div class="mg-row" style="margin-top:12px">
-        <div class="mg-col"><label class="mg-label">מינ׳ מספר חדרי שינה</label>
+        <div class="mg-col"><label class="mg-label">מינ׳ חדרים (סה״כ)</label>
+          <input id="wf-total-rooms" class="mg-input" type="number" min="1" max="99" value="3" placeholder="מינימום חדרים"></div>
+        <div class="mg-col"><label class="mg-label">מינ׳ חדרי שינה</label>
           <select id="wf-rooms" class="mg-select">
             <option value="0">לא משנה</option>
-            ${[1,2,3,4,5,6,7,8].map(i=>`<option value="${i}">${i} חד'</option>`).join('')}
+            ${[1,2,3,4,5,6,7,8].map(i=>`<option value="${i}">${i} חדרי שינה</option>`).join('')}
           </select></div>
-        <div class="mg-col"><label class="mg-label">מינ׳ מספר חדרים</label>
-          <input id="wf-beds" class="mg-input" type="number" min="1" max="99" value="2" placeholder="מינימום חדרים"></div>
+        <div class="mg-col"><label class="mg-label">מינ׳ מיטות</label>
+          <input id="wf-beds" class="mg-input" type="number" min="1" max="99" value="2" placeholder="מינימום מיטות"></div>
         <div class="mg-col"><label class="mg-label">תקציב מקסימלי (₪)</label>
           <input id="wf-price" class="mg-input" type="number" min="0" max="99999" value="0" placeholder="0 = לא מגביל"></div>
       </div>
@@ -922,13 +930,15 @@ function showSwapForm() {
       <div class="mg-row">
         <div class="mg-col"><label class="mg-label">סוג דירה *</label>
           <select id="sf-type" class="mg-select"><option value="">בחר…</option>${types}</select></div>
-        <div class="mg-col"><label class="mg-label">מספר חדרי שינה</label>
+        <div class="mg-col"><label class="mg-label">מספר חדרים (סה״כ)</label>
+          <input id="sf-total-rooms" class="mg-input" type="number" min="1" max="99" value="4" placeholder="סה״כ חדרים בדירה"></div>
+        <div class="mg-col"><label class="mg-label">חדרי שינה</label>
           <select id="sf-rooms" class="mg-select">
             <option value="0">סטודיו</option>
-            ${[1,2,3,4,5,6,7,8].map(i=>`<option value="${i}" ${i===3?'selected':''}>${i} חד'</option>`).join('')}
+            ${[1,2,3,4,5,6,7,8].map(i=>`<option value="${i}" ${i===2?'selected':''}>${i} חדרי שינה</option>`).join('')}
           </select></div>
-        <div class="mg-col"><label class="mg-label">מספר חדרים</label>
-          <input id="sf-beds" class="mg-input" type="number" min="1" max="99" value="4" placeholder="סה״כ חדרים בדירה"></div>
+        <div class="mg-col"><label class="mg-label">מספר מיטות</label>
+          <input id="sf-beds" class="mg-input" type="number" min="1" max="99" value="4" placeholder="מספר מיטות"></div>
       </div>
     </div>
     <div class="mg-card">
@@ -1082,6 +1092,7 @@ async function doPublishWanted() {
     rental_type:document.getElementById('wf-rent')?.value||'1',
     bedrooms:document.getElementById('wf-rooms')?.value||'0',
     beds:document.getElementById('wf-beds')?.value||'2',
+    total_rooms:document.getElementById('wf-total-rooms')?.value||'0',
     price:document.getElementById('wf-price')?.value||'0',
     description:document.getElementById('wf-desc')?.value||'',
     contact_name:document.getElementById('wf-cname')?.value||'',
@@ -1120,6 +1131,7 @@ async function doPublishSwap() {
     apt_type:aptType,
     bedrooms:document.getElementById('sf-rooms')?.value||'1',
     beds:document.getElementById('sf-beds')?.value||'4',
+    total_rooms:document.getElementById('sf-total-rooms')?.value||'0',
     floor:document.getElementById('sf-floor')?.value||'',
     features:feats,
     description:document.getElementById('sf-desc')?.value||'',
@@ -1194,6 +1206,7 @@ async function doPublish() {
     apt_type:aptType,
     bedrooms:document.getElementById('mg-rooms')?.value||'1',
     beds:document.getElementById('mg-beds')?.value||'4',
+    total_rooms:document.getElementById('mg-total-rooms')?.value||'0',
     rental_type:document.getElementById('mg-rent')?.value||'1',
     price:document.getElementById('mg-price')?.value||'0',
     floor:document.getElementById('mg-floor')?.value||'',

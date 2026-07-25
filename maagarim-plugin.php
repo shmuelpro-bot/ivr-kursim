@@ -525,6 +525,7 @@ function mg_post_to_listing( int $post_id ): array {
         'rental_type'      => (int) $get( '_maagarim_rental_type', 1 ),
         'beds'             => (int) $get( '_maagarim_beds', 1 ),
         'bedrooms'         => (int) $get( '_maagarim_bedrooms', 1 ),
+        'total_rooms'      => (int) $get( '_maagarim_total_rooms', 0 ),
         'price'            => (int) $get( '_maagarim_price', 0 ),
         'floor'            => $get( '_maagarim_floor', '' ),
         'features'         => $features,
@@ -561,6 +562,7 @@ function mg_action_publish( array $body, string $token ): WP_REST_Response {
     $rental_type  = (int) ( $body['rental_type']  ?? 1 );
     $beds         = (int) ( $body['beds']         ?? 1 );
     $bedrooms     = (int) ( $body['bedrooms']     ?? 1 );
+    $total_rooms  = (int) ( $body['total_rooms']  ?? 0 );
     $price        = (int) ( $body['price']        ?? 0 );
     $floor        = sanitize_text_field( $body['floor']         ?? '' );
     $street       = sanitize_text_field( $body['street']        ?? '' );
@@ -572,8 +574,9 @@ function mg_action_publish( array $body, string $token ): WP_REST_Response {
     if ( ! array_key_exists( $rental_type, MG_RENTAL_TYPES ) ) $rental_type = 1;
 
     // Clamp numeric fields
-    $beds     = max( 1, min( 99, $beds ) );
-    $bedrooms = max( 0, min( 20, $bedrooms ) );
+    $beds        = max( 1, min( 99, $beds ) );
+    $bedrooms    = max( 0, min( 20, $bedrooms ) );
+    $total_rooms = max( 0, min( 99, $total_rooms ) );
     $price    = max( 0, min( 99999, $price ) );
 
     // Validate features whitelist
@@ -617,6 +620,7 @@ function mg_action_publish( array $body, string $token ): WP_REST_Response {
         '_maagarim_rental_type'  => $rental_type,
         '_maagarim_beds'         => $beds,
         '_maagarim_bedrooms'     => $bedrooms,
+        '_maagarim_total_rooms'  => $total_rooms,
         '_maagarim_price'        => $price,
         '_maagarim_floor'        => $floor,
         '_maagarim_features'     => json_encode( $features, JSON_UNESCAPED_UNICODE ),
@@ -725,9 +729,10 @@ function mg_action_publish_wanted( array $body, string $token ): WP_REST_Respons
     $neighborhood_name = sanitize_text_field( $body['neighborhood_name'] ?? '' );
     $apt_type      = (int) ( $body['apt_type']      ?? 0 );
     $rental_type   = (int) ( $body['rental_type']   ?? 1 );
-    $beds          = max( 1, min( 99, (int) ( $body['beds']      ?? 1 ) ) );
-    $bedrooms      = max( 0, min( 20, (int) ( $body['bedrooms']  ?? 0 ) ) );
-    $price_max     = max( 0, min( 99999, (int) ( $body['price']  ?? 0 ) ) );
+    $beds          = max( 1, min( 99, (int) ( $body['beds']         ?? 1 ) ) );
+    $bedrooms      = max( 0, min( 20, (int) ( $body['bedrooms']    ?? 0 ) ) );
+    $total_rooms   = max( 0, min( 99, (int) ( $body['total_rooms'] ?? 0 ) ) );
+    $price_max     = max( 0, min( 99999, (int) ( $body['price']    ?? 0 ) ) );
     $description   = sanitize_textarea_field( $body['description']  ?? '' );
     $contact_name  = sanitize_text_field( $body['contact_name']  ?? '' );
     $contact_phone = sanitize_text_field( $body['contact_phone'] ?? '' );
@@ -757,6 +762,7 @@ function mg_action_publish_wanted( array $body, string $token ): WP_REST_Respons
         '_maagarim_rental_type'  => $rental_type,
         '_maagarim_beds'         => $beds,
         '_maagarim_bedrooms'     => $bedrooms,
+        '_maagarim_total_rooms'  => $total_rooms,
         '_maagarim_price'        => $price_max,
         '_maagarim_features'     => json_encode( $features, JSON_UNESCAPED_UNICODE ),
         '_maagarim_description'  => $description,
@@ -833,6 +839,7 @@ function mg_action_publish_swap( array $body, string $token ): WP_REST_Response 
     $neighborhood_name = sanitize_text_field( $body['neighborhood_name'] ?? '' );
     $beds              = max( 1, min( 99, (int) ( $body['beds']         ?? 1 ) ) );
     $bedrooms          = max( 0, min( 20, (int) ( $body['bedrooms']     ?? 1 ) ) );
+    $total_rooms       = max( 0, min( 99, (int) ( $body['total_rooms']  ?? 0 ) ) );
     $floor             = sanitize_text_field( $body['floor']         ?? '' );
     $street            = sanitize_text_field( $body['street']        ?? '' );
     $building_num      = sanitize_text_field( $body['building_num']  ?? '' );
@@ -867,6 +874,7 @@ function mg_action_publish_swap( array $body, string $token ): WP_REST_Response 
         '_maagarim_apt_type'          => $apt_type,
         '_maagarim_beds'              => $beds,
         '_maagarim_bedrooms'          => $bedrooms,
+        '_maagarim_total_rooms'       => $total_rooms,
         '_maagarim_floor'             => $floor,
         '_maagarim_features'          => json_encode( $features, JSON_UNESCAPED_UNICODE ),
         '_maagarim_description'       => $description,
