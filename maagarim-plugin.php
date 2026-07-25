@@ -298,6 +298,9 @@ function mg_api_handler( WP_REST_Request $request ): WP_REST_Response {
         case 'publish':
             return mg_action_publish( $body, $token );
 
+        case 'update_apt':
+            return mg_action_update_apt( $body, $token );
+
         case 'delete_apt':
             return mg_action_delete_apt( $body, $token );
 
@@ -668,6 +671,80 @@ function mg_action_delete_apt( array $body, string $token ): WP_REST_Response {
     wp_trash_post( $apt_id );
 
     return mg_json( [ 'ok' => true ] );
+}
+
+// ── Action: update_apt ───────────────────────────────────────────────────────
+
+function mg_action_update_apt( array $body, string $token ): WP_REST_Response {
+    $email = mg_email_from_token( $token );
+    if ( ! $email ) return mg_err( 'טוקן לא מאומת – נא להתחבר מחדש', 401 );
+
+    $apt_id = (int) ( $body['apt_id'] ?? 0 );
+    if ( $apt_id <= 0 ) return mg_err( 'מזהה לא תקין' );
+
+    $post = get_post( $apt_id );
+    if ( ! $post || $post->post_type !== 'maagarim_apt' ) return mg_err( 'פרסום לא נמצא' );
+
+    $owner = get_post_meta( $apt_id, '_maagarim_email', true );
+    if ( $owner !== $email ) return mg_err( 'אין הרשאה לעדכן פרסום זה', 403 );
+
+    $city      = (int) ( $body['city']      ?? 0 );
+    $city_name = sanitize_text_field( $body['city_name'] ?? '' );
+    $apt_type  = (int) ( $body['apt_type'] ?? 0 );
+
+    if ( $city !== 0 && ! array_key_exists( $city, MG_CITIES ) ) return mg_err( 'עיר לא תקינה' );
+    if ( $city === 0 && empty( $city_name ) ) return mg_err( 'נא להזין שם עיר' );
+    if ( ! array_key_exists( $apt_type, MG_APT_TYPES ) ) return mg_err( 'סוג דירה לא תקין' );
+
+    $neighborhood      = (int) ( $body['neighborhood']      ?? 0 );
+    $neighborhood_name = sanitize_text_field( $body['neighborhood_name'] ?? '' );
+    $rental_type  = (int) ( $body['rental_type']  ?? 1 );
+    $beds         = max( 1, min( 99, (int) ( $body['beds']        ?? 1 ) ) );
+    $bedrooms     = max( 0, min( 20, (int) ( $body['bedrooms']    ?? 1 ) ) );
+    $total_rooms  = max( 0, min( 99, (int) ( $body['total_rooms'] ?? 0 ) ) );
+    $price        = max( 0, min( 99999, (int) ( $body['price']    ?? 0 ) ) );
+    $floor        = sanitize_text_field( $body['floor']        ?? '' );
+    $street       = sanitize_text_field( $body['street']       ?? '' );
+    $building_num = sanitize_text_field( $body['building_num'] ?? '' );
+    $description  = sanitize_textarea_field( $body['description']  ?? '' );
+    $contact_name = sanitize_text_field( $body['contact_name']  ?? '' );
+    $contact_phone= sanitize_text_field( $body['contact_phone'] ?? '' );
+
+    if ( ! array_key_exists( $rental_type, MG_RENTAL_TYPES ) ) $rental_type = 1;
+
+    $raw_features = is_array( $body['features'] ?? null ) ? $body['features'] : [];
+    $features     = array_values( array_filter( $raw_features, fn( $f ) => in_array( $f, MG_VALID_FEATURES, true ) ) );
+
+    $new_images = mg_save_images( $body['images'] ?? [], $email );
+    $image_urls = $new_images ?: json_decode( get_post_meta( $apt_id, '_maagarim_images', true ) ?: '[]', true );
+
+    $display_city = $city !== 0 ? ( MG_CITIES[ $city ] ?? $city_name ) : $city_name;
+    wp_update_post( [ 'ID' => $apt_id, 'post_title' => $display_city . ' – ' . ( MG_APT_TYPES[ $apt_type ] ?? '' ) ] );
+
+    foreach ( [
+        '_maagarim_city'              => $city,
+        '_maagarim_city_name'         => $city === 0 ? $city_name : '',
+        '_maagarim_neighborhood'      => $neighborhood,
+        '_maagarim_neighborhood_name' => $neighborhood_name,
+        '_maagarim_street'            => $street,
+        '_maagarim_building_num'      => $building_num,
+        '_maagarim_apt_type'          => $apt_type,
+        '_maagarim_rental_type'       => $rental_type,
+        '_maagarim_beds'              => $beds,
+        '_maagarim_bedrooms'          => $bedrooms,
+        '_maagarim_total_rooms'       => $total_rooms,
+        '_maagarim_price'             => $price,
+        '_maagarim_floor'             => $floor,
+        '_maagarim_features'          => json_encode( $features, JSON_UNESCAPED_UNICODE ),
+        '_maagarim_description'       => $description,
+        '_maagarim_contact_name'      => $contact_name,
+        '_maagarim_contact_phone'     => $contact_phone,
+        '_maagarim_images'            => json_encode( $image_urls, JSON_UNESCAPED_UNICODE ),
+    ] as $key => $value ) {
+        update_post_meta( $apt_id, $key, $value );
+    }
+
+    return mg_json( [ 'ok' => true, 'id' => (string) $apt_id ] );
 }
 
 // ── Image Handling ────────────────────────────────────────────────────────────

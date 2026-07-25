@@ -144,6 +144,7 @@ const S = {
   customCities:JSON.parse(localStorage.getItem('mg_custom_cities')||'[]'),
   customNhs:JSON.parse(localStorage.getItem('mg_custom_nhs')||'{}'),
   swapListings:[], swapLoaded:false, mySwap:[], mySwapLoaded:false,
+  editingId:null,
 };
 
 const FMAP = {
@@ -729,7 +730,7 @@ function showForm() {
           <input id="mg-cphone" class="mg-input" placeholder="050-000-0000" type="tel"></div>
       </div>
     </div>
-    <button class="mg-btn mg-btn-success mg-btn-full" style="font-size:.95rem;padding:14px" onclick="doPublish()">פרסם דירה עכשיו</button>
+    <button class="mg-btn mg-btn-success mg-btn-full" style="font-size:.95rem;padding:14px" onclick="doPublish()">${S.editingId?'✅ עדכן דירה':'פרסם דירה עכשיו'}</button>
     <div style="height:24px"></div>
   `);
   const ta=document.getElementById('mg-desc'),tc=document.getElementById('mg-desc-c');
@@ -771,7 +772,10 @@ function showListings() {
             ${a.description?`<p style="font-size:.82rem;color:#8a8075;margin:0 0 8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(a.description)}</p>`:''}
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #f0ede7">
               <small style="color:#b0a898">${rN(a.rental_type)}${a.expires>0?' · תקף עד '+new Date(a.expires*1000).toLocaleDateString('he-IL'):''}</small>
-              <button class="mg-btn mg-btn-danger" onclick="doDelete('${esc(a.id)}')">הסר</button>
+              <div style="display:flex;gap:6px">
+                <button class="mg-btn mg-btn-outline" style="padding:5px 12px;font-size:.78rem;border-radius:6px" onclick="goEdit('${esc(a.id)}')">✏️ ערוך</button>
+                <button class="mg-btn mg-btn-danger" onclick="doDelete('${esc(a.id)}')">הסר</button>
+              </div>
             </div>
           </div>
         </div>`;
@@ -791,7 +795,36 @@ function showListings() {
 function goHome()       { S.error='';S.success='';S.step='home'; if(!S.allLoaded) loadAllListings(); else showHome(); }
 function goLogin(to)    { S._afterLogin=to||'form';S.error='';S.success=''; showLogin(to); }
 function goDash()       { S.error='';S.success='';S.step='dashboard'; showDashboard(); }
-function goForm()       { S.error='';S.success='';S.step='form';S.imgs=[]; showForm(); }
+function goForm()       { S.error='';S.success='';S.step='form';S.imgs=[];S.editingId=null; showForm(); }
+function goEdit(aptId)  {
+  S.error='';S.success='';S.step='form';S.imgs=[];S.editingId=aptId;
+  showForm();
+  const apt=(S.listings||[]).find(a=>a.id==aptId);
+  if(!apt) return;
+  setTimeout(()=>{
+    const fd=S.fd||S.allFd||{};
+    const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=(v==null?'':v); };
+    set('mg-city', apt.city_name||(fd.cities?.[apt.city])||'');
+    updateNhDatalist('mg');
+    set('mg-nh', apt.neighborhood_name||(fd.neighborhoods?.[apt.city]?.[apt.neighborhood])||'');
+    set('mg-street', apt.street);
+    set('mg-building', apt.building_num);
+    set('mg-type', apt.apt_type);
+    set('mg-rooms', apt.bedrooms);
+    set('mg-beds', apt.beds);
+    set('mg-total-rooms', apt.total_rooms||'');
+    set('mg-rent', apt.rental_type);
+    set('mg-price', apt.price);
+    set('mg-floor', apt.floor);
+    set('mg-desc', apt.description);
+    set('mg-cname', apt.contact_name);
+    set('mg-cphone', apt.contact_phone);
+    (apt.features||[]).forEach(f=>{
+      const cb=document.querySelector(`#mg-app input[value="${f}"][name="feat"]`);
+      if(cb) cb.checked=true;
+    });
+  }, 80);
+}
 function goListings()   { S.error='';S.success='';S.step='listings';S.listingsLoaded=false; showListings(); }
 function goWantedForm() { S.error='';S.success='';S.step='wanted_form'; showWantedForm(); }
 function goMyWanted()   { S.error='';S.success='';S.step='my_wanted'; showMyWanted(); }
@@ -1196,9 +1229,10 @@ async function doPublish() {
   const nhVal=(document.getElementById('mg-nh')?.value||'').trim();
   const rn=resolveNhByName(effCityId, nhVal);
   const feats=[...document.querySelectorAll('input[name=feat]:checked')].map(i=>i.value);
-  render(`<div class="mg-loading">מעלה…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
+  render(`<div class="mg-loading">${S.editingId?'מעדכן…':'מעלה…'}<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
   const images=await Promise.all(S.imgs.map(imgToB64));
-  const r=await api('publish',{
+  const action=S.editingId?'update_apt':'publish';
+  const body={
     city:rc.cityId, city_name:rc.cityName,
     neighborhood:rn.nhId, neighborhood_name:rn.nhName,
     street:document.getElementById('mg-street')?.value||'',
@@ -1215,9 +1249,12 @@ async function doPublish() {
     contact_name:document.getElementById('mg-cname')?.value||'',
     contact_phone:document.getElementById('mg-cphone')?.value||'',
     images,
-  });
+  };
+  if(S.editingId) body.apt_id=S.editingId;
+  const r=await api(action, body);
   if(!r.ok){ S.error=r.error; showForm(); return; }
-  S.success='הדירה פורסמה בהצלחה! 🎉'; S.listingsLoaded=false; S.allLoaded=false; S.imgs=[]; goListings();
+  S.success=S.editingId?'הדירה עודכנה! ✅':'הדירה פורסמה בהצלחה! 🎉';
+  S.editingId=null; S.listingsLoaded=false; S.allLoaded=false; S.imgs=[]; goListings();
 }
 
 async function doDelete(aptId) {
@@ -1290,7 +1327,7 @@ function showAd() {
 function closeAd() { const el=document.getElementById('mg-ad-overlay'); if(el) el.remove(); }
 
 /* ── Init ── */
-Object.assign(window,{S,goHome,goLogin,goDash,goForm,goListings,goWantedForm,goMyWanted,goSwapForm,goMySwap,setTab,
+Object.assign(window,{S,goHome,goLogin,goDash,goForm,goEdit,goListings,goWantedForm,goMyWanted,goSwapForm,goMySwap,setTab,
   doEmailLogin,doPublish,doDelete,doPublishWanted,doDeleteWanted,doPublishSwap,doDeleteSwap,doLogout,
   addImgs,removeImg,updateNhDatalist,toggleFeat,resetFilters,applyFilter,closeAd,loadSwapListings});
 
