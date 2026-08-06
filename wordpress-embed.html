@@ -1254,8 +1254,8 @@ async function doPublish() {
   };
   if(S.editingId) body.apt_id=S.editingId;
   const r=await api(action, body);
-  if(!r.ok){ S.error=r.error; showForm(); return; }
-  S.success=S.editingId?'הדירה עודכנה! ✅':'הדירה פורסמה בהצלחה! 🎉';
+  if(!r.ok){ S.error='שגיאה: '+r.error+' | טלפון שנשלח: '+(body.contact_phone||'ריק'); showForm(); return; }
+  S.success=(S.editingId?'עודכן ✅':'פורסם 🎉')+' | טלפון: '+(body.contact_phone||'לא הוזן')+' | תשובה: '+JSON.stringify(r);
   S.editingId=null; S.listingsLoaded=false; S.allLoaded=false; S.imgs=[]; goListings();
 }
 
