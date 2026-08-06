@@ -225,7 +225,7 @@ function toWaNum(ph) {
 }
 function contactBlock(a, bgColor, bdColor, linkColor) {
   const ph = a.contact_phone ? `<a href="tel:${esc(a.contact_phone)}" style="color:${linkColor};font-weight:700;text-decoration:none;font-size:.87rem">📞 ${esc(a.contact_phone)}</a>` : '';
-  const waNum = a.contact_phone ? toWaNum(a.contact_phone) : '';
+  const waNum = (a.whatsapp||a.contact_phone) ? toWaNum(a.whatsapp||a.contact_phone) : '';
   const wa = waNum ? `<a href="https://wa.me/${waNum}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;background:#25d366;color:#fff;font-weight:700;text-decoration:none;font-size:.82rem;padding:4px 10px;border-radius:20px">💬 וואטסאפ</a>` : '';
   const em = a.contact_email ? `<a href="mailto:${esc(a.contact_email)}" style="color:${linkColor};font-weight:600;text-decoration:none;font-size:.82rem">${esc(a.contact_email)}</a>` : '';
   const parts = [ph, wa, em].filter(Boolean);
@@ -504,14 +504,25 @@ function showHome() {
       </div>
     </div>
     ${alert_html()}
+    ${S.token?`
+    <div style="background:linear-gradient(135deg,#1a5c40 0%,#1a1a2e 100%);border-radius:12px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.62rem;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.7px;text-transform:uppercase;margin-bottom:3px">האזור האישי שלך</div>
+        <div style="font-size:.82rem;color:rgba(255,255,255,.8);word-break:break-all">${esc(S.email||'')}</div>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+        <button onclick="goForm()" style="padding:7px 15px;font-size:.78rem;background:#c8a256;color:#1a1a2e;border:none;border-radius:7px;cursor:pointer;font-weight:700;font-family:inherit">+ פרסם</button>
+        <button onclick="goDash()" style="padding:7px 15px;font-size:.78rem;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:7px;cursor:pointer;font-family:inherit">הפרסומים שלי</button>
+        <button onclick="doLogout()" style="background:none;border:none;color:rgba(255,255,255,.35);font-size:.75rem;cursor:pointer;font-family:inherit;padding:4px 6px">יציאה</button>
+      </div>
+    </div>`:''}
     <div class="mg-tabs">
       <button class="mg-tab ${isListings?'act':''}" onclick="setTab('listings')">להשכרה</button>
       <button class="mg-tab ${isSwap?'act-p':''}" onclick="setTab('swap')">החלפות</button>
       <button class="mg-tab ${isWanted?'act':''}" onclick="setTab('wanted')">ביקושים</button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:16px">
-      <button class="mg-btn mg-btn-primary" onclick="goLogin(${pubLoginArg})" style="flex:1;${pubBtnStyle}">${pubLabel}</button>
-      ${S.token?`<button class="mg-btn mg-btn-outline" onclick="goDash()" style="flex:1">הפרסומים שלי</button>`:''}
+      <button class="mg-btn mg-btn-primary" onclick="${S.token?`go${isSwap?'SwapForm':isWanted?'WantedForm':'Form'}()`:`goLogin(${pubLoginArg})`}" style="flex:1;${pubBtnStyle}">${pubLabel}</button>
     </div>
     ${currentLoaded&&Object.keys(cities).length?`
     <div style="border-radius:var(--r);overflow:hidden;margin-bottom:16px;border:2px solid ${hasFilter?'#1a1a2e':'#ddd8d0'};background:#fff;transition:border-color .2s">
@@ -727,8 +738,9 @@ function showForm() {
         <div class="mg-col"><label class="mg-label">שם</label>
           <input id="mg-cname" class="mg-input mg-input-rtl" placeholder="שם מלא (אופציונלי)"></div>
         <div class="mg-col"><label class="mg-label">טלפון</label>
-          <input id="mg-cphone" class="mg-input" placeholder="050-000-0000" type="tel" oninput="document.getElementById('mg-phone-preview').textContent=this.value||'(ריק)'">
-          <div id="mg-phone-preview" style="font-size:.75rem;color:#1a5c40;margin-top:4px;font-weight:700">(ריק)</div></div>
+          <input id="mg-cphone" class="mg-input" placeholder="050-000-0000" type="tel"></div>
+        <div class="mg-col"><label class="mg-label">וואטסאפ (אם שונה)</label>
+          <input id="mg-wa" class="mg-input" placeholder="050-000-0000" type="tel"></div>
       </div>
     </div>
     <button class="mg-btn mg-btn-success mg-btn-full" style="font-size:.95rem;padding:14px" onclick="doPublish()">${S.editingId?'✅ עדכן דירה':'פרסם דירה עכשיו'}</button>
@@ -821,6 +833,7 @@ function goEdit(aptId)  {
     set('mg-desc', apt.description);
     set('mg-cname', apt.contact_name);
     set('mg-cphone', apt.contact_phone);
+    set('mg-wa', apt.whatsapp);
     (apt.features||[]).forEach(f=>{
       const cb=document.querySelector(`#mg-app input[value="${f}"][name="feat"]`);
       if(cb) cb.checked=true;
@@ -925,6 +938,8 @@ function showWantedForm() {
           <input id="wf-cname" class="mg-input mg-input-rtl" placeholder="שם מלא"></div>
         <div class="mg-col"><label class="mg-label">טלפון</label>
           <input id="wf-cphone" class="mg-input" placeholder="050-000-0000" type="tel"></div>
+        <div class="mg-col"><label class="mg-label">וואטסאפ (אם שונה)</label>
+          <input id="wf-wa" class="mg-input" placeholder="050-000-0000" type="tel"></div>
       </div>
     </div>
     <button class="mg-btn mg-btn-primary mg-btn-full" style="font-size:.95rem;padding:14px;background:#1a3a6c" onclick="doPublishWanted()">פרסם ביקוש</button>
@@ -1005,6 +1020,8 @@ function showSwapForm() {
           <input id="sf-cname" class="mg-input mg-input-rtl" placeholder="שם מלא (אופציונלי)"></div>
         <div class="mg-col"><label class="mg-label">טלפון</label>
           <input id="sf-cphone" class="mg-input" placeholder="050-000-0000" type="tel"></div>
+        <div class="mg-col"><label class="mg-label">וואטסאפ (אם שונה)</label>
+          <input id="sf-wa" class="mg-input" placeholder="050-000-0000" type="tel"></div>
       </div>
     </div>
     <button class="mg-btn mg-btn-full" style="font-size:.95rem;padding:14px;background:#5c1a9a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;letter-spacing:.35px;font-family:inherit" onclick="doPublishSwap()">פרסם להחלפה</button>
@@ -1129,12 +1146,13 @@ async function doPublishWanted() {
   const description = document.getElementById('wf-desc')?.value||'';
   const contact_name  = document.getElementById('wf-cname')?.value||'';
   const contact_phone = document.getElementById('wf-cphone')?.value||'';
+  const whatsapp      = document.getElementById('wf-wa')?.value||'';
   render(`<div class="mg-loading">שולח…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
   const r=await api('publish_wanted',{
     city:rc.cityId, city_name:rc.cityName,
     neighborhood:rn.nhId, neighborhood_name:rn.nhName,
     apt_type, rental_type, bedrooms, beds, total_rooms, price,
-    description, contact_name, contact_phone, features:feats,
+    description, contact_name, contact_phone, whatsapp, features:feats,
   });
   if(!r.ok){ S.error=r.error; showWantedForm(); return; }
   S.success='הביקוש פורסם! 🎉'; S.myWantedLoaded=false; S.wantedLoaded=false; goDash();
@@ -1167,6 +1185,7 @@ async function doPublishSwap() {
   const description  = document.getElementById('sf-desc')?.value||'';
   const contact_name = document.getElementById('sf-cname')?.value||'';
   const contact_phone= document.getElementById('sf-cphone')?.value||'';
+  const whatsapp     = document.getElementById('sf-wa')?.value||'';
   render(`<div class="mg-loading">מעלה…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
   const images=await Promise.all(S.imgs.map(imgToB64));
   const r=await api('publish_swap',{
@@ -1174,7 +1193,7 @@ async function doPublishSwap() {
     neighborhood:rn.nhId, neighborhood_name:rn.nhName,
     street, building_num, apt_type:aptType,
     bedrooms, beds, total_rooms, floor,
-    features:feats, description, contact_name, contact_phone,
+    features:feats, description, contact_name, contact_phone, whatsapp,
     images,
   });
   if(!r.ok){ S.error=r.error; showSwapForm(); return; }
@@ -1245,6 +1264,7 @@ async function doPublish() {
   const description  = document.getElementById('mg-desc')?.value||'';
   const contact_name = document.getElementById('mg-cname')?.value||'';
   const contact_phone= document.getElementById('mg-cphone')?.value||'';
+  const whatsapp     = document.getElementById('mg-wa')?.value||'';
   render(`<div class="mg-loading">${S.editingId?'מעדכן…':'מעלה…'}<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
   const images=await Promise.all(S.imgs.map(imgToB64));
   const action=S.editingId?'update_apt':'publish';
@@ -1253,13 +1273,13 @@ async function doPublish() {
     neighborhood:rn.nhId, neighborhood_name:rn.nhName,
     street, building_num, apt_type:aptType,
     bedrooms, beds, total_rooms, rental_type, price, floor,
-    features:feats, description, contact_name, contact_phone,
+    features:feats, description, contact_name, contact_phone, whatsapp,
     images,
   };
   if(S.editingId) body.apt_id=S.editingId;
   const r=await api(action, body);
-  if(!r.ok){ S.error='שגיאה: '+r.error+' | טל: '+(contact_phone||'ריק'); showForm(); return; }
-  S.success=(S.editingId?'עודכן ✅':'פורסם 🎉')+' | טלפון שנשלח: '+(contact_phone||'לא הוזן');
+  if(!r.ok){ S.error='שגיאה: '+r.error; showForm(); return; }
+  S.success=S.editingId?'עודכן ✅':'פורסם 🎉';
   S.editingId=null; S.listingsLoaded=false; S.allLoaded=false; S.imgs=[]; goListings();
 }
 

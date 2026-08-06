@@ -537,6 +537,7 @@ function mg_post_to_listing( int $post_id ): array {
         'description'      => $get( '_maagarim_description', '' ),
         'contact_name'     => $get( '_maagarim_contact_name', '' ),
         'contact_phone'    => $get( '_maagarim_contact_phone', '' ),
+        'whatsapp'         => $get( '_maagarim_whatsapp', '' ),
         'contact_email'    => $get( '_maagarim_email', '' ),
         'expires'          => (int) $get( '_maagarim_expires', 0 ),
         'images'           => $images,
@@ -575,6 +576,7 @@ function mg_action_publish( array $body, string $token ): WP_REST_Response {
     $description  = sanitize_textarea_field( $body['description']  ?? '' );
     $contact_name = sanitize_text_field( $body['contact_name']  ?? '' );
     $contact_phone= sanitize_text_field( $body['contact_phone'] ?? '' );
+    $whatsapp     = sanitize_text_field( $body['whatsapp']      ?? '' );
 
     if ( ! array_key_exists( $rental_type, MG_RENTAL_TYPES ) ) $rental_type = 1;
 
@@ -632,6 +634,7 @@ function mg_action_publish( array $body, string $token ): WP_REST_Response {
         '_maagarim_description'  => $description,
         '_maagarim_contact_name' => $contact_name,
         '_maagarim_contact_phone'=> $contact_phone,
+        '_maagarim_whatsapp'     => $whatsapp,
         '_maagarim_images'       => json_encode( $image_urls, JSON_UNESCAPED_UNICODE ),
         '_maagarim_expires'      => $expires,
     ];
@@ -711,6 +714,7 @@ function mg_action_update_apt( array $body, string $token ): WP_REST_Response {
     $description  = sanitize_textarea_field( $body['description']  ?? '' );
     $contact_name = sanitize_text_field( $body['contact_name']  ?? '' );
     $contact_phone= sanitize_text_field( $body['contact_phone'] ?? '' );
+    $whatsapp     = sanitize_text_field( $body['whatsapp']      ?? '' );
 
     if ( ! array_key_exists( $rental_type, MG_RENTAL_TYPES ) ) $rental_type = 1;
 
@@ -741,6 +745,7 @@ function mg_action_update_apt( array $body, string $token ): WP_REST_Response {
         '_maagarim_description'       => $description,
         '_maagarim_contact_name'      => $contact_name,
         '_maagarim_contact_phone'     => $contact_phone,
+        '_maagarim_whatsapp'          => $whatsapp,
         '_maagarim_images'            => json_encode( $image_urls, JSON_UNESCAPED_UNICODE ),
     ] as $key => $value ) {
         update_post_meta( $apt_id, $key, $value );
@@ -815,6 +820,7 @@ function mg_action_publish_wanted( array $body, string $token ): WP_REST_Respons
     $description   = sanitize_textarea_field( $body['description']  ?? '' );
     $contact_name  = sanitize_text_field( $body['contact_name']  ?? '' );
     $contact_phone = sanitize_text_field( $body['contact_phone'] ?? '' );
+    $whatsapp      = sanitize_text_field( $body['whatsapp']      ?? '' );
 
     if ( ! array_key_exists( $rental_type, MG_RENTAL_TYPES ) ) $rental_type = 1;
 
@@ -847,6 +853,7 @@ function mg_action_publish_wanted( array $body, string $token ): WP_REST_Respons
         '_maagarim_description'  => $description,
         '_maagarim_contact_name' => $contact_name,
         '_maagarim_contact_phone'=> $contact_phone,
+        '_maagarim_whatsapp'     => $whatsapp,
         '_maagarim_expires'      => 0,
     ] as $key => $value ) {
         update_post_meta( $post_id, $key, $value );
@@ -925,6 +932,7 @@ function mg_action_publish_swap( array $body, string $token ): WP_REST_Response 
     $description       = sanitize_textarea_field( $body['description']  ?? '' );
     $contact_name      = sanitize_text_field( $body['contact_name']  ?? '' );
     $contact_phone     = sanitize_text_field( $body['contact_phone'] ?? '' );
+    $whatsapp          = sanitize_text_field( $body['whatsapp']      ?? '' );
 
     $raw_features = is_array( $body['features'] ?? null ) ? $body['features'] : [];
     $features     = array_values( array_filter( $raw_features, fn( $f ) => in_array( $f, MG_VALID_FEATURES, true ) ) );
@@ -959,6 +967,7 @@ function mg_action_publish_swap( array $body, string $token ): WP_REST_Response 
         '_maagarim_description'       => $description,
         '_maagarim_contact_name'      => $contact_name,
         '_maagarim_contact_phone'     => $contact_phone,
+        '_maagarim_whatsapp'          => $whatsapp,
         '_maagarim_images'            => json_encode( $image_urls, JSON_UNESCAPED_UNICODE ),
         '_maagarim_expires'           => 0,
     ] as $key => $value ) {
