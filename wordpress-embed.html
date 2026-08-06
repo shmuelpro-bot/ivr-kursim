@@ -765,7 +765,8 @@ function showListings() {
             </div>
             <div style="margin-bottom:6px">
               <span class="mg-badge mg-badge-gray">${tN(a.apt_type)}</span>
-              <span class="mg-badge mg-badge-gray">${a.bedrooms==0?'סטודיו':(a.beds>0?a.beds+' חד׳ ('+a.bedrooms+' חדרי שינה)':a.bedrooms+" חדרי שינה")}</span>
+              <span class="mg-badge mg-badge-gray">${a.bedrooms==0?'סטודיו':(a.total_rooms>0?a.total_rooms+' חד׳, '+a.bedrooms+' חדרי שינה':a.bedrooms+' חדרי שינה')}</span>
+              ${a.beds>0?`<span class="mg-badge mg-badge-blue">🛏 ${a.beds} מיטות</span>`:''}
               ${a.price>0?`<span class="mg-badge mg-badge-gold">₪${Number(a.price).toLocaleString()}</span>`:''}
             </div>
             ${feats?`<div style="margin-bottom:7px">${feats}</div>`:''}
@@ -1071,7 +1072,8 @@ function showMySwap() {
             </div>
             <div style="margin-bottom:6px">
               <span class="mg-badge mg-badge-gray">${tN(a.apt_type)}</span>
-              <span class="mg-badge mg-badge-gray">${a.bedrooms==0?'סטודיו':(a.beds>0?a.beds+' חד׳ ('+a.bedrooms+' חדרי שינה)':a.bedrooms+" חדרי שינה")}</span>
+              <span class="mg-badge mg-badge-gray">${a.bedrooms==0?'סטודיו':(a.total_rooms>0?a.total_rooms+' חד׳, '+a.bedrooms+' חדרי שינה':a.bedrooms+' חדרי שינה')}</span>
+              ${a.beds>0?`<span class="mg-badge mg-badge-blue">🛏 ${a.beds} מיטות</span>`:''}
             </div>
             ${a.description?`<p style="font-size:.82rem;color:#8a8075;margin:0 0 8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(a.description)}</p>`:''}
             <div style="display:flex;justify-content:flex-end;margin-top:8px;padding-top:8px;border-top:1px solid #f0ede7">
