@@ -727,7 +727,8 @@ function showForm() {
         <div class="mg-col"><label class="mg-label">שם</label>
           <input id="mg-cname" class="mg-input mg-input-rtl" placeholder="שם מלא (אופציונלי)"></div>
         <div class="mg-col"><label class="mg-label">טלפון</label>
-          <input id="mg-cphone" class="mg-input" placeholder="050-000-0000" type="tel"></div>
+          <input id="mg-cphone" class="mg-input" placeholder="050-000-0000" type="tel" oninput="document.getElementById('mg-phone-preview').textContent=this.value||'(ריק)'">
+          <div id="mg-phone-preview" style="font-size:.75rem;color:#1a5c40;margin-top:4px;font-weight:700">(ריק)</div></div>
       </div>
     </div>
     <button class="mg-btn mg-btn-success mg-btn-full" style="font-size:.95rem;padding:14px" onclick="doPublish()">${S.editingId?'✅ עדכן דירה':'פרסם דירה עכשיו'}</button>
@@ -1257,8 +1258,8 @@ async function doPublish() {
   };
   if(S.editingId) body.apt_id=S.editingId;
   const r=await api(action, body);
-  if(!r.ok){ S.error='שגיאה: '+r.error; showForm(); return; }
-  S.success=(S.editingId?'עודכן ✅':'פורסם 🎉');
+  if(!r.ok){ S.error='שגיאה: '+r.error+' | טל: '+(contact_phone||'ריק'); showForm(); return; }
+  S.success=(S.editingId?'עודכן ✅':'פורסם 🎉')+' | טלפון שנשלח: '+(contact_phone||'לא הוזן');
   S.editingId=null; S.listingsLoaded=false; S.allLoaded=false; S.imgs=[]; goListings();
 }
 
