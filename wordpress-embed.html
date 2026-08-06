@@ -1119,20 +1119,21 @@ async function doPublishWanted() {
   const nhVal=(document.getElementById('wf-nh')?.value||'').trim();
   const rn=resolveNhByName(effCityId, nhVal);
   const feats=[...document.querySelectorAll('input[name=feat]:checked')].map(i=>i.value);
+  const apt_type    = document.getElementById('wf-type')?.value||'0';
+  const rental_type = document.getElementById('wf-rent')?.value||'1';
+  const bedrooms    = document.getElementById('wf-rooms')?.value||'0';
+  const beds        = document.getElementById('wf-beds')?.value||'2';
+  const total_rooms = document.getElementById('wf-total-rooms')?.value||'0';
+  const price       = document.getElementById('wf-price')?.value||'0';
+  const description = document.getElementById('wf-desc')?.value||'';
+  const contact_name  = document.getElementById('wf-cname')?.value||'';
+  const contact_phone = document.getElementById('wf-cphone')?.value||'';
   render(`<div class="mg-loading">שולח…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
   const r=await api('publish_wanted',{
     city:rc.cityId, city_name:rc.cityName,
     neighborhood:rn.nhId, neighborhood_name:rn.nhName,
-    apt_type:document.getElementById('wf-type')?.value||'0',
-    rental_type:document.getElementById('wf-rent')?.value||'1',
-    bedrooms:document.getElementById('wf-rooms')?.value||'0',
-    beds:document.getElementById('wf-beds')?.value||'2',
-    total_rooms:document.getElementById('wf-total-rooms')?.value||'0',
-    price:document.getElementById('wf-price')?.value||'0',
-    description:document.getElementById('wf-desc')?.value||'',
-    contact_name:document.getElementById('wf-cname')?.value||'',
-    contact_phone:document.getElementById('wf-cphone')?.value||'',
-    features:feats,
+    apt_type, rental_type, bedrooms, beds, total_rooms, price,
+    description, contact_name, contact_phone, features:feats,
   });
   if(!r.ok){ S.error=r.error; showWantedForm(); return; }
   S.success='הביקוש פורסם! 🎉'; S.myWantedLoaded=false; S.wantedLoaded=false; goDash();
@@ -1156,22 +1157,23 @@ async function doPublishSwap() {
   const nhVal=(document.getElementById('sf-nh')?.value||'').trim();
   const rn=resolveNhByName(effCityId, nhVal);
   const feats=[...document.querySelectorAll('input[name=feat]:checked')].map(i=>i.value);
+  const street       = document.getElementById('sf-street')?.value||'';
+  const building_num = document.getElementById('sf-building')?.value||'';
+  const bedrooms     = document.getElementById('sf-rooms')?.value||'1';
+  const beds         = document.getElementById('sf-beds')?.value||'4';
+  const total_rooms  = document.getElementById('sf-total-rooms')?.value||'0';
+  const floor        = document.getElementById('sf-floor')?.value||'';
+  const description  = document.getElementById('sf-desc')?.value||'';
+  const contact_name = document.getElementById('sf-cname')?.value||'';
+  const contact_phone= document.getElementById('sf-cphone')?.value||'';
   render(`<div class="mg-loading">מעלה…<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
   const images=await Promise.all(S.imgs.map(imgToB64));
   const r=await api('publish_swap',{
     city:rc.cityId, city_name:rc.cityName,
     neighborhood:rn.nhId, neighborhood_name:rn.nhName,
-    street:document.getElementById('sf-street')?.value||'',
-    building_num:document.getElementById('sf-building')?.value||'',
-    apt_type:aptType,
-    bedrooms:document.getElementById('sf-rooms')?.value||'1',
-    beds:document.getElementById('sf-beds')?.value||'4',
-    total_rooms:document.getElementById('sf-total-rooms')?.value||'0',
-    floor:document.getElementById('sf-floor')?.value||'',
-    features:feats,
-    description:document.getElementById('sf-desc')?.value||'',
-    contact_name:document.getElementById('sf-cname')?.value||'',
-    contact_phone:document.getElementById('sf-cphone')?.value||'',
+    street, building_num, apt_type:aptType,
+    bedrooms, beds, total_rooms, floor,
+    features:feats, description, contact_name, contact_phone,
     images,
   });
   if(!r.ok){ S.error=r.error; showSwapForm(); return; }
@@ -1231,31 +1233,32 @@ async function doPublish() {
   const nhVal=(document.getElementById('mg-nh')?.value||'').trim();
   const rn=resolveNhByName(effCityId, nhVal);
   const feats=[...document.querySelectorAll('input[name=feat]:checked')].map(i=>i.value);
+  const street       = document.getElementById('mg-street')?.value||'';
+  const building_num = document.getElementById('mg-building')?.value||'';
+  const bedrooms     = document.getElementById('mg-rooms')?.value||'1';
+  const beds         = document.getElementById('mg-beds')?.value||'4';
+  const total_rooms  = document.getElementById('mg-total-rooms')?.value||'0';
+  const rental_type  = document.getElementById('mg-rent')?.value||'1';
+  const price        = document.getElementById('mg-price')?.value||'0';
+  const floor        = document.getElementById('mg-floor')?.value||'';
+  const description  = document.getElementById('mg-desc')?.value||'';
+  const contact_name = document.getElementById('mg-cname')?.value||'';
+  const contact_phone= document.getElementById('mg-cphone')?.value||'';
   render(`<div class="mg-loading">${S.editingId?'מעדכן…':'מעלה…'}<br><span id="mg-status-msg" style="font-size:.8rem"></span></div>`);
   const images=await Promise.all(S.imgs.map(imgToB64));
   const action=S.editingId?'update_apt':'publish';
   const body={
     city:rc.cityId, city_name:rc.cityName,
     neighborhood:rn.nhId, neighborhood_name:rn.nhName,
-    street:document.getElementById('mg-street')?.value||'',
-    building_num:document.getElementById('mg-building')?.value||'',
-    apt_type:aptType,
-    bedrooms:document.getElementById('mg-rooms')?.value||'1',
-    beds:document.getElementById('mg-beds')?.value||'4',
-    total_rooms:document.getElementById('mg-total-rooms')?.value||'0',
-    rental_type:document.getElementById('mg-rent')?.value||'1',
-    price:document.getElementById('mg-price')?.value||'0',
-    floor:document.getElementById('mg-floor')?.value||'',
-    features:feats,
-    description:document.getElementById('mg-desc')?.value||'',
-    contact_name:document.getElementById('mg-cname')?.value||'',
-    contact_phone:document.getElementById('mg-cphone')?.value||'',
+    street, building_num, apt_type:aptType,
+    bedrooms, beds, total_rooms, rental_type, price, floor,
+    features:feats, description, contact_name, contact_phone,
     images,
   };
   if(S.editingId) body.apt_id=S.editingId;
   const r=await api(action, body);
-  if(!r.ok){ S.error='שגיאה: '+r.error+' | טלפון שנשלח: '+(body.contact_phone||'ריק'); showForm(); return; }
-  S.success=(S.editingId?'עודכן ✅':'פורסם 🎉')+' | טלפון: '+(body.contact_phone||'לא הוזן')+' | תשובה: '+JSON.stringify(r);
+  if(!r.ok){ S.error='שגיאה: '+r.error; showForm(); return; }
+  S.success=(S.editingId?'עודכן ✅':'פורסם 🎉');
   S.editingId=null; S.listingsLoaded=false; S.allLoaded=false; S.imgs=[]; goListings();
 }
 
