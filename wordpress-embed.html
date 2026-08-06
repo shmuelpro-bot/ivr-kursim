@@ -161,8 +161,8 @@ async function api(action, data={}, timeoutMs=25000) {
   const ctrl = new AbortController();
   const tid  = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const r = await fetch(API, {
-      method:'POST', headers:{'Content-Type':'application/json'},
+    const r = await fetch(API+'?_='+Date.now(), {
+      method:'POST', headers:{'Content-Type':'application/json','Cache-Control':'no-cache'},
       body:JSON.stringify({action, token:S.token||'', ...data}), signal:ctrl.signal,
     });
     clearTimeout(tid);

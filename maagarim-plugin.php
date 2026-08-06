@@ -261,6 +261,8 @@ function mg_json( array $data, int $status = 200 ): WP_REST_Response {
     mg_cors_headers();
     $response = new WP_REST_Response( $data, $status );
     $response->header( 'Content-Type', 'application/json; charset=utf-8' );
+    $response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+    $response->header( 'Pragma', 'no-cache' );
     return $response;
 }
 
