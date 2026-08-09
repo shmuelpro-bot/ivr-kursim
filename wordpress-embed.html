@@ -1279,7 +1279,8 @@ async function doPublish() {
   };
   if(S.editingId) body.apt_id=S.editingId;
   const r=await api(action, body);
-  if(!r.ok){ S.error='שגיאה: '+r.error+' | טל: '+(contact_phone||'ריק'); showForm(); return; }
+  if(!r.ok){ alert('שגיאה: '+r.error); S.error='שגיאה: '+r.error; showForm(); return; }
+  alert('הצלחה! טלפון: '+(contact_phone||'ריק')+'\nAPI: '+JSON.stringify(r));
   S.success=(S.editingId?'עודכן ✅':'פורסם 🎉')+' | טל: '+(contact_phone||'לא הוזן');
   S.editingId=null; S.listingsLoaded=false; S.allLoaded=false; S.imgs=[]; goListings();
 }
