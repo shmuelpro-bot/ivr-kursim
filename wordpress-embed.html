@@ -484,6 +484,7 @@ function showHome() {
       <div style="position:absolute;inset:0;background:radial-gradient(ellipse 90% 60% at 50% 110%,rgba(200,162,86,.13) 0%,transparent 65%)"></div>
       <div style="position:relative">
         <div style="font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:.3px;line-height:1.3">מתחמים, צימרים, נופש דירות לשבת</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.25);margin-top:3px">v16</div>
         <div style="width:36px;height:2px;background:#c8a256;margin:12px auto 16px;border-radius:1px"></div>
         <div style="display:flex;justify-content:center;align-items:stretch;gap:0">
           <div style="text-align:center;padding:0 22px">
@@ -1278,8 +1279,8 @@ async function doPublish() {
   };
   if(S.editingId) body.apt_id=S.editingId;
   const r=await api(action, body);
-  if(!r.ok){ S.error='שגיאה: '+r.error; showForm(); return; }
-  S.success=S.editingId?'עודכן ✅':'פורסם 🎉';
+  if(!r.ok){ S.error='שגיאה: '+r.error+' | טל: '+(contact_phone||'ריק'); showForm(); return; }
+  S.success=(S.editingId?'עודכן ✅':'פורסם 🎉')+' | טל: '+(contact_phone||'לא הוזן');
   S.editingId=null; S.listingsLoaded=false; S.allLoaded=false; S.imgs=[]; goListings();
 }
 
