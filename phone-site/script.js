@@ -5,7 +5,7 @@
 // לשינוי: הריצו בקונסול של הדפדפן  btoa([..."972XXXXXXXXX"].reverse().join(""))  והדביקו כאן.
 const CONFIG = {
   wa: "MzY4MzkzOTQ1Mjc5",
-  em: "bW9jLmxpYW1nQDgxbXl5aGg=",
+  em: "bW9jLmxpYW1nQDk4MW15eWho",
 };
 const reveal = s => [...atob(s)].reverse().join("");
 
