@@ -1,14 +1,13 @@
 /* =========================================================
    הגדרות – לשנות כאן את פרטי הקשר שלכם
    ========================================================= */
+// פרטי הקשר שמורים מקודדים כדי שלא יופיעו כטקסט באתר ולא ייקלטו בקלות ע"י בוטים.
+// לשינוי: הריצו בקונסול של הדפדפן  btoa([..."972XXXXXXXXX"].reverse().join(""))  והדביקו כאן.
 const CONFIG = {
-  // מספר וואטסאפ בפורמט בינלאומי, בלי + ובלי 0 בהתחלה (לדוגמה 972501234567)
-  whatsapp: "972500000000",
-  // כתובת המייל שאליה יגיעו פניות
-  email: "info@example.com",
-  // מספר מערכת הדוגמה
-  demoNumber: "09-3764444",
+  wa: "MzY4MzkzOTQ1Mjc5",
+  em: "bW9jLmxpYW1nQDgxbXl5aGg=",
 };
+const reveal = s => [...atob(s)].reverse().join("");
 
 /* ===== Nav ===== */
 const nav = document.querySelector(".nav");
@@ -24,13 +23,19 @@ navLinks.querySelectorAll("a").forEach(a => a.addEventListener("click", () => {
   navLinks.classList.remove("open");
 }));
 
-/* ===== Contact links ===== */
-const waBase = `https://wa.me/${CONFIG.whatsapp}`;
-const waHello = `${waBase}?text=${encodeURIComponent("היי, הגעתי מהאתר ואשמח לשמוע על הקמת מערכת טלפונית")}`;
-document.getElementById("waLink").href = waHello;
-document.getElementById("waFloat").href = waHello;
-document.getElementById("mailLink").href = `mailto:${CONFIG.email}`;
-document.getElementById("mailText").textContent = CONFIG.email;
+/* ===== Contact links (נבנים רק בלחיצה – לא מוצגים בדף) ===== */
+const waUrl = text => `https://wa.me/${reveal(CONFIG.wa)}?text=${encodeURIComponent(text)}`;
+const mailUrl = (subject, body) =>
+  `mailto:${reveal(CONFIG.em)}?subject=${encodeURIComponent(subject)}` + (body ? `&body=${encodeURIComponent(body)}` : "");
+const HELLO = "היי, הגעתי מהאתר ואשמח לשמוע על הקמת מערכת טלפונית";
+["waLink", "waFloat"].forEach(id => document.getElementById(id).addEventListener("click", e => {
+  e.preventDefault();
+  window.open(waUrl(HELLO), "_blank", "noopener");
+}));
+document.getElementById("mailLink").addEventListener("click", e => {
+  e.preventDefault();
+  window.location.href = mailUrl("פנייה מהאתר");
+});
 document.getElementById("year").textContent = new Date().getFullYear();
 
 /* ===== Reveal on scroll ===== */
@@ -235,9 +240,9 @@ form.addEventListener("submit", e => {
     (data.message ? `פרטים: ${data.message}` : "");
 
   if (via === "email") {
-    window.location.href = `mailto:${CONFIG.email}?subject=${encodeURIComponent("פנייה מהאתר – " + data.name)}&body=${encodeURIComponent(text)}`;
+    window.location.href = mailUrl("פנייה מהאתר – " + data.name, text);
   } else {
-    window.open(`${waBase}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+    window.open(waUrl(text), "_blank", "noopener");
   }
   note.textContent = "מעולה! ההודעה מוכנה לשליחה – נחזור אליכם בהקדם 🙌";
   note.className = "form-note";
