@@ -24,7 +24,7 @@ if (isset($_GET['logout'])) {
 
 $loginError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SESSION['admin'])) {
-    if (hash_equals(ADMIN_PASS, $_POST['pass'] ?? '')) {
+    if (ADMIN_PASS !== '' && hash_equals(ADMIN_PASS, $_POST['pass'] ?? '')) {
         $_SESSION['admin'] = true;
         header('Location: admin.php');
         exit;
