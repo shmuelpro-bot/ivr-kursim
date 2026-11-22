@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="../logo-square.png">
+<title>ברגר ושות׳ רואי חשבון</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=IBM+Plex+Sans+Hebrew:wght@400;600&display=swap">
+<style>
+/* Layout: crisp ledger grid; split hero with a live VAT calculator as the proof point */
+:root{
+  --bg:#f5f7f8; --surface:#ffffff; --fg:#14232b; --muted:#56656d;
+  --ink:#0f3a4a; --mint:#1f9d7a; --line:#dde3e6; --on-ink:#e9f4f7;
+  --display:"Heebo","Arial",sans-serif; --body:"IBM Plex Sans Hebrew","Arial",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e171b; --surface:#152229; --fg:#e4eef1; --muted:#9db0b8; --ink:#0b2b37; --mint:#3cc39d; --line:#24353d; --on-ink:#e9f4f7; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e171b; --surface:#152229; --fg:#e4eef1; --muted:#9db0b8; --ink:#0b2b37; --mint:#3cc39d; --line:#24353d; --on-ink:#e9f4f7; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.65;direction:rtl}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.2;margin:0}
+.demo{background:var(--mint);color:#06231a;text-align:center;font-size:14px;font-weight:600;padding:6px 16px}
+.top{background:var(--surface);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;justify-content:space-between;align-items:center;padding-block:16px;gap:12px;flex-wrap:wrap}
+.logo{font-family:var(--display);font-weight:800;font-size:22px;color:var(--fg)}
+.logo small{display:block;font-weight:500;font-size:13px;color:var(--muted)}
+.top a.call{background:var(--ink);color:var(--on-ink);padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600}
+.hero{background:var(--ink);color:var(--on-ink);background-image:linear-gradient(#ffffff0d 1px,transparent 1px),linear-gradient(90deg,#ffffff0d 1px,transparent 1px);background-size:32px 32px}
+.hero .wrap{display:grid;grid-template-columns:1.1fr 1fr;gap:48px;align-items:center;padding-block:64px}
+.hero h1{font-size:clamp(34px,5vw,56px);font-weight:800}
+.hero h1 span{color:var(--mint)}
+.hero p{font-size:19px;opacity:.9;max-width:38ch}
+.checks{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:8px}
+.checks li::before{content:"✓";color:var(--mint);font-weight:800;margin-inline-end:10px}
+.calc{background:var(--surface);color:var(--fg);border-radius:14px;padding:26px;box-shadow:0 20px 50px #0004}
+.calc h2{font-size:20px;margin-bottom:14px}
+.calc label{display:block;font-weight:600;font-size:15px;margin-bottom:6px}
+.calc input{width:100%;font:inherit;font-size:22px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font-variant-numeric:tabular-nums}
+.calc input:focus{outline:2px solid var(--mint);border-color:transparent}
+.seg{display:flex;gap:6px;margin:14px 0}
+.seg button{flex:1;font:inherit;padding:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.seg button:focus-visible{outline:2px solid var(--mint)}
+.rows{display:grid;gap:6px;font-variant-numeric:tabular-nums}
+.rows div{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line);padding-block:6px}
+.rows div:last-child{border:0;font-weight:800;font-size:20px;color:var(--mint)}
+.calc .note{font-size:13px;color:var(--muted);margin:10px 0 0}
+section{padding-block:72px}
+.sec-title{font-size:clamp(26px,3.5vw,38px);margin-bottom:28px}
+.services{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.svc{background:var(--surface);padding:26px}
+.svc h3{font-size:20px;margin-bottom:6px}
+.svc p{color:var(--muted);margin:0;font-size:16px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;counter-reset:s}
+.step{counter-increment:s}
+.step::before{content:counter(s);display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--mint);color:#06231a;font-weight:800;font-family:var(--display);margin-bottom:10px}
+.step h3{font-size:18px}
+.step p{color:var(--muted);margin:4px 0 0;font-size:15px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:10px}
+summary{font-weight:600;cursor:pointer}
+details p{color:var(--muted);margin:10px 0 0}
+.cta{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cta .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.cta b{font-size:24px;user-select:all;font-variant-numeric:tabular-nums}
+footer{padding-block:24px;color:var(--muted);font-size:14px}
+@media (max-width:860px){.hero .wrap{grid-template-columns:1fr}.services{grid-template-columns:1fr}.steps{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="demo">אתר לדוגמה · העסק והפרטים בדויים</div>
+<div class="top"><div class="wrap">
+  <div class="logo">ברגר ושות׳<small>רואי חשבון ויועצי מס</small></div>
+  <a class="call" href="#contact">לפגישת ייעוץ חינם</a>
+</div></div>
+
+<section class="hero" style="padding:0"><div class="wrap">
+  <div>
+    <h1>תתעסקו בעסק.<br><span>את המספרים תשאירו לנו.</span></h1>
+    <p>הנהלת חשבונות, דוחות שנתיים והחזרי מס לעוסקים, לאברכים ולמשפחות. מחיר קבוע לחודש, בלי הפתעות.</p>
+    <ul class="checks"><li>פתיחת תיק עוסק פטור או מורשה תוך 48 שעות</li><li>בדיקת זכאות להחזר מס עד 6 שנים אחורה</li><li>זמינים בטלפון ובוואטסאפ, גם בערבים</li></ul>
+  </div>
+  <div class="calc" aria-labelledby="ct">
+    <h2 id="ct">מחשבון מע״מ מהיר</h2>
+    <label for="amt">סכום בשקלים</label>
+    <input id="amt" inputmode="decimal" value="1000">
+    <div class="seg" role="group" aria-label="סוג הסכום">
+      <button id="m-add" aria-pressed="true" type="button">הוספת מע״מ</button>
+      <button id="m-sub" aria-pressed="false" type="button">חילוץ מע״מ</button>
+    </div>
+    <div class="rows">
+      <div><span>לפני מע״מ</span><span id="r-net">—</span></div>
+      <div><span>מע״מ (18%)</span><span id="r-vat">—</span></div>
+      <div><span>סה״כ</span><span id="r-tot">—</span></div>
+    </div>
+    <p class="note">חישוב לפי שיעור מע״מ של 18%. לחישוב מדויק לעסק שלכם, דברו איתנו.</p>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2 class="sec-title">השירותים שלנו</h2>
+  <div class="services">
+    <div class="svc"><h3>הנהלת חשבונות</h3><p>קליטת חשבוניות, דיווחי מע״מ ומקדמות, בלי שתצטרכו לזכור תאריכים.</p></div>
+    <div class="svc"><h3>דוח שנתי</h3><p>הכנה והגשה של הדוח לרשות המסים, כולל תכנון מס לשנה הבאה.</p></div>
+    <div class="svc"><h3>החזרי מס לשכירים</h3><p>בדיקה חינם. משלמים רק אם יש החזר.</p></div>
+    <div class="svc"><h3>פתיחת עסק</h3><p>ליווי מהרגע הראשון: מע״מ, מס הכנסה וביטוח לאומי.</p></div>
+    <div class="svc"><h3>שכר עובדים</h3><p>תלושים, טפסי 106 ודיווחים חודשיים.</p></div>
+    <div class="svc"><h3>עמותות ומוסדות</h3><p>ביקורת, אישור סעיף 46 ודוחות לרשם העמותות.</p></div>
+  </div>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap">
+  <h2 class="sec-title">איך זה עובד</h2>
+  <div class="steps">
+    <div class="step"><h3>שיחת היכרות</h3><p>15 דקות בטלפון, בלי עלות ובלי התחייבות.</p></div>
+    <div class="step"><h3>הצעת מחיר קבועה</h3><p>מחיר חודשי ידוע מראש לפי היקף העסק.</p></div>
+    <div class="step"><h3>העברת חומרים</h3><p>מצלמים חשבוניות בוואטסאפ, ואנחנו מסדרים.</p></div>
+    <div class="step"><h3>דיווח בזמן</h3><p>קנסות ואיחורים נשארים מאחוריכם.</p></div>
+  </div>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap" style="max-width:780px">
+  <h2 class="sec-title">שאלות נפוצות</h2>
+  <details><summary>מה ההבדל בין עוסק פטור לעוסק מורשה?</summary><p>עוסק פטור לא גובה מע״מ ומוגבל בתקרת הכנסה שנתית. עוסק מורשה גובה מע״מ ומקזז מע״מ על הוצאות. נעזור לכם לבחור את המסלול המשתלם.</p></details>
+  <details><summary>האם אברך יכול לקבל החזר מס?</summary><p>במקרים רבים כן, למשל כשבן או בת הזוג עובדים ויש נקודות זיכוי שלא נוצלו. הבדיקה אצלנו חינם.</p></details>
+  <details><summary>כמה עולה הנהלת חשבונות?</summary><p>לעוסק פטור החל מ-₪250 לחודש, ולעוסק מורשה החל מ-₪450. המחיר נקבע מראש ולא משתנה באמצע השנה.</p></details>
+</div></section>
+
+<section class="cta" id="contact"><div class="wrap">
+  <div><h2 style="font-size:26px">רוצים לבדוק אם מגיע לכם החזר?</h2><p style="color:var(--muted);margin:4px 0 0">התקשרו או שלחו הודעה, ונחזור אליכם עוד היום.</p></div>
+  <b>03-000-0000</b>
+</div></section>
+<footer><div class="wrap">© 2026 ברגר ושות׳ (עסק לדוגמה)</div></footer>
+
+<script>
+const amt=document.getElementById('amt'),add=document.getElementById('m-add'),sub=document.getElementById('m-sub');
+let mode='add';const f=n=>'₪'+n.toLocaleString('he-IL',{minimumFractionDigits:2,maximumFractionDigits:2});
+function calc(){const v=parseFloat(amt.value.replace(/[^\d.]/g,''))||0;let net,vat;
+ if(mode==='add'){net=v;vat=v*0.18}else{net=v/1.18;vat=v-net}
+ document.getElementById('r-net').textContent=f(net);document.getElementById('r-vat').textContent=f(vat);document.getElementById('r-tot').textContent=f(net+vat)}
+function setMode(m){mode=m;add.setAttribute('aria-pressed',m==='add');sub.setAttribute('aria-pressed',m==='sub');calc()}
+add.onclick=()=>setMode('add');sub.onclick=()=>setMode('sub');amt.oninput=calc;calc();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="74 0 294 104" width="294" height="104" role="img" aria-label="שילובים – בניית אתרים">
+  <defs>
+    <clipPath id="b"><rect x="34" y="8" width="52" height="52" rx="13"/></clipPath>
+  </defs>
+  <!-- mark: two windows that merge -->
+  <g transform="translate(270 14)">
+    <rect x="4" y="24" width="52" height="52" rx="13" fill="#0f5c63"/>
+    <rect x="34" y="8" width="52" height="52" rx="13" fill="#f2a33a"/>
+    <rect x="4" y="24" width="52" height="52" rx="13" fill="#0a3438" clip-path="url(#b)"/>
+    <circle cx="74" cy="19" r="3.2" fill="#0a3438"/>
+    <circle cx="64" cy="19" r="3.2" fill="#0a3438" opacity=".55"/>
+    <circle cx="54" cy="19" r="3.2" fill="#0a3438" opacity=".3"/>
+  </g>
+  <!-- wordmark -->
+  <text x="258" y="60" direction="rtl" text-anchor="start" font-family="Rubik, Heebo, Assistant, Arial, sans-serif" font-weight="800" font-size="50" fill="#14262a">שילובים</text>
+  <text x="258" y="88" direction="rtl" text-anchor="start" font-family="Rubik, Heebo, Assistant, Arial, sans-serif" font-weight="500" font-size="17" fill="#0f5c63" letter-spacing="0.5">בניית אתרים לעסקים</text>
+</svg>

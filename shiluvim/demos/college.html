@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="../logo-square.png">
+<title>מרכז אופק להכשרה מקצועית</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Suez+One&family=Rubik:wght@400;500;700&display=swap">
+<style>
+/* Layout: bold indigo hero, filterable course catalog as the centerpiece, separate-tracks band */
+:root{
+  --bg:#f6f6fb; --surface:#ffffff; --fg:#1a1b33; --muted:#5d5f7c;
+  --indigo:#2b2f8f; --coral:#f26d4f; --line:#e1e2ef; --on-indigo:#eef0ff;
+  --display:"Suez One","David",serif; --body:"Rubik","Arial",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11122a; --surface:#1a1c3a; --fg:#ecedfb; --muted:#a8aacb; --indigo:#22256f; --coral:#ff8a6e; --line:#2c2e52; --on-indigo:#eef0ff; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11122a; --surface:#1a1c3a; --fg:#ecedfb; --muted:#a8aacb; --indigo:#22256f; --coral:#ff8a6e; --line:#2c2e52; --on-indigo:#eef0ff; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.6;direction:rtl}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;line-height:1.2;margin:0}
+.demo{background:var(--coral);color:#2a0d05;text-align:center;font-size:14px;font-weight:500;padding:6px 16px}
+.hero{background:var(--indigo);color:var(--on-indigo);overflow:hidden;position:relative}
+.hero .wrap{padding-block:24px 64px;position:relative;z-index:1}
+.hero::after{content:"";position:absolute;width:520px;height:520px;border-radius:50%;border:70px solid var(--coral);opacity:.9;left:-180px;bottom:-260px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{font-family:var(--display);font-size:26px}
+.logo span{color:var(--coral)}
+.bar a{color:inherit;font-weight:500}
+.hero h1{font-size:clamp(36px,6vw,66px);margin-top:56px;max-width:16ch}
+.hero p{font-size:20px;max-width:44ch;opacity:.9}
+.btn{display:inline-block;background:var(--coral);color:#2a0d05;font-weight:700;padding:14px 26px;border-radius:10px;text-decoration:none;font:inherit;font-weight:700;border:0;cursor:pointer}
+.btn:focus-visible,.chip:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.stats{display:flex;gap:40px;flex-wrap:wrap;margin-top:32px}
+.stats b{display:block;font-family:var(--display);font-size:34px;color:var(--coral);font-weight:400}
+section{padding-block:68px}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.sec-head h2{font-size:clamp(28px,4vw,40px)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font:inherit;font-size:15px;padding:7px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.courses{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.course{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.course .cat{font-size:13px;font-weight:700;color:var(--coral);letter-spacing:.03em}
+.course h3{font-size:22px}
+.course p{color:var(--muted);margin:0;font-size:15px;flex:1}
+.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:14px}
+.meta span{background:var(--bg);border:1px solid var(--line);padding:2px 10px;border-radius:6px}
+.course .start{font-weight:700;font-size:15px}
+.tracks{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.tracks .wrap{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.track h3{font-size:26px;margin-bottom:8px}
+.track p{color:var(--muted);margin:0}
+.track{border-inline-start:4px solid var(--indigo);padding-inline-start:18px}
+.track.w{border-color:var(--coral)}
+.signup{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start}
+form{display:grid;gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-weight:500;font-size:15px}
+input,select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+input:focus,select:focus{outline:2px solid var(--coral);border-color:transparent}
+#ok{color:var(--coral);font-weight:700}
+footer{border-top:1px solid var(--line);padding-block:24px;color:var(--muted);font-size:14px}
+@media (max-width:860px){.courses{grid-template-columns:1fr 1fr}.tracks .wrap,.signup{grid-template-columns:1fr}}
+@media (max-width:560px){.courses{grid-template-columns:1fr}.hero::after{width:300px;height:300px;border-width:40px;left:-140px;bottom:-170px}}
+</style>
+</head>
+<body>
+
+<div class="demo">אתר לדוגמה · המוסד והפרטים בדויים</div>
+<header class="hero"><div class="wrap">
+  <div class="bar"><div class="logo">מרכז <span>אופק</span></div><a href="#signup">הרשמה</a></div>
+  <h1>מקצוע אמיתי, באווירה שמתאימה לכם.</h1>
+  <p>קורסים מעשיים עם מסלולים נפרדים לגברים ולנשים, שעות לימוד שמתאימות לסדר היום, וליווי עד ההשמה בעבודה.</p>
+  <a class="btn" href="#courses">לקורסים הקרובים</a>
+  <div class="stats"><div><b>86%</b>השמה בתום הקורס</div><div><b>3,400</b>בוגרים</div><div><b>12</b>מסלולים</div></div>
+</div></header>
+
+<section id="courses"><div class="wrap">
+  <div class="sec-head">
+    <h2>הקורסים הקרובים</h2>
+    <div class="chips" role="group" aria-label="סינון לפי תחום">
+      <button class="chip" type="button" data-f="all" aria-pressed="true">הכל</button>
+      <button class="chip" type="button" data-f="tech" aria-pressed="false">מחשבים</button>
+      <button class="chip" type="button" data-f="biz" aria-pressed="false">כספים</button>
+      <button class="chip" type="button" data-f="design" aria-pressed="false">עיצוב</button>
+    </div>
+  </div>
+  <div class="courses" id="list"></div>
+</div></section>
+
+<section class="tracks"><div class="wrap">
+  <div class="track"><h3>מסלול גברים</h3><p>לימודים בשעות אחר הצהריים והערב, אחרי הסדר בכולל. כיתות קטנות ומרצים מהציבור.</p></div>
+  <div class="track w"><h3>מסלול נשים</h3><p>לימודי בוקר בשעות הגן, במבנה נפרד. אפשרות ללימוד מקוון מלא מהבית.</p></div>
+</div></section>
+
+<section id="signup"><div class="wrap signup">
+  <div>
+    <h2 style="font-size:clamp(28px,4vw,40px)">שריינו מקום בקורס</h2>
+    <p style="color:var(--muted)">יועצת לימודים תחזור אליכם לשיחת התאמה. אפשר לבדוק זכאות למימון של משרד העבודה.</p>
+  </div>
+  <form id="f">
+    <label>שם מלא<input id="n" required></label>
+    <label>טלפון<input id="p" type="tel" required></label>
+    <label>קורס<select id="c"></select></label>
+    <label>מסלול<select id="t"><option>גברים</option><option>נשים</option></select></label>
+    <button class="btn" type="submit">שלחו פרטים</button>
+    <p id="ok" hidden>זה אתר לדוגמה, ולכן הפרטים לא נשלחו. באתר אמיתי הם יגיעו ישר למערכת הלידים.</p>
+  </form>
+</div></section>
+
+<footer><div class="wrap">© 2026 מרכז אופק (מוסד לדוגמה)</div></footer>
+
+<script>
+const C=[
+ {c:'tech',cat:'מחשבים',t:'פיתוח אתרים',d:'HTML, CSS ו-JavaScript, עד אתר ראשון ללקוח אמיתי.',len:'6 חודשים',h:'2 ערבים בשבוע',s:'ר״ח שבט'},
+ {c:'biz',cat:'כספים',t:'הנהלת חשבונות סוג 1+2',d:'הכנה למבחני לשכת מנהלי החשבונות, כולל תוכנת חשבשבת.',len:'5 חודשים',h:'בוקר',s:'ט״ו שבט'},
+ {c:'design',cat:'עיצוב',t:'עיצוב גרפי',d:'פוטושופ, אילוסטרייטור ומיתוג לעסקים קטנים.',len:'4 חודשים',h:'בוקר או ערב',s:'ר״ח אדר'},
+ {c:'tech',cat:'מחשבים',t:'בדיקות תוכנה (QA)',d:'בדיקות ידניות ואוטומטיות, עם הכנה לראיונות עבודה.',len:'5 חודשים',h:'ערב',s:'ר״ח אדר'},
+ {c:'biz',cat:'כספים',t:'חשבי שכר',d:'תלושי שכר, דיני עבודה ודיווחים לרשויות.',len:'3 חודשים',h:'בוקר',s:'ר״ח שבט'},
+ {c:'design',cat:'עיצוב',t:'עיצוב אתרים UI/UX',d:'עיצוב ממשקים בפיגמה, מאפיון ועד אב טיפוס.',len:'4 חודשים',h:'מקוון',s:'ר״ח ניסן'}];
+const list=document.getElementById('list'),sel=document.getElementById('c');
+function render(f){list.innerHTML=C.filter(x=>f==='all'||x.c===f).map(x=>`<article class="course"><div class="cat">${x.cat}</div><h3>${x.t}</h3><p>${x.d}</p><div class="meta"><span>${x.len}</span><span>${x.h}</span></div><div class="start">פתיחה: ${x.s}</div><a class="btn" href="#signup" style="text-align:center">להרשמה</a></article>`).join('')}
+sel.innerHTML=C.map(x=>`<option>${x.t}</option>`).join('');
+document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{document.querySelectorAll('.chip').forEach(o=>o.setAttribute('aria-pressed',o===b));render(b.dataset.f)});
+render('all');
+document.getElementById('f').addEventListener('submit',e=>{e.preventDefault();document.getElementById('ok').hidden=false});
+</script>
+
+</body>
+</html>

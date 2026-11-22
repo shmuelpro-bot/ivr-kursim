@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="../logo-square.png">
+<title>קייטרינג בית הדר</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;600;700&display=swap">
+<style>
+/* Layout: wine-dark hero band, then airy menu cards and a two-column inquiry block */
+:root{
+  --bg:#fbf8f6; --surface:#ffffff; --fg:#2a1d22; --muted:#6e5c63;
+  --wine:#5b1f33; --saffron:#d99a2b; --line:#eadfe2; --on-wine:#fbeff2;
+  --display:"Frank Ruhl Libre","David",serif; --body:"Assistant","Arial",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1b1316; --surface:#251a1e; --fg:#f3e9ec; --muted:#b9a5ac; --wine:#3e1222; --saffron:#e8b04d; --line:#3a2a30; --on-wine:#fbeff2; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1b1316; --surface:#251a1e; --fg:#f3e9ec; --muted:#b9a5ac; --wine:#3e1222; --saffron:#e8b04d; --line:#3a2a30; --on-wine:#fbeff2; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.65;direction:rtl}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.2;margin:0}
+.demo{background:var(--saffron);color:#2a1d22;text-align:center;font-size:14px;font-weight:600;padding:6px 16px}
+header.hero{background:var(--wine);color:var(--on-wine);position:relative;overflow:hidden}
+.hero .wrap{padding-block:28px 72px}
+nav{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{font-family:var(--display);font-weight:900;font-size:26px}
+.logo span{color:var(--saffron)}
+nav ul{display:flex;gap:22px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
+nav a{color:inherit;text-decoration:none;opacity:.85}
+nav a:hover,nav a:focus-visible{opacity:1;text-decoration:underline}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:center;margin-top:56px}
+.hero h1{font-size:clamp(36px,6vw,64px);font-weight:900}
+.hero h1 em{font-style:normal;color:var(--saffron)}
+.hero p{font-size:20px;max-width:34ch;opacity:.9}
+.btn{display:inline-block;background:var(--saffron);color:#2a1d22;font-weight:700;padding:14px 28px;border-radius:999px;text-decoration:none;border:0;font:inherit;font-weight:700;cursor:pointer}
+.btn:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
+.btn.ghost{background:transparent;color:inherit;border:2px solid currentColor;margin-inline-start:10px}
+.plate{aspect-ratio:1;max-width:100%;border-radius:50%;background:radial-gradient(circle at 50% 50%,#fff 0 38%,#f3e3c6 39% 47%,var(--saffron) 48% 50%,transparent 51%),repeating-conic-gradient(from 0deg,#ffffff14 0 6deg,transparent 6deg 12deg);position:relative}
+.plate::after{content:"מהדרין";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:clamp(22px,4vw,36px);color:var(--wine);font-weight:900}
+.facts{display:flex;gap:36px;flex-wrap:wrap;margin-top:28px}
+.facts b{display:block;font-family:var(--display);font-size:32px;color:var(--saffron)}
+section{padding-block:72px}
+.eyebrow{color:var(--saffron);font-weight:700;letter-spacing:.04em;font-size:15px}
+.sec-title{font-size:clamp(28px,4vw,42px);margin-block:6px 32px}
+.events{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.ev{border-top:3px solid var(--wine);padding-top:14px}
+.ev h3{font-size:22px}
+.ev p{color:var(--muted);margin:6px 0 0;font-size:16px}
+.menus{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.menu{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:12px}
+.menu.star{border:2px solid var(--saffron)}
+.menu .tag{align-self:flex-start;background:var(--saffron);color:#2a1d22;font-size:13px;font-weight:700;padding:2px 10px;border-radius:999px}
+.price{font-family:var(--display);font-size:40px;font-weight:900;color:var(--fg)}
+.price small{font-family:var(--body);font-size:15px;color:var(--muted);font-weight:400}
+.menu ul{margin:0;padding-inline-start:18px;color:var(--muted)}
+.quote{background:var(--wine);color:var(--on-wine)}
+.quote blockquote{margin:0;font-family:var(--display);font-size:clamp(22px,3vw,32px);max-width:40ch}
+.quote cite{display:block;margin-top:14px;font-style:normal;opacity:.8;font-size:16px;font-family:var(--body)}
+.contact{display:grid;grid-template-columns:1fr 1.2fr;gap:40px}
+form{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:flex;flex-direction:column;font-weight:600;font-size:15px;gap:4px}
+label.full{grid-column:1/-1}
+input,select,textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--saffron);border-color:transparent}
+#done{grid-column:1/-1;color:var(--saffron);font-weight:700}
+footer{border-top:1px solid var(--line);padding-block:28px;color:var(--muted);font-size:15px}
+@media (max-width:820px){.hero-grid,.contact{grid-template-columns:1fr}.plate{max-width:260px}.events{grid-template-columns:1fr 1fr}.menus{grid-template-columns:1fr}form{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:no-preference){.plate{animation:spin 60s linear infinite}@keyframes spin{to{rotate:360deg}}}
+</style>
+</head>
+<body>
+
+<div class="demo">אתר לדוגמה · העסק והפרטים בדויים</div>
+<header class="hero">
+  <div class="wrap">
+    <nav>
+      <div class="logo">בית <span>הדר</span></div>
+      <ul><li><a href="#events">אירועים</a></li><li><a href="#menus">תפריטים</a></li><li><a href="#contact">הצעת מחיר</a></li></ul>
+    </nav>
+    <div class="hero-grid">
+      <div>
+        <h1>השמחה שלכם,<br><em>הצלחת שלנו.</em></h1>
+        <p>קייטרינג לבר מצווה, שבע ברכות ושבת חתן. כשרות מהדרין, מלצרות מקצועית ואוכל שאורחים מדברים עליו גם שבוע אחרי.</p>
+        <a class="btn" href="#contact">לקבלת הצעת מחיר</a><a class="btn ghost" href="#menus">לתפריטים</a>
+        <div class="facts"><div><b>1,200+</b>שמחות</div><div><b>20</b>שנות ניסיון</div><div><b>40–800</b>סועדים</div></div>
+      </div>
+      <div class="plate" role="img" aria-label="צלחת מעוצבת"></div>
+    </div>
+  </div>
+</header>
+
+<section id="events"><div class="wrap">
+  <div class="eyebrow">לכל שמחה</div>
+  <h2 class="sec-title">מה אנחנו עושים</h2>
+  <div class="events">
+    <div class="ev"><h3>בר מצווה</h3><p>סעודה מלאה באולם או בבית, כולל עיצוב שולחנות.</p></div>
+    <div class="ev"><h3>שבע ברכות</h3><p>מגשים חמים ומנות אישיות, גם בהתראה קצרה.</p></div>
+    <div class="ev"><h3>שבת חתן</h3><p>סעודות שבת, קידוש ומגשי פירות, בכל הארץ.</p></div>
+    <div class="ev"><h3>ברית ופדיון</h3><p>בוקר מהודר, סלטים ומאפים טריים מהתנור.</p></div>
+  </div>
+</div></section>
+
+<section id="menus" style="padding-top:0"><div class="wrap">
+  <div class="eyebrow">מחירים שקופים</div>
+  <h2 class="sec-title">תפריטים לבחירה</h2>
+  <div class="menus">
+    <div class="menu"><h3>קלאסי</h3><div class="price">₪89 <small>לסועד</small></div><ul><li>6 סלטים</li><li>מנה עיקרית אחת</li><li>תוספת וקינוח</li></ul></div>
+    <div class="menu star"><span class="tag">הנבחר ביותר</span><h3>מהודר</h3><div class="price">₪139 <small>לסועד</small></div><ul><li>10 סלטים ופתיחה</li><li>2 מנות עיקריות</li><li>שולחן קינוחים</li><li>מלצרות כלולה</li></ul></div>
+    <div class="menu"><h3>פרימיום</h3><div class="price">₪199 <small>לסועד</small></div><ul><li>מנה ראשונה מוגשת</li><li>נתחי בשר מובחרים</li><li>בר שתייה ושף במקום</li></ul></div>
+  </div>
+</div></section>
+
+<section class="quote"><div class="wrap">
+  <blockquote>״חתנו את הבן הצעיר. מאתיים אורחים, ואף אחד לא חיכה למנה. מומלץ בחום.״<cite>משפחת ל., בית שמש</cite></blockquote>
+</div></section>
+
+<section id="contact"><div class="wrap contact">
+  <div>
+    <div class="eyebrow">נשמח לשמוע</div>
+    <h2 class="sec-title">ספרו לנו על השמחה</h2>
+    <p style="color:var(--muted)">נחזור אליכם תוך שעתיים עם הצעת מחיר מפורטת. אפשר גם להתקשר או לשלוח וואטסאפ.</p>
+    <p style="font-size:22px;font-weight:700;user-select:all">050-000-0000</p>
+  </div>
+  <form id="f">
+    <label>שם<input id="name" required></label>
+    <label>טלפון<input id="phone" type="tel" required></label>
+    <label>סוג אירוע<select id="type"><option>בר מצווה</option><option>שבע ברכות</option><option>שבת חתן</option><option>ברית</option></select></label>
+    <label>מספר סועדים<input id="guests" type="number" min="10" value="120"></label>
+    <label class="full">הערות<textarea id="notes" rows="3"></textarea></label>
+    <div class="full"><button class="btn" type="submit">שלחו בקשה</button></div>
+    <p id="done" hidden>זה אתר לדוגמה, ולכן הבקשה לא נשלחה. באתר אמיתי היא תגיע ישר לוואטסאפ של בעל העסק.</p>
+  </form>
+</div></section>
+
+<footer><div class="wrap">© 2026 קייטרינג בית הדר (עסק לדוגמה) · כשרות מהדרין</div></footer>
+<script>
+document.getElementById('f').addEventListener('submit',e=>{e.preventDefault();document.getElementById('done').hidden=false});
+</script>
+
+</body>
+</html>

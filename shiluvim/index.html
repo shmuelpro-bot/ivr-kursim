@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="logo-square.png">
+<title>שילובים בניית אתרים</title>
+<meta name="description" content="שילובים – בניית אתרים לעסקים: דפי נחיתה, אתרי תדמית ואתרים מתקדמים. מחיר קבוע, אספקה תוך חודש עד חודש וחצי.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap">
+<style>
+/* Layout: logo-led header, hero built on the two merging "windows" of the mark, portfolio, price table, timeline, contact form */
+:root{
+  --bg:#f4f7f7; --surface:#ffffff; --fg:#14262a; --muted:#566a6e;
+  --teal:#0f5c63; --deep:#0a3438; --amber:#f2a33a; --line:#dbe5e6; --on-teal:#e8f4f5;
+  --font:"Rubik","Heebo","Arial",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c181a; --surface:#132427; --fg:#e6f1f2; --muted:#9fb5b8; --teal:#167680; --deep:#0a2a2e; --amber:#f5b252; --line:#22383b; --on-teal:#e8f4f5; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0c181a; --surface:#132427; --fg:#e6f1f2; --muted:#9fb5b8; --teal:#167680; --deep:#0a2a2e; --amber:#f5b252; --line:#22383b; --on-teal:#e8f4f5; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:17px;line-height:1.65;direction:rtl}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{text-wrap:balance;line-height:1.2;margin:0}
+a{color:var(--teal)}
+.btn{display:inline-block;background:var(--amber);color:#14262a;font:inherit;font-weight:700;padding:14px 28px;border-radius:12px;text-decoration:none;border:0;cursor:pointer;transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.btn.alt{background:transparent;color:inherit;border:2px solid currentColor}
+/* header */
+.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.top .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-block:10px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg)}
+.brand svg{width:44px;height:44px}
+.brand b{font-size:24px;font-weight:800}
+.top nav{display:flex;gap:24px;align-items:center}
+.top nav a{color:var(--fg);text-decoration:none;font-weight:500}
+.top nav a.btn{padding:9px 18px;color:#14262a}
+/* hero */
+.hero .wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center;padding-block:64px 72px}
+.kicker{display:inline-block;background:var(--surface);border:1px solid var(--line);padding:4px 14px;border-radius:999px;font-size:15px;color:var(--teal);font-weight:500}
+.hero h1{font-size:clamp(36px,5.6vw,62px);font-weight:800;margin-block:16px}
+.hero h1 span{color:var(--teal)}
+.hero p{font-size:20px;color:var(--muted);max-width:40ch;margin:0 0 28px}
+.hero .ctas{display:flex;gap:12px;flex-wrap:wrap}
+.trust{display:flex;gap:28px;flex-wrap:wrap;margin-top:32px;font-size:15px;color:var(--muted)}
+.trust b{display:block;font-size:26px;color:var(--fg);font-weight:800}
+.stage{position:relative;aspect-ratio:1/0.9;max-width:100%}
+.win{position:absolute;border-radius:22px;padding:18px;box-shadow:0 24px 60px #0a343833}
+.win.a{inset:24% 30% 0 0;background:var(--teal);color:var(--on-teal)}
+.win.b{inset:0 0 30% 26%;background:var(--amber);color:#14262a}
+.dots{display:flex;gap:6px;justify-content:flex-start;margin-bottom:14px}
+.dots i{width:10px;height:10px;border-radius:50%;background:currentColor;opacity:.35}
+.dots i:first-child{opacity:1}
+.win .ln{height:10px;border-radius:5px;background:currentColor;opacity:.25;margin-bottom:10px}
+.win .ln.s{width:60%}.win .ln.m{width:80%}
+.win .big{font-weight:800;font-size:clamp(18px,2.4vw,26px);margin-bottom:12px;opacity:1}
+.win .pill{display:inline-block;background:#14262a;color:#fff;border-radius:8px;padding:6px 12px;font-size:14px;font-weight:700;margin-top:6px}
+.win.a .pill{background:var(--amber);color:#14262a}
+/* sections */
+section{padding-block:76px}
+.sec-head{max-width:640px;margin-bottom:36px}
+.sec-head h2{font-size:clamp(28px,4vw,42px);font-weight:800}
+.sec-head p{color:var(--muted);margin:10px 0 0}
+.why{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.why h3{font-size:20px;margin-bottom:6px}
+.why p{color:var(--muted);margin:0;font-size:16px}
+.why .ic{width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;margin-bottom:12px}
+.why .ic svg{width:24px;height:24px;stroke:var(--teal);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.alt-bg{background:var(--surface);border-block:1px solid var(--line)}
+.works{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+.work{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:var(--fg);background:var(--bg);transition:transform .2s,box-shadow .2s}
+.work:hover{transform:translateY(-3px);box-shadow:0 16px 40px #0a343822}
+.shot{aspect-ratio:16/8;display:flex;flex-direction:column;padding:16px;gap:8px;color:#fff;position:relative}
+.shot .bar{display:flex;gap:5px}.shot .bar i{width:8px;height:8px;border-radius:50%;background:#fff;opacity:.5}
+.shot strong{font-size:clamp(20px,2.6vw,30px);font-weight:800;margin-top:auto}
+.shot small{opacity:.85;font-size:14px}
+.work .info{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.work .info b{font-size:18px}
+.work .info span{font-size:14px;color:var(--muted)}
+.tag{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--amber);color:#14262a;white-space:nowrap}
+.tag.demo{background:var(--line);color:var(--fg)}
+.prices{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px;display:flex;flex-direction:column;gap:12px}
+.plan.pop{background:var(--teal);color:var(--on-teal);border-color:var(--teal);position:relative}
+.plan.pop .pmuted{color:var(--on-teal);opacity:.8}
+.plan h3{font-size:22px}
+.pmuted{color:var(--muted);font-size:15px;margin:0}
+.amount{font-size:44px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.amount small{font-size:16px;font-weight:500}
+.plan ul{list-style:none;padding:0;margin:4px 0 8px;display:grid;gap:8px;flex:1}
+.plan li{padding-inline-start:26px;position:relative}
+.plan li::before{content:"";position:absolute;right:0;top:.5em;width:14px;height:8px;border-inline-start:2.5px solid var(--amber);border-bottom:2.5px solid var(--amber);transform:rotate(-45deg) scaleX(-1)}
+.plan .btn{text-align:center}
+.plan:not(.pop) .btn{background:var(--teal);color:var(--on-teal)}
+.badge{position:absolute;top:-13px;left:24px;background:var(--amber);color:#14262a;font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px}
+.note{color:var(--muted);font-size:15px;margin-top:18px}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative}
+.timeline::before{content:"";position:absolute;top:21px;right:21px;left:21px;height:3px;background:var(--line)}
+.tl{position:relative;padding-inline-end:16px}
+.tl .wk{width:44px;height:44px;border-radius:50%;background:var(--teal);color:var(--on-teal);display:grid;place-items:center;font-weight:800;position:relative}
+.tl:last-child .wk{background:var(--amber);color:#14262a}
+.tl small{display:block;color:var(--teal);font-weight:700;margin-top:14px;font-size:14px}
+.tl h3{font-size:19px;margin-top:2px}
+.tl p{color:var(--muted);font-size:15px;margin:4px 0 0}
+.faq{max-width:780px}
+details{border-bottom:1px solid var(--line);padding-block:16px}
+summary{font-weight:700;cursor:pointer;font-size:18px}
+details p{color:var(--muted);margin:8px 0 0}
+/* contact */
+.contact{background:var(--deep);color:var(--on-teal)}
+.contact .wrap{display:grid;grid-template-columns:1fr 1.15fr;gap:48px;align-items:start}
+.contact h2{font-size:clamp(28px,4vw,44px);font-weight:800}
+.contact .lead{opacity:.85;font-size:19px}
+.contact ul{padding:0;list-style:none;display:grid;gap:10px;margin-top:22px}
+.contact li::before{content:"✓";color:var(--amber);font-weight:800;margin-inline-end:10px}
+form{background:var(--surface);color:var(--fg);border-radius:18px;padding:28px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:flex;flex-direction:column;gap:5px;font-weight:500;font-size:15px}
+label.full,.full{grid-column:1/-1}
+input,select,textarea{font:inherit;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal)}
+.hp{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;clip-path:inset(50%)}
+#status{grid-column:1/-1;margin:0;font-weight:700;min-height:1.5em}
+#status.ok{color:var(--teal)}#status.err{color:#c0392b}
+form .btn{width:100%;font-size:18px}
+form .btn[disabled]{opacity:.6;cursor:wait}
+.privacy{grid-column:1/-1;font-size:13px;color:var(--muted);margin:0}
+footer{padding-block:28px;color:var(--muted);font-size:15px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+@media (max-width:900px){.hero .wrap,.contact .wrap{grid-template-columns:1fr}.stage{max-width:420px}.why{grid-template-columns:1fr 1fr}.prices{grid-template-columns:1fr}.timeline{grid-template-columns:1fr 1fr;row-gap:28px}.timeline::before{display:none}.top nav a:not(.btn){display:none}}
+@media (max-width:560px){.works{grid-template-columns:1fr}form{grid-template-columns:1fr}.why{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.work{transition:none}}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <a class="brand" href="#" aria-label="שילובים – לראש העמוד">
+    <svg viewBox="0 0 90 80" aria-hidden="true"><defs><clipPath id="lb"><rect x="34" y="4" width="52" height="52" rx="13"/></clipPath></defs><rect x="4" y="22" width="52" height="52" rx="13" fill="#0f5c63"/><rect x="34" y="4" width="52" height="52" rx="13" fill="#f2a33a"/><rect x="4" y="22" width="52" height="52" rx="13" fill="#0a3438" clip-path="url(#lb)"/><circle cx="74" cy="15" r="3.2" fill="#0a3438"/><circle cx="64" cy="15" r="3.2" fill="#0a3438" opacity=".55"/><circle cx="54" cy="15" r="3.2" fill="#0a3438" opacity=".3"/></svg>
+    <b>שילובים</b>
+  </a>
+  <nav><a href="#works">עבודות</a><a href="#prices">מחירים</a><a href="#process">תהליך</a><a class="btn" href="#contact">דברו איתנו</a></nav>
+</div></header>
+
+<section class="hero" style="padding:0"><div class="wrap">
+  <div>
+    <span class="kicker">בניית אתרים לעסקים, מוסדות ומיזמים</span>
+    <h1>אתר שמביא לקוחות,<br><span>לא רק כרטיס ביקור.</span></h1>
+    <p>אנחנו משלבים עיצוב נקי, טכנולוגיה מתקדמת והיכרות עם הקהל שלכם, ובונים אתר שנראה מקצועי, עובד מצוין בנייד ומביא פניות.</p>
+    <div class="ctas"><a class="btn" href="#contact">לקבלת הצעת מחיר</a><a class="btn alt" href="#works">לעבודות שלנו</a></div>
+    <div class="trust"><div><b>מחיר קבוע</b>בלי הפתעות בסוף</div><div><b>4–6 שבועות</b>מהאפיון לאוויר</div><div><b>100%</b>מותאם לנייד</div></div>
+  </div>
+  <div class="stage" aria-hidden="true">
+    <div class="win b"><div class="dots"><i></i><i></i><i></i></div><div class="big">הזמנה אונליין</div><div class="ln m"></div><div class="ln s"></div><span class="pill">שלחו פנייה</span></div>
+    <div class="win a"><div class="dots"><i></i><i></i><i></i></div><div class="big">האתר של העסק שלך</div><div class="ln"></div><div class="ln m"></div><div class="ln s"></div><span class="pill">פנייה חדשה התקבלה ✓</span></div>
+  </div>
+</div></section>
+
+<section style="padding-top:24px"><div class="wrap">
+  <div class="why">
+    <div><div class="ic"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg></div><h3>קודם כל נייד</h3><p>רוב הלקוחות שלכם גולשים מהטלפון. האתר נבנה קודם כל בשבילם.</p></div>
+    <div><div class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div><h3>נמצאים בגוגל</h3><p>מבנה נכון, מהירות טעינה ותוכן שגוגל אוהב, כבר מהיום הראשון.</p></div>
+    <div><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg></div><h3>פניות ישר אליכם</h3><p>טופס, וואטסאפ וטלפון. כל פנייה מגיעה אליכם למייל תוך שניות.</p></div>
+    <div><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg></div><h3>מכירים את הקהל</h3><p>ניסיון בבניית אתרים לציבור החרדי: שפה, תוכן ועיצוב שמתאימים בדיוק.</p></div>
+  </div>
+</div></section>
+
+<section id="works" class="alt-bg"><div class="wrap">
+  <div class="sec-head"><h2>עבודות שלנו</h2><p>אתר אחד שעובד בשטח עם מאות נכסים, ועוד אתרים לדוגמה שמראים מה אפשר לבנות לעסק שלכם.</p></div>
+  <div class="works">
+    <a class="work" href="https://charedivacation.com/" target="_blank" rel="noopener">
+      <div class="shot" style="background:linear-gradient(135deg,#1f4e79,#2e86ab)"><div class="bar"><i></i><i></i><i></i></div><small>חיפוש לפי עיר, תאריכים, שבתות וחגים</small><strong>חופשה חרדית</strong></div>
+      <div class="info"><div><b>charedivacation.com</b><br><span>פורטל דירות נופש ושבת · מעל 140 נכסים</span></div><span class="tag">פרויקט חי</span></div>
+    </a>
+    <a class="work" href="demos/catering.html" target="_blank" rel="noopener">
+      <div class="shot" style="background:linear-gradient(135deg,#5b1f33,#8a3450)"><div class="bar"><i></i><i></i><i></i></div><small>תפריטים, מחירים לסועד, הצעת מחיר</small><strong>קייטרינג לשמחות</strong></div>
+      <div class="info"><div><b>בית הדר</b><br><span>אתר תדמית עם טופס הזמנה</span></div><span class="tag demo">לדוגמה</span></div>
+    </a>
+    <a class="work" href="demos/accountant.html" target="_blank" rel="noopener">
+      <div class="shot" style="background:linear-gradient(135deg,#0f3a4a,#1f9d7a)"><div class="bar"><i></i><i></i><i></i></div><small>מחשבון מע״מ חי, שירותים, שאלות נפוצות</small><strong>משרד רואי חשבון</strong></div>
+      <div class="info"><div><b>ברגר ושות׳</b><br><span>אתר משרד עם כלי אינטראקטיבי</span></div><span class="tag demo">לדוגמה</span></div>
+    </a>
+    <a class="work" href="demos/college.html" target="_blank" rel="noopener">
+      <div class="shot" style="background:linear-gradient(135deg,#2b2f8f,#f26d4f)"><div class="bar"><i></i><i></i><i></i></div><small>קטלוג קורסים עם סינון והרשמה</small><strong>מרכז הכשרה</strong></div>
+      <div class="info"><div><b>מרכז אופק</b><br><span>מסלולים נפרדים, טופס לידים</span></div><span class="tag demo">לדוגמה</span></div>
+    </a>
+  </div>
+</div></section>
+
+<section id="prices"><div class="wrap">
+  <div class="sec-head"><h2>מחירים</h2><p>מחיר קבוע שסוגרים מראש. בלי שעות נוספות ובלי הפתעות בחשבונית.</p></div>
+  <div class="prices">
+    <div class="plan">
+      <h3>דף נחיתה</h3><p class="pmuted">לקמפיין, אירוע או שירות אחד</p>
+      <div class="amount">₪1,490</div>
+      <ul><li>עמוד אחד ממוקד מכירה</li><li>טופס פניות למייל וכפתור וואטסאפ</li><li>התאמה מלאה לנייד</li><li>חיבור לדומיין שלכם</li></ul>
+      <a class="btn" href="#contact" data-plan="דף נחיתה">אני רוצה דף נחיתה</a>
+    </div>
+    <div class="plan pop">
+      <span class="badge">הכי משתלם</span>
+      <h3>אתר תדמית</h3><p class="pmuted">לעסק שרוצה להיראות מקצועי</p>
+      <div class="amount">₪3,490</div>
+      <ul><li>עד 6 עמודים</li><li>עיצוב אישי לפי המיתוג שלכם</li><li>טופס פניות, וואטסאפ ומפה</li><li>התאמה לגוגל (SEO בסיסי)</li><li>הדרכה לעדכון תכנים</li></ul>
+      <a class="btn" href="#contact" data-plan="אתר תדמית">אני רוצה אתר תדמית</a>
+    </div>
+    <div class="plan">
+      <h3>אתר מתקדם</h3><p class="pmuted">מאגרים, הזמנות, הרשמה או חנות</p>
+      <div class="amount"><small>החל מ-</small>₪6,900</div>
+      <ul><li>מערכת חיפוש וסינון</li><li>אזור אישי וניהול תכנים</li><li>תשלומים והזמנות אונליין</li><li>כמו האתר של חופשה חרדית</li></ul>
+      <a class="btn" href="#contact" data-plan="אתר מתקדם">בואו נדבר על זה</a>
+    </div>
+  </div>
+  <p class="note">המחירים לפני מע״מ. אחסון ודומיין לפי בחירה, ונעזור לכם להסדיר אותם.</p>
+</div></section>
+
+<section id="process" class="alt-bg"><div class="wrap">
+  <div class="sec-head"><h2>מהשיחה הראשונה לאתר באוויר</h2><p>זמן אספקה: חודש עד חודש וחצי. ככה זה נראה בפועל.</p></div>
+  <div class="timeline">
+    <div class="tl"><div class="wk">1</div><small>שבוע 1</small><h3>אפיון</h3><p>שיחה על העסק, הקהל והמטרות. מגדירים יחד מה האתר צריך לעשות.</p></div>
+    <div class="tl"><div class="wk">2</div><small>שבועות 2–3</small><h3>עיצוב</h3><p>מקבלים עיצוב ראשוני, מעירים, ואנחנו מתקנים עד שזה בדיוק מה שרציתם.</p></div>
+    <div class="tl"><div class="wk">3</div><small>שבועות 3–5</small><h3>בנייה</h3><p>האתר נבנה, נבדק בכל סוגי הטלפונים ומתחבר לטפסים ולגוגל.</p></div>
+    <div class="tl"><div class="wk">✓</div><small>שבועות 5–6</small><h3>עולים לאוויר</h3><p>חיבור לדומיין, הדרכה קצרה ותמיכה צמודה בחודש הראשון.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap faq">
+  <div class="sec-head"><h2>שאלות נפוצות</h2></div>
+  <details><summary>איך משלמים?</summary><p>מקדמה של 40% בתחילת העבודה, והיתרה כשהאתר מוכן ואתם מרוצים, לפני העלייה לאוויר.</p></details>
+  <details><summary>אני לא מבין במחשבים. זה בעיה?</summary><p>ממש לא. אתם מספרים לנו על העסק, ואנחנו דואגים לכל השאר: כתיבה, תמונות, דומיין והעלאה.</p></details>
+  <details><summary>האם אפשר לעדכן את האתר אחר כך?</summary><p>כן. נדריך אתכם לעדכן תכנים בעצמכם, ואפשר גם לבקש מאיתנו שינויים בכל שלב.</p></details>
+  <details><summary>מה אם צריך משהו מיוחד, כמו מאגר או מערכת הזמנות?</summary><p>זה בדיוק מה שבנינו בחופשה חרדית. ספרו לנו מה אתם צריכים, ונחזור עם הצעה מסודרת.</p></details>
+</div></section>
+
+<section id="contact" class="contact"><div class="wrap">
+  <div>
+    <h2>בואו נבנה לכם אתר</h2>
+    <p class="lead">השאירו פרטים, ונחזור אליכם תוך יום עסקים עם רעיונות והצעת מחיר. בלי התחייבות.</p>
+    <ul><li>שיחת ייעוץ ראשונה חינם</li><li>מחיר קבוע שסוגרים מראש</li><li>אתר באוויר תוך חודש עד חודש וחצי</li></ul>
+  </div>
+  <form id="contact-form" novalidate>
+    <label>שם מלא<input id="f-name" name="name" required autocomplete="name"></label>
+    <label>טלפון<input id="f-phone" name="phone" type="tel" required autocomplete="tel" inputmode="tel"></label>
+    <label>אימייל (לא חובה)<input id="f-email" name="email" type="email" autocomplete="email"></label>
+    <label>שם העסק<input id="f-biz" name="business"></label>
+    <label class="full">מה מעניין אתכם?<select id="f-plan" name="package"><option>עוד לא יודע, אשמח לייעוץ</option><option>דף נחיתה</option><option>אתר תדמית</option><option>אתר מתקדם</option></select></label>
+    <label class="full">ספרו לנו בקצרה על העסק<textarea id="f-msg" name="message" rows="4"></textarea></label>
+    <input class="hp" type="checkbox" name="botcheck" id="f-bot" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <div class="full"><button class="btn" type="submit" id="f-send">שלחו ונחזור אליכם</button></div>
+    <p id="status" role="status" aria-live="polite"></p>
+    <p class="privacy">הפרטים נשלחים ישירות אלינו ולא מועברים לאף גורם אחר.</p>
+  </form>
+</div></section>
+
+<footer><div class="wrap"><span>© 2026 שילובים · בניית אתרים</span><span>שילוב של עיצוב, טכנולוגיה ושירות</span></div></footer>
+
+<script>
+/* מפתח Web3Forms: מגיע למייל שלך בהרשמה חינם באתר web3forms.com.
+   המייל שלך לא מופיע בקוד, ורק המפתח הזה כן. */
+const WEB3FORMS_KEY = "PASTE-YOUR-ACCESS-KEY-HERE";
+
+const form=document.getElementById('contact-form'),st=document.getElementById('status'),send=document.getElementById('f-send');
+document.querySelectorAll('[data-plan]').forEach(a=>a.addEventListener('click',()=>{document.getElementById('f-plan').value=a.dataset.plan}));
+function say(t,cls){st.textContent=t;st.className=cls||''}
+form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const name=document.getElementById('f-name').value.trim(),phone=document.getElementById('f-phone').value.trim();
+  if(!name||phone.replace(/\D/g,'').length<9){say('נא למלא שם ומספר טלפון תקין.','err');return}
+  if(document.getElementById('f-bot').checked)return;
+  if(WEB3FORMS_KEY.startsWith('PASTE')){say('הטופס עוד לא מחובר למייל. זו תצוגה מקדימה.','err');return}
+  const data=Object.fromEntries(new FormData(form));delete data.botcheck;
+  data.access_key=WEB3FORMS_KEY;data.subject='פנייה חדשה מהאתר – '+name;data.from_name='אתר שילובים';
+  send.disabled=true;say('שולח...');
+  try{
+    const r=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(data)});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.success){form.reset();say('תודה! קיבלנו את הפרטים ונחזור אליכם בהקדם.','ok')}
+    else say('השליחה לא הצליחה. נסו שוב בעוד רגע.','err');
+  }catch(_){say('אין חיבור כרגע. בדקו את האינטרנט ונסו שוב.','err')}
+  finally{send.disabled=false}
+});
+</script>
+
+</body>
+</html>
