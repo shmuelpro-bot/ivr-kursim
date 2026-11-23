@@ -257,7 +257,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
 <script>
 /* מפתח Web3Forms: מגיע למייל שלך בהרשמה חינם באתר web3forms.com.
    המייל שלך לא מופיע בקוד, ורק המפתח הזה כן. */
-const WEB3FORMS_KEY = "PASTE-YOUR-ACCESS-KEY-HERE";
+const WEB3FORMS_KEY = "aade596e-d204-4d58-a03a-b334cef078b6";
 
 const form=document.getElementById('contact-form'),st=document.getElementById('status'),send=document.getElementById('f-send');
 document.querySelectorAll('[data-plan]').forEach(a=>a.addEventListener('click',()=>{document.getElementById('f-plan').value=a.dataset.plan}));
@@ -268,11 +268,11 @@ form.addEventListener('submit',async e=>{
   if(!name||phone.replace(/\D/g,'').length<9){say('נא למלא שם ומספר טלפון תקין.','err');return}
   if(document.getElementById('f-bot').checked)return;
   if(WEB3FORMS_KEY.startsWith('PASTE')){say('הטופס עוד לא מחובר למייל. זו תצוגה מקדימה.','err');return}
-  const data=Object.fromEntries(new FormData(form));delete data.botcheck;
-  data.access_key=WEB3FORMS_KEY;data.subject='פנייה חדשה מהאתר – '+name;data.from_name='אתר שילובים';
+  const data=new FormData(form);data.delete('botcheck');
+  data.append('access_key',WEB3FORMS_KEY);data.append('subject','פנייה חדשה מהאתר – '+name);data.append('from_name','אתר שילובים');
   send.disabled=true;say('שולח...');
   try{
-    const r=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(data)});
+    const r=await fetch('https://api.web3forms.com/submit',{method:'POST',body:data});
     const j=await r.json().catch(()=>({}));
     if(r.ok&&j.success){form.reset();say('תודה! קיבלנו את הפרטים ונחזור אליכם בהקדם.','ok')}
     else say('השליחה לא הצליחה. נסו שוב בעוד רגע.','err');
